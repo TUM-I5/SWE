@@ -31,7 +31,11 @@
 #include <string>
 
 #include "../SWE_Block.hh"
+#ifndef CUDA
 #include "../SWE_WavePropagationBlock.hh"
+#else
+#include "../SWE_WavePropagationBlockCuda.hh"
+#endif
 #include "../scenarios/SWE_simple_scenarios.h"
 #include "../tools/Logger.hpp"
 
@@ -91,7 +95,11 @@ int main( int argc, char** argv ) {
   l_originY = l_scenario.getBoundaryPos(BND_BOTTOM);
 
   // create a single wave propagation block
+  #ifndef CUDA
   SWE_WavePropagationBlock l_wavePropgationBlock(l_originX, l_originY);
+  #else
+  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_originX, l_originY);
+  #endif
 
   // initialize the wave propgation block
   l_wavePropgationBlock.initScenario(l_scenario);
@@ -115,7 +123,7 @@ int main( int argc, char** argv ) {
   /**
    * Simulation.
    */
-  // print a start message and reset the wall clock time
+  // print the start message and reset the wall clock time
   s_sweLogger.printStartMessage();
   s_sweLogger.initWallClockTime(time(NULL));
 
@@ -165,7 +173,7 @@ int main( int argc, char** argv ) {
   s_sweLogger.printStatisticsMessage();
 
   // print the cpu time
-  s_sweLogger.printCpuTime("CPU time");
+  s_sweLogger.printCpuTime("CPU/GPU time");
 
   // print the wall clock time (includes plotting)
   s_sweLogger.printWallClockTime(time(NULL));

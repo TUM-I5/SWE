@@ -28,7 +28,7 @@
 #ifndef __SWE_SIMPLE_SCENARIOS_H
 #define __SWE_SIMPLE_SCENARIOS_H
 
-#include <math.h>
+#include <cmath>
 
 #include "SWE_Scenario.h"
 
@@ -56,12 +56,39 @@ class SWE_BathymetryDamBreakScenario : public SWE_Scenario {
   public:
 
     float getBathymetry(float x, float y) { 
-       // return ( sqrt( (x-0.3f)*(x-0.3f) + (y-0.8f)*(y-0.8f) ) < 0.1f ) ? 0.1f: 0.0f;
-       return ( sqrt( (x-0.5f)*(x-0.5f) + (y-0.5f)*(y-0.5f) ) < 0.1f ) ? 0.1f: 0.0f;
+       return ( std::sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 50.f ) ? -250.f: -260.f;
     };
-    virtual float endSimulation() { return 0.2f; };
+    virtual float endSimulation() { return (float) 15; };
 
     virtual BoundaryType getBoundaryType(BoundaryEdge edge) { return OUTFLOW; };
+
+    /** Get the boundary positions
+     *
+     * @param i_edge which edge
+     * @return value in the corresponding dimension
+     */
+    float getBoundaryPos(BoundaryEdge i_edge) {
+       if ( i_edge == BND_LEFT )
+         return (float)0;
+       else if ( i_edge == BND_RIGHT)
+         return (float)1000;
+       else if ( i_edge == BND_BOTTOM )
+         return (float)0;
+       else
+         return (float)1000;
+    };
+
+    /**
+     * Get the water height at a specific location.
+     *
+     * @param i_positionX position relative to the origin of the bathymetry grid in x-direction
+     * @param i_positionY position relative to the origin of the bathymetry grid in y-direction
+     * @return water height (before the initial displacement)
+     */
+    float getWaterHeight( float i_positionX,
+                          float i_positionY ) {
+      return (float) 270;
+    }
 };
 
 /**
