@@ -26,7 +26,7 @@
  * Very basic setting of SWE, which uses a wave propagation solver and an artificial scenario on a single block.
  */
 
-#include "tools/help.hh"
+#include "../tools/help.hh"
 #include <cstdlib>
 #include <string>
 
@@ -41,7 +41,7 @@
 
 #ifndef STATICLOGGER
 #define STATICLOGGER
-#include "tools/Logger.hpp"
+#include "../tools/Logger.hpp"
 static tools::Logger s_sweLogger;
 #endif
 
@@ -57,7 +57,7 @@ int main( int argc, char** argv ) {
     std::cout << "Aborting ... please provide proper input parameters." << std::endl
               << "Example: ./SWE_parallel 200 300 /work/openmp_out" << std::endl
               << "\tfor a single block of size 200 * 300" << std::endl;
-    assert(false);
+    return 1;
   }
 
   //! number of grid cells in x- and y-direction.
