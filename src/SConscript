@@ -1,0 +1,76 @@
+#! /usr/bin/python
+
+# @file
+# This file is part of SWE.
+#
+# @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+#
+# @section LICENSE
+#
+# SWE is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# SWE is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with SWE.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+# @section DESCRIPTION
+#
+# Definition of the source files.
+#
+
+Import('env')
+
+# Code without CUDA
+if env['parallelization'] not in ['cuda', 'cuda_with_mpi']:
+  if env['solver'] != 'rusanov':
+    sourceFiles = ['SWE_WavePropagationBlock.cpp']
+  else:
+    sourceFiles = ['SWE_RusanovBlock.cpp']
+
+# Code with CUDA
+else:
+  sourceFiles = [ 'SWE_BlockCUDA.cu',
+                  'SWE_BlockCUDA_kernels.cu']
+  if env['solver'] == 'rusanov':
+    sourceFiles.append( [ 'SWE_RusanovBlockCUDA.cu',
+                          'SWE_RusanovBlockCUDA_kernels.cu']
+                      )
+  elif env['solver'] == 'fwave':
+    sourceFiles.append( [ 'SWE_WavePropagationBlockCuda.cu',
+                          'SWE_WavePropagationBlockCuda_kernels.cu']
+                      )
+  
+# compile the files defined so far, important step because of possible different compilers                  
+for i in sourceFiles:
+  env.src_files.append(env.Object(i))
+
+# SWE_Block is used in every implementation
+sourceFiles = ['SWE_Block.cpp']
+
+# netCDF writer
+if env['writeNetCDF'] == True:
+  sourceFiles.append( ['io/NetCdfWriter.cpp'] )
+
+# file containing the main-function
+if env['parallelization'] in ['none', 'cuda']:
+  if env['solver'] != 'rusanov':
+    sourceFiles.append( ['examples/swe_wavepropagation.cpp'] )
+  else:
+   print '** The selected configuration is not implemented.'
+   Exit(1)
+else:
+  print '** The selected configuration is not implemented.'
+
+# CPU compilation for sure
+for i in sourceFiles:
+  env.src_files.append(env.Object(i))
+
+Export('env')
