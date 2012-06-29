@@ -50,6 +50,8 @@ vars = Variables()
 
 # SWE specific variables
 vars.AddVariables(
+  PathVariable( 'xmlFile', 'location of the xml-file, which contains compile parameters', None, PathVariable.PathIsFile ),
+
   PathVariable( 'buildDir', 'where to build the code', 'build', PathVariable.PathIsDirCreate ),
 
   EnumVariable( 'compiler', 'used compiler', 'gnu',
@@ -64,7 +66,7 @@ vars.AddVariables(
                 allowed_values=('none', 'cuda', 'mpi_with_cuda', 'mpi')
               ),
 
-  EnumVariable( 'computeCapability', 'optional architecture/compute capability of the CUDA card', 'sm_21',
+  EnumVariable( 'computeCapability', 'optional architecture/compute capability of the CUDA card', 'sm_20',
                 allowed_values=('sm_20', 'sm_21', 'sm_22', 'sm_23')
               ),
 
@@ -74,7 +76,9 @@ vars.AddVariables(
 
   EnumVariable( 'solver', 'Riemann solver', 'augrie',
                 allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid')
-              )
+              ),
+
+  BoolVariable( 'xmlRuntime', 'use a xml-file for runtime parameters', False )
 )
 
 # external variables
@@ -82,7 +86,8 @@ vars.AddVariables(
   PathVariable( 'cudaToolkitDir', 'location of the CUDA toolkit', None ),
   PathVariable( 'cudaSDKDir', 'location of the CUDA SDK', None),
   PathVariable( 'netCDFDir', 'location of netCDF', None),
-  PathVariable( 'asagiDir', 'location of ASAGI', None)
+  PathVariable( 'asagiDir', 'location of ASAGI', None),
+  PathVariable( 'libxmlDir', 'location of libxml2', None)
 )
 
 # set environment
@@ -102,6 +107,8 @@ if env['parallelization'] == 'cuda' and env['solver'] != 'rusanov' and env['solv
 
 # eclipse specific flag
 env.Append(CCFLAGS=['-fmessage-length=0'])
+
+# xml parameters for the compiler TODO
 
 # set (pre-)compiler flags for the compile modes
 if env['compileMode'] == 'debug':
@@ -148,14 +155,14 @@ if env['parallelization'] == 'cuda':
   env.Append(NVCCFLAGS=env['computeCapability'])
 
 # set the precompiler flags and includes for netCDF
-if int(env['writeNetCDF']):
+if env['writeNetCDF'] == True:
   env.Append(CPPDEFINES=['WRITENETCDF'])
   # set netCDF location
   if 'netCDFDir' in env:
     env.Append(CPPPATH=[env['netCDFDir']+'/include'])
 
 # set the precompiler flags, includes and libraries for ASAGI
-if int(env['asagi']):
+if env['asagi'] == True:
   env.Append(CPPDEFINES=['ASAGI'])
   if env['parallelization'] == 'none' or env['parallelization'] == 'cuda':
     env.Append(CPPDEFINES=['ASAGI_NOMPI'])
@@ -167,6 +174,15 @@ if int(env['asagi']):
   if 'netCDFDir' in env:
     env.Append(LIBPATH=[env['netCDFDir']+'/lib'])
 
+# xml runtime parameters
+if env['xmlRuntime'] == True: #TODO
+  print 'xml runtime parameters are not implemented so far.'
+  Exit(1)
+  env.Append(CPPDEFINES=['READXML'])
+  #set xmllib2 location
+  if 'libxmlDir' in env:
+    env.Append(CPPPATH=[env['libxmlDir']+'/include/libxml2'])
+    env.Append(LIBPATH=[env['libxmlDir']+'/lib'])
 
 #
 # setup the program name and the build directory

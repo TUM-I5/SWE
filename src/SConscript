@@ -59,6 +59,10 @@ sourceFiles = ['SWE_Block.cpp']
 if env['writeNetCDF'] == True:
   sourceFiles.append( ['io/NetCdfWriter.cpp'] )
 
+# xml reader
+if env['xmlRuntime'] == True:
+  sourceFiles.append( ['tools/CXMLConfig.cpp'] )
+
 # file containing the main-function
 if env['parallelization'] in ['none', 'cuda']:
   if env['solver'] != 'rusanov':
