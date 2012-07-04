@@ -53,7 +53,7 @@ class SWE_BlockCUDA : public SWE_Block {
 
   public:
     // Constructor und Destructor
-    SWE_BlockCUDA(float _offsetX = 0, float _offsetY = 0);
+    SWE_BlockCUDA(float _offsetX = 0, float _offsetY = 0, const int i_cudaDevice = 0);
     virtual ~SWE_BlockCUDA();
     
   // object methods
@@ -62,7 +62,7 @@ class SWE_BlockCUDA : public SWE_Block {
 //     // determine maximum possible time step
 //     virtual float getMaxTimestep();
 
-    // deliver a pointer to proxy class that represents 
+    // deliver a pointer to proxy class that represents
     // the layer that is copied to an external ghost layer 
     virtual SWE_Block1D* registerCopyLayer(BoundaryEdge edge);
     // "grab" the ghost layer in order to set these values externally
@@ -77,6 +77,9 @@ class SWE_BlockCUDA : public SWE_Block {
      *  @return	pointer to the array #hb (bathymetry) in device memory 
      */
     const float* getCUDA_bathymetry() { return bd; };
+
+    // print information about the CUDA device
+    void printDeviceInformation() const;
 
   protected:
      

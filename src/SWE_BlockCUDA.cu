@@ -25,10 +25,17 @@
  * TODO
  */
 
-#include <math.h>
+#include <cassert>
+#include <cmath>
 #include "tools/help.hh"
 #include "SWE_BlockCUDA.hh"
 #include "SWE_BlockCUDA_kernels.hh"
+
+#ifndef STATICLOGGER
+#define STATICLOGGER
+#include "tools/Logger.hpp"
+static tools::Logger s_sweLogger;
+#endif
 
 //const int TILE_SIZE=16;
 //const int TILE_SIZE=8;
@@ -73,10 +80,27 @@ void tryCUDA(cudaError_t err, const char *msg)
  * cells with index (i,j) and (i+1,j) or (i,j+1)
  *
  * bathymetry source terms are defined for cells with indices [1,..,nx]*[1,..,ny]
+ *
+ *
+ * @param _offsetX offset in x-direction.
+ * @param _offsetY offset in y-direction.
+ * @param i_cudaDevice ID of the CUDA-device, which should be used.
  */
-SWE_BlockCUDA::SWE_BlockCUDA(float _offsetX, float _offsetY)
+SWE_BlockCUDA::SWE_BlockCUDA(float _offsetX, float _offsetY, const int i_cudaDevice )
  : SWE_Block(_offsetX,_offsetY)
 {
+  s_sweLogger.setProcessRank(i_cudaDevice);
+
+  cudaSetDevice(i_cudaDevice);
+
+  // check for a valid CUDA device id
+  #ifndef NDEBUG
+  int l_deviceCount;
+  cudaGetDeviceCount(&l_deviceCount);
+  assert( (i_cudaDevice >= 0) && (i_cudaDevice < l_deviceCount) );
+  #endif
+
+  printDeviceInformation();
 
   if (nx % TILE_SIZE != 0) {
     cout << "WARNING: nx not a multiple of TILE_SIZE  -> will lead to crashes!" 
@@ -431,6 +455,41 @@ SWE_Block1D* SWE_BlockCUDA::grabGhostLayer(BoundaryEdge edge){
       return topGhostLayer;
   };
   return NULL;
+}
+
+/**
+ * Print some available information about the CUDA devices.
+ */
+void SWE_BlockCUDA::printDeviceInformation() const {
+  s_sweLogger.printString("Printing device information");
+
+  //! id of the CUDA device.
+  int l_deviceId;
+  cudaGetDevice(&l_deviceId);
+
+  //! total number of CUDA devices on this host.
+  int l_deviceCount;
+  cudaGetDeviceCount(&l_deviceCount);
+
+  //! drive and runtime version
+  int l_driverVersion, l_runtimeVersion;
+  cudaDriverGetVersion(&l_driverVersion);
+  cudaRuntimeGetVersion(&l_runtimeVersion);
+
+  //! device properties
+  cudaDeviceProp l_deviceProperty;
+  cudaGetDeviceProperties(&l_deviceProperty, l_deviceId);
+
+  // print information about the current device
+
+  s_sweLogger.cout() << "Current CUDA device (relative to host): " << l_deviceId
+                     << " ( " << l_deviceCount << " in total)" << std::endl;
+
+  s_sweLogger.cout() << "CUDA device properties: "
+                     << l_deviceProperty.name << " (name), "
+                     << l_driverVersion << "/" << l_runtimeVersion << " (driver/runtime version), "
+                     << l_deviceProperty.major << "." << l_deviceProperty.minor << " (compute capability)"
+                     << std::endl;
 }
 
 

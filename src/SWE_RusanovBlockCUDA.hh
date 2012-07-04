@@ -48,7 +48,7 @@ class SWE_RusanovBlockCUDA : public SWE_BlockCUDA {
 
   public:
     // Constructor und Destructor
-    SWE_RusanovBlockCUDA(float _offsetX = 0, float _offsetY = 0);
+    SWE_RusanovBlockCUDA(float _offsetX = 0, float _offsetY = 0, const int i_cudaDevice = 0);
     virtual ~SWE_RusanovBlockCUDA();
     
   // object methods
