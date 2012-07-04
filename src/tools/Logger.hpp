@@ -28,7 +28,7 @@
 #ifndef LOGGER_HPP_
 #define LOGGER_HPP_
 
-#ifdef MPI
+#if (defined USEMPI && !defined CUDA)
 #include <mpi.h>
 #endif
 
@@ -43,7 +43,11 @@ namespace tools {
 class tools::Logger {
 //private:
 
-  //stream which print the time
+  /**
+   * Stream, which prints the time in the beginning.
+   *
+   * @return extended std::cout stream.
+   */
   std::ostream& timeCout() {
     //get current time
     time_t rawTime;
@@ -81,14 +85,14 @@ class tools::Logger {
   const std::string indentation;
 
   //! CPU clock
-#ifdef MPI
+#if (defined USEMPI && !defined CUDA)
   double cpuClock;
 #else
   clock_t cpuClock;
 #endif
 
   //! CPU-Communication clock
-#ifdef MPI
+#if (defined USEMPI && !defined CUDA)
   double cpuCommClock;
 #else
   clock_t cpuCommClock;
@@ -128,26 +132,6 @@ class tools::Logger {
               << " = " << i_nX*i_nY << std::endl;
   }
 
-  /**
-   * Print the welcome message.
-   */
-  void printWelcomeMessage() {
-    std::cout << largeDelimiter
-              << welcomeMessage << " "
-              << programName
-              << largeDelimiter;
-  }
-
-  /**
-   * Print the finish message.
-   */
-  void printFinishMessage() {
-    std::cout << largeDelimiter
-              << programName << " "
-              << finishMessage
-              << largeDelimiter;
-  }
-
   public:
     /**
      * The Constructor.
@@ -181,9 +165,10 @@ class tools::Logger {
             indentation(i_indentation) {
       //set time to zero
       cpuTime = cpuCommTime = wallClockTime = 0.;
-      if(processRank == 0) {
+
+      #ifndef USEMPI
         printWelcomeMessage();
-      }
+      #endif
     }
 
     /**
@@ -191,9 +176,47 @@ class tools::Logger {
      * Prints the finish message (process rank 0 only).
      */
     virtual ~Logger() {
-      if(processRank == 0) {
+      #ifndef USEMPI
         printFinishMessage();
+      #endif
+      std::cout.flush();
+    }
+
+    /**
+     * Print the welcome message.
+     */
+    void printWelcomeMessage() {
+      if(processRank == 0) {
+        std::cout << largeDelimiter
+                  << welcomeMessage << " "
+                  << programName
+                  << largeDelimiter;
       }
+    }
+
+    /**
+     * Print the finish message.
+     */
+    void printFinishMessage() {
+      if(processRank == 0) {
+        std::cout << largeDelimiter
+                  << programName << " "
+                  << finishMessage
+                  << largeDelimiter;
+      }
+    }
+
+    /**
+     * Default output stream of the logger.
+     *
+     * @return extended (time + indentation) std::cout stream.
+     */
+    std::ostream& cout() {
+      return timeCout() << indentation
+        #ifdef USEMPI
+        <<  "process " << processRank << " - "
+        #endif
+        ;
     }
 
     /**
@@ -388,7 +411,7 @@ class tools::Logger {
      * Update the CPU time.
      */
     void updateCpuTime() {
-#ifdef MPI
+#if (defined USEMPI && !defined CUDA)
       cpuTime += MPI_Wtime() - cpuClock;
 #else
       cpuTime += (clock() - cpuClock)/(double)CLOCKS_PER_SEC;
@@ -399,7 +422,7 @@ class tools::Logger {
      * Update the CPU-Communication time.
      */
     void updateCpuCommunicationTime() {
-#ifdef MPI
+#if (defined USEMPI && !defined CUDA)
       cpuCommTime += MPI_Wtime() - cpuCommClock;
 #else
       cpuCommTime += (clock() - cpuCommClock)/(double)CLOCKS_PER_SEC;
@@ -407,7 +430,7 @@ class tools::Logger {
     }
 
     void resetCpuClockToCurrentTime() {
-#ifdef MPI
+#if (defined USEMPI && !defined CUDA)
       cpuClock = MPI_Wtime();
 #else
       cpuClock = clock();
@@ -415,7 +438,7 @@ class tools::Logger {
     }
 
     void resetCpuCommunicationClockToCurrentTime() {
-#ifdef MPI
+#if (defined USEMPI && !defined CUDA)
       cpuCommClock = MPI_Wtime();
 #else
       cpuCommClock = clock();
