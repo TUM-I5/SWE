@@ -29,7 +29,7 @@
 Import('env')
 
 # Code without CUDA
-if env['parallelization'] not in ['cuda', 'cuda_with_mpi']:
+if env['parallelization'] not in ['cuda', 'mpi_with_cuda']:
   if env['solver'] != 'rusanov':
     sourceFiles = ['SWE_WavePropagationBlock.cpp']
   else:
@@ -70,8 +70,11 @@ if env['parallelization'] in ['none', 'cuda']:
   else:
    print '** The selected configuration is not implemented.'
    Exit(1)
+elif env['parallelization'] in ['mpi_with_cuda', 'mpi']:
+    sourceFiles.append( ['examples/swe_mpi.cpp'] )
 else:
   print '** The selected configuration is not implemented.'
+  Exit(1)
 
 # CPU compilation for sure
 for i in sourceFiles:

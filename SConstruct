@@ -96,8 +96,15 @@ env = Environment(variables=vars)
 # generate help text
 Help(vars.GenerateHelpText(env))
 
+# handle unknown, maybe misspelled variables
+unknownVariables = vars.UnknownVariables()
+if unknownVariables:
+  print "*** The following build variables are unknown:", unknownVariables.keys()
+  Exit(1)
+
+
 # valid solver for CUDA?
-if env['parallelization'] == 'cuda' and env['solver'] != 'rusanov' and env['solver'] != 'fwave':
+if env['parallelization'] in ['cuda', 'mpi_with_cuda'] and env['solver'] != 'rusanov' and env['solver'] != 'fwave':
   print '** The "'+env['solver']+'" solver is not supported in CUDA.'
   Exit(1)
 
@@ -137,10 +144,13 @@ elif env['solver'] == 'augrie':
 elif env['solver'] == 'hybrid':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=0'])
 
-# set the precompiler flags for CUDA
-if env['parallelization'] == 'cuda':
-  env.Append(CPPDEFINES=['CUDA'])
+# set the precompiler flags for serial version
+if env['parallelization'] in ['none', 'cuda']:
   env.Append(CPPDEFINES=['NOMPI'])
+
+# set the precompiler flags for CUDA
+if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
+  env.Append(CPPDEFINES=['CUDA'])
   
   # set the directories for the CudaTool
   if 'cudaToolkitDir' in env:
@@ -149,10 +159,23 @@ if env['parallelization'] == 'cuda':
     env['CUDA_SDK_PATH'] = env['cudaSDKDir']
 
   env.Tool('CudaTool', toolpath = ['.'])
+  
+  # set precompiler flag for nvcc
+  env.Append(NVCCFLAGS=' -DCUDA')
 
   # set the compute capability of the cuda compiler (needs to be set after the CudaTool
   env.Append(NVCCFLAGS=' --gpu-architecture=')
   env.Append(NVCCFLAGS=env['computeCapability'])
+
+# set the precompiler flags for MPI (CUDA)
+if env['parallelization'] in ['mpi_with_cuda']:
+  env.Append(NVCCFLAGS=' -DUSEMPI')
+
+# set the precompiler flags for MPI (C++)
+if env['parallelization'] in ['mpi_with_cuda', 'mpi']:
+  env.Append(CPPDEFINES=['USEMPI'])
+  env['CXX'] = 'mpiCC.openmpi'
+  env['LINKERFORPROGRAMS'] = 'mpiCC.openmpi'
 
 # set the precompiler flags and includes for netCDF
 if env['writeNetCDF'] == True:
