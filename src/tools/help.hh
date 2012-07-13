@@ -152,6 +152,25 @@ inline std::string generateFileName(std::string baseName, int timeStep) {
 };
 
 /**
+ * Generates an output file name for a multiple SWE_Block version based on the ordering of the blocks.
+ *
+ * @param i_baseName base name of the output.
+ * @param i_blockPositionX position of the SWE_Block in x-direction.
+ * @param i_blockPositionY position of the SWE_Block in y-direction.
+ * @param i_fileExtension file extension of the output file.
+ * @return
+ */
+inline std::string generateFileName( std::string i_baseName,
+                                     int i_blockPositionX, int i_blockPositionY,
+                                     std::string i_fileExtension=".nc" ) {
+
+  std::ostringstream l_fileName;
+
+  l_fileName << i_baseName << "_" << i_blockPositionX << i_blockPositionY << i_fileExtension;
+  return l_fileName.str();
+};
+
+/**
  * generate output filename for the multiple-SWE_Block version
  * (for serial and parallel (OpenMP and MPI) versions that use 
  *  multiple SWE_Blocks - for each block, one output file is 
