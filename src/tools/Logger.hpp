@@ -72,6 +72,9 @@ class tools::Logger {
   //! definition of the welcome message
   const std::string welcomeMessage;
 
+  //! definition of the copyrights
+  const std::string copyRights;
+
   //! definition of the finish message
   const std::string finishMessage;
 
@@ -150,15 +153,26 @@ class tools::Logger {
      * @param i_indentation definition of the indentation (used in all messages, except welcome, start and finish).
      */
     Logger( const int i_processRank = 0,
-            const std::string i_programName = "SWE teaching code",
-            const std::string i_welcomeMessage = "Welcome to the",
+            const std::string i_programName = "SWE",
+            const std::string i_welcomeMessage = "Welcome to",
+            const std::string i_copyRights =  "\n\nSWE Copyright (C) 2012\n"
+                                              "  Technische Universitaet Muenchen\n"
+                                              "  Department of Informatics\n"
+                                              "  Chair of Scientific Computing\n"
+                                              "  http://www5.in.tum.de/SWE\n"
+                                              "\n"
+                                              "SWE comes with ABSOLUTELY NO WARRANTY.\n"
+                                              "SWE is free software, and you are welcome to redistribute it\n"
+                                              "under certain conditions.\n"
+                                              "Details can be found in the file \'gpl.txt\'.",
             const std::string i_finishMessage = "finished successfully.",
             const std::string i_midDelimiter = "\n------------------------------------------------------------------\n",
-            const std::string i_largeDelimiter = "\n****************************************\n",
+            const std::string i_largeDelimiter = "\n*************************************************************\n",
             const std::string i_indentation = "\t" ):
             processRank(i_processRank),
             programName(i_programName),
             welcomeMessage(i_welcomeMessage),
+            copyRights(i_copyRights),
             finishMessage(i_finishMessage),
             midDelimiter(i_midDelimiter),
             largeDelimiter(i_largeDelimiter),
@@ -190,6 +204,7 @@ class tools::Logger {
         std::cout << largeDelimiter
                   << welcomeMessage << " "
                   << programName
+                  << copyRights
                   << largeDelimiter;
       }
     }
