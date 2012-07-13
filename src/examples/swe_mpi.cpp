@@ -23,21 +23,34 @@
  *
  * @section DESCRIPTION
  *
- * Very basic setting of SWE, which uses a wave propagation solver and an artificial scenario on a single block.
+ * Setting of SWE, which uses a wave propagation solver and an artificial or ASAGI scenario on multiple blocks.
  */
 
 #include <mpi.h>
-#include "../tools/help.hh"
+#include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <string>
 
+#include "../tools/help.hh"
+
 #include "../SWE_Block.hh"
+
 #ifndef CUDA
 #include "../SWE_WavePropagationBlock.hh"
 #else
 #include "../SWE_WavePropagationBlockCuda.hh"
 #endif
+
+#ifdef WRITENETCDF
+#include "../tools/NetCdfWriter.hh"
+#endif
+
+#ifdef ASAGI
+#include "../scenarios/SWE_AsagiScenario.hpp"
+#else
 #include "../scenarios/SWE_simple_scenarios.h"
+#endif
 
 #ifdef READXML
 #include "../tools/CXMLConfig.hpp"
@@ -136,6 +149,7 @@ int main( int argc, char** argv ) {
 
   // read xml file
   #ifdef READXML
+  assert(false); //TODO: not implemented.
   if(argc != 2) {
     l_sweLogger.printString("Aborting. Please provide a proper input file.");
     l_sweLogger.printString("Example: ./SWE_gnu_debug_none_augrie config.xml");
@@ -169,8 +183,34 @@ int main( int argc, char** argv ) {
   l_blockPositionX = l_mpiRank / l_blocksY;
   l_blockPositionY = l_mpiRank % l_blocksY;
 
+  #ifdef ASAGI
+  /*
+   * Pixel node registration used [Cartesian grid]
+   * Grid file format: nf = GMT netCDF format (float)  (COARDS-compliant)
+   * x_min: -500000 x_max: 6500000 x_inc: 500 name: x nx: 14000
+   * y_min: -2500000 y_max: 1500000 y_inc: 500 name: y ny: 8000
+   * z_min: -6.48760175705 z_max: 16.1780223846 name: z
+   * scale_factor: 1 add_offset: 0
+   * mean: 0.00217145586762 stdev: 0.245563641735 rms: 0.245573241263
+   */
+
+  //simulation area
+  float simulationArea[4];
+  simulationArea[0] = -450000;
+  simulationArea[1] = 6450000;
+  simulationArea[2] = -2450000;
+  simulationArea[3] = 1450000;
+
+  //  scenarios::Asagi scene( "/naslx/ptmp/2/di56dok/data/tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
+  //                          "/naslx/ptmp/2/di56dok/data/tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
+  //                          (float) 300., simulationArea);
+  SWE_AsagiScenario l_scenario( "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
+                                "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
+                                (float) 14400., simulationArea, true);
+  #else
   // create a simple artificial scenario
   SWE_BathymetryDamBreakScenario l_scenario;
+  #endif
 
   //! number of checkpoints for visualization (at each checkpoint in time, an output file is written).
   int l_numberOfCheckPoints = 40;
@@ -218,7 +258,7 @@ int main( int argc, char** argv ) {
   #endif
 
   // initialize the wave propgation block
-  l_wavePropgationBlock.initScenario(l_scenario);
+  l_wavePropgationBlock.initScenario( l_scenario, true );
 
   //! time when the simulation ends.
   float l_endSimulation = l_scenario.endSimulation();
@@ -330,8 +370,27 @@ int main( int argc, char** argv ) {
 
   // write the output at time zero
   l_sweLogger.printOutputTime(0);
+  #ifdef WRITENETCDF
+  //boundary size of the ghost layers
+  int l_boundarySize[4];
+  l_boundarySize[0] = l_boundarySize[1] = l_boundarySize[2] = l_boundarySize[3] = 1;
+
+  //construct a NetCdfWriter
+  std::string l_fileName = generateFileName(l_baseName,l_blockPositionX,l_blockPositionY);
+  io::NetCdfWriter l_netCdfWriter( l_fileName, l_nXLocal, l_nYLocal );
+  //create the netCDF-file
+  l_netCdfWriter.createNetCdfFile( l_dX, l_dY,
+                                   l_originX, l_originY );
+  l_netCdfWriter.writeBathymetry( l_wavePropgationBlock.getBathymetry(),
+                                  l_boundarySize );
+  l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
+                                l_wavePropgationBlock.getDischarge_hu(),
+                                l_wavePropgationBlock.getDischarge_hv(),
+                                l_boundarySize, (float) 0.);
+#else
   l_wavePropgationBlock.writeVTKFileXML( generateFileName(l_baseName,0,l_blockPositionX,l_blockPositionY),
                                          l_nXLocal*l_blockPositionX, l_nYLocal*l_blockPositionY);
+#endif
 
 
   /**
@@ -352,7 +411,6 @@ int main( int argc, char** argv ) {
     // do time steps until next checkpoint is reached
     while( l_t < l_checkPoints[c] ) {
       // exchange ghost and copy layers
-      l_sweLogger.printString("Exchanging ghost and copy layers.");
       exchangeLeftRightGhostLayers( l_leftNeighborRank,  l_leftInflow,  l_leftOutflow,
                       l_rightNeighborRank, l_rightInflow, l_rightOutflow,
                       l_mpiCol );
@@ -364,7 +422,7 @@ int main( int argc, char** argv ) {
       // reset the cpu clock
       l_sweLogger.resetCpuClockToCurrentTime();
 
-      // set values in ghost cells:
+      // set values in ghost cells
       l_wavePropgationBlock.setGhostLayer();
 
       // compute numerical flux on each edge
@@ -396,9 +454,16 @@ int main( int argc, char** argv ) {
     // print current simulation time
     l_sweLogger.printOutputTime(l_t);
 
-    // write vtk output
+    // write output
+    #ifdef WRITENETCDF
+    l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
+                                  l_wavePropgationBlock.getDischarge_hu(),
+                                  l_wavePropgationBlock.getDischarge_hv(),
+                                  l_boundarySize, l_t);
+    #else
     l_wavePropgationBlock.writeVTKFileXML( generateFileName(l_baseName,c,l_blockPositionX,l_blockPositionY),
                                           l_blockPositionX*l_nXLocal, l_blockPositionY*l_nYLocal);
+    #endif
   }
 
   /**

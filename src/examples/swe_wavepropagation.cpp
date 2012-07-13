@@ -23,21 +23,35 @@
  *
  * @section DESCRIPTION
  *
- * Very basic setting of SWE, which uses a wave propagation solver and an artificial scenario on a single block.
+ * Basic setting of SWE, which uses a wave propagation solver and an artificial or ASAGI scenario on a single block.
  */
 
-#include "../tools/help.hh"
+#include <cassert>
 #include <cstdlib>
 #include <string>
+#include "../tools/help.hh"
 
 #include "../SWE_Block.hh"
+
 #ifndef CUDA
 #include "../SWE_WavePropagationBlock.hh"
 #else
 #include "../SWE_WavePropagationBlockCuda.hh"
 #endif
+
+#ifdef WRITENETCDF
+#include "../tools/NetCdfWriter.hh"
+#endif
+
+#ifdef ASAGI
+#include "../scenarios/SWE_AsagiScenario.hpp"
+#else
 #include "../scenarios/SWE_simple_scenarios.h"
-#include "../tools/Logger.hpp"
+#endif
+
+#ifdef READXML
+#include "../tools/CXMLConfig.hpp"
+#endif
 
 #ifndef STATICLOGGER
 #define STATICLOGGER
@@ -53,12 +67,14 @@ int main( int argc, char** argv ) {
    * Initialization.
    */
   // check if the necessary command line input parameters are given
+  #ifndef READXML
   if(argc != 4) {
     std::cout << "Aborting ... please provide proper input parameters." << std::endl
               << "Example: ./SWE_parallel 200 300 /work/openmp_out" << std::endl
               << "\tfor a single block of size 200 * 300" << std::endl;
     return 1;
   }
+  #endif
 
   //! number of grid cells in x- and y-direction.
   int l_nX, l_nY;
@@ -67,15 +83,58 @@ int main( int argc, char** argv ) {
   std::string l_baseName;
 
   // read command line parameters
+  #ifndef READXML
   l_nY = l_nX = atoi(argv[1]);
   l_nY = atoi(argv[2]);
   l_baseName = std::string(argv[3]);
+  #endif
 
-  //create a simple artificial scenario
+  // read xml file
+  #ifdef READXML
+  assert(false); //TODO: not implemented.
+  if(argc != 2) {
+    s_sweLogger.printString("Aborting. Please provide a proper input file.");
+    s_sweLogger.printString("Example: ./SWE_gnu_debug_none_augrie config.xml");
+    return 1;
+  }
+  s_sweLogger.printString("Reading xml-file.");
+
+  std::string l_xmlFile = std::string(argv[1]);
+  s_sweLogger.printString(l_xmlFile);
+
+  CXMLConfig l_xmlConfig;
+  l_xmlConfig.loadConfig(l_xmlFile.c_str());
+  #endif
+
+  #ifdef ASAGI
+  /* Information about the example bathymetry grid (tohoku_gebco_ucsb3_500m_hawaii_bath.nc):
+   *
+   * Pixel node registration used [Cartesian grid]
+   * Grid file format: nf = GMT netCDF format (float)  (COARDS-compliant)
+   * x_min: -500000 x_max: 6500000 x_inc: 500 name: x nx: 14000
+   * y_min: -2500000 y_max: 1500000 y_inc: 500 name: y ny: 8000
+   * z_min: -6.48760175705 z_max: 16.1780223846 name: z
+   * scale_factor: 1 add_offset: 0
+   * mean: 0.00217145586762 stdev: 0.245563641735 rms: 0.245573241263
+   */
+
+  //simulation area
+  float simulationArea[4];
+  simulationArea[0] = -450000;
+  simulationArea[1] = 6450000;
+  simulationArea[2] = -2450000;
+  simulationArea[3] = 1450000;
+
+  SWE_AsagiScenario l_scenario( "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
+                                "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
+                                (float) 28800., simulationArea, true);
+  #else
+  // create a simple artificial scenario
   SWE_BathymetryDamBreakScenario l_scenario;
+  #endif
 
   //! number of checkpoints for visualization (at each checkpoint in time, an output file is written).
-  int l_numberOfCheckPoints = 40;
+  int l_numberOfCheckPoints = 20;
 
   //! size of a single cell in x- and y-direction
   float l_dX, l_dY;
@@ -116,8 +175,27 @@ int main( int argc, char** argv ) {
      l_checkPoints[cp] = cp*(l_endSimulation/l_numberOfCheckPoints);
   }
 
+
   // write the output at time zero
+  s_sweLogger.printOutputTime((float) 0.);
+  #ifdef WRITENETCDF
+  //boundary size of the ghost layers
+  int l_boundarySize[4];
+  l_boundarySize[0] = l_boundarySize[1] = l_boundarySize[2] = l_boundarySize[3] = 1;
+
+  //construct a NetCdfWriter
+  std::string l_fileName = l_baseName;
+  io::NetCdfWriter l_netCdfWriter( l_fileName, l_nX, l_nY );
+  //create the netCDF-file
+  l_netCdfWriter.createNetCdfFile(l_dX, l_dY, l_originX, l_originY);
+  l_netCdfWriter.writeBathymetry(l_wavePropgationBlock.getBathymetry(), l_boundarySize);
+  l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
+                                l_wavePropgationBlock.getDischarge_hu(),
+                                l_wavePropgationBlock.getDischarge_hv(),
+                                l_boundarySize, (float) 0.);
+  #else
   l_wavePropgationBlock.writeVTKFileXML(generateFileName(l_baseName,0,0,0), l_nX, l_nY);
+  #endif
 
 
   /**
@@ -159,11 +237,18 @@ int main( int argc, char** argv ) {
     // update the cpu time in the logger
     s_sweLogger.updateCpuTime();
 
-    // print current simulation time
+    // print current simulation time of the output
     s_sweLogger.printOutputTime(l_t);
 
-    // write vtk output
+    // write output
+#ifdef WRITENETCDF
+    l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
+                                  l_wavePropgationBlock.getDischarge_hu(),
+                                  l_wavePropgationBlock.getDischarge_hv(),
+                                  l_boundarySize, l_t);
+#else
     l_wavePropgationBlock.writeVTKFileXML(generateFileName(l_baseName,c,0,0), l_nX, l_nY);
+#endif
   }
 
   /**
@@ -173,7 +258,7 @@ int main( int argc, char** argv ) {
   s_sweLogger.printStatisticsMessage();
 
   // print the cpu time
-  s_sweLogger.printCpuTime("CPU/GPU time");
+  s_sweLogger.printCpuTime();
 
   // print the wall clock time (includes plotting)
   s_sweLogger.printWallClockTime(time(NULL));
