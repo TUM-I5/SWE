@@ -61,7 +61,7 @@ SWE_Block::SWE_Block(float _offsetX, float _offsetY)
 {
   // set WALL as default boundary condition
   for(int i=0; i<4;i++) {
-     boundary[i] = WALL;
+     boundary[i] = PASSIVE;
      neighbour[i] = NULL;
   };
   
@@ -80,53 +80,44 @@ SWE_Block::~SWE_Block() {
 //==================================================================
 
 /**
- * Initialise unknowns and bathymetry in all grid cells 
- * according to the specified SWE_Scenario
- * Note: unknowns hu and hv represent momentum, while parameters u and v are velocities! 
+ * Initializes the unknowns and bathymetry in all grid cells according to the given SWE_Scenario.
+ *
+ * In the case of multiple SWE_Blocks at this point, it is not clear how the boundary conditions
+ * should be set. This is because an isolated SWE_Block doesn't have any in information about the grid.
+ * Therefore the calling routine, which has the information about multiple blocks, has to take care about setting
+ * the right boundary conditions.
  * 
+ * @param i_scenario scenario, which is used during the setup.
+ * @param i_multipleBlocks are the multiple SWE_blocks?
  */
-void SWE_Block::initScenario(SWE_Scenario &scene) {
+void SWE_Block::initScenario( SWE_Scenario &i_scenario,
+                              const bool i_multipleBlocks ) {
 
   // initialize water height and discharge
   for(int i=1; i<=nx; i++)
     for(int j=1; j<=ny; j++) {
       float x = offsetX + (i-0.5f)*dx;
       float y = offsetY + (j-0.5f)*dy;
-      h[i][j] =  scene.getWaterHeight(x,y);
-      hu[i][j] = scene.getVeloc_u(x,y) * h[i][j];
-      hv[i][j] = scene.getVeloc_v(x,y) * h[i][j]; 
+      h[i][j] =  i_scenario.getWaterHeight(x,y);
+      hu[i][j] = i_scenario.getVeloc_u(x,y) * h[i][j];
+      hv[i][j] = i_scenario.getVeloc_v(x,y) * h[i][j]; 
     };
 
-  // initialise bathymetry
+  // initialize bathymetry
   for(int i=0; i<=nx+1; i++) {
     for(int j=0; j<=ny+1; j++) {
-      b[i][j] = scene.getBathymetry(offsetX + (i-0.5f)*dx,
-                                    offsetY + (j-0.5f)*dy );
+      b[i][j] = i_scenario.getBathymetry( offsetX + (i-0.5f)*dx,
+                                          offsetY + (j-0.5f)*dy );
     }
   }
 
-  // obtain boundary conditions for all four edges from scenario
-  boundary[BND_LEFT]   = scene.getBoundaryType(BND_LEFT); 
-  boundary[BND_RIGHT]  = scene.getBoundaryType(BND_RIGHT); 
-  boundary[BND_BOTTOM] = scene.getBoundaryType(BND_BOTTOM); 
-  boundary[BND_TOP]    = scene.getBoundaryType(BND_TOP); 
-
-  // set bathymetry values in the ghost layer, if necessary
-  for(int j=0; j<=ny+1; j++) {
-    if( boundary[BND_LEFT] == OUTFLOW || boundary[BND_LEFT] == WALL ) {
-      b[0][j] = b[1][j];
-    }
-    if( boundary[BND_RIGHT] == OUTFLOW || boundary[BND_RIGHT] == WALL ) {
-      b[nx+1][j] = b[nx][j];
-    }
-  }
-  for(int i=0; i<=nx+1; i++) {
-    if( boundary[BND_BOTTOM] == OUTFLOW || boundary[BND_BOTTOM] == WALL ) {
-      b[i][0] = b[i][1];
-    }
-    if( boundary[BND_TOP] == OUTFLOW || boundary[BND_TOP] == WALL ) {
-      b[i][ny+1] = b[i][ny];
-    }
+  // in the case of multiple blocks the calling routine takes care about proper boundary conditions.
+  if( i_multipleBlocks == false ) {
+    // obtain boundary conditions for all four edges from scenario
+    setBoundaryType(BND_LEFT, i_scenario.getBoundaryType(BND_LEFT));
+    setBoundaryType(BND_RIGHT, i_scenario.getBoundaryType(BND_RIGHT));
+    setBoundaryType(BND_BOTTOM, i_scenario.getBoundaryType(BND_BOTTOM));
+    setBoundaryType(BND_TOP, i_scenario.getBoundaryType(BND_TOP));
   }
 
   // perform update after external write to variables 
@@ -339,16 +330,38 @@ void SWE_Block::setOutflowBoundaries() {
 }
 
 /**
- * set boundary type for a specific block boundary
- * @param edge	specifies boundary (LEFT, RIGHT, BOTTOM, TOP)
- * @param boundtype	type of boundary condition
- * @param inflow	pointer to an SWE_block1D that specifies 
- * 			inflow (should be NULL for WALL or OUTFLOW boundary) 
+ * Set the boundary type for specific block boundary.
+ *
+ * @param i_edge location of the edge relative to the SWE_block.
+ * @param i_boundaryType type of the boundary condition.
+ * @param i_inflow pointer to an SWE_Block1D, which specifies the inflow (should be NULL for WALL or OUTFLOW boundary)
  */
-void SWE_Block::setBoundaryType(BoundaryEdge edge, BoundaryType boundtype, 
-                                const SWE_Block1D* inflow) {
-  boundary[edge] = boundtype;
-  neighbour[edge] = inflow;
+void SWE_Block::setBoundaryType( const BoundaryEdge i_edge,
+                                 const BoundaryType i_boundaryType,
+                                 const SWE_Block1D* i_inflow) {
+  boundary[i_edge] = i_boundaryType;
+  neighbour[i_edge] = i_inflow;
+
+  // set bathymetry values in the ghost layer, if necessary
+  for(int j=0; j<=ny+1; j++) {
+    if( boundary[BND_LEFT] == OUTFLOW || boundary[BND_LEFT] == WALL ) {
+      b[0][j] = b[1][j];
+    }
+    if( boundary[BND_RIGHT] == OUTFLOW || boundary[BND_RIGHT] == WALL ) {
+      b[nx+1][j] = b[nx][j];
+    }
+  }
+  for(int i=0; i<=nx+1; i++) {
+    if( boundary[BND_BOTTOM] == OUTFLOW || boundary[BND_BOTTOM] == WALL ) {
+      b[i][0] = b[i][1];
+    }
+    if( boundary[BND_TOP] == OUTFLOW || boundary[BND_TOP] == WALL ) {
+      b[i][ny+1] = b[i][ny];
+    }
+  }
+
+  // synchronize after an external update of the bathymetry
+  synchBathymetryAfterWrite();
 }
 
 // /**
@@ -529,7 +542,6 @@ void SWE_Block::setBoundaryConditions() {
         h[0][j] = h[1][j];
         hu[0][j] = -hu[1][j];
         hv[0][j] = hv[1][j];
-        b[0][j] = b[1][j];
       };
       break;
     }
@@ -539,7 +551,6 @@ void SWE_Block::setBoundaryConditions() {
         h[0][j] = h[1][j];
         hu[0][j] = hu[1][j];
         hv[0][j] = hv[1][j];
-        b[0][j] = b[1][j];
       };
       break;
     }
@@ -559,7 +570,6 @@ void SWE_Block::setBoundaryConditions() {
         h[nx+1][j] = h[nx][j];
         hu[nx+1][j] = -hu[nx][j];
         hv[nx+1][j] = hv[nx][j];
-        b[nx+1][j] = b[nx][j];
       };
       break;
     }
@@ -569,7 +579,6 @@ void SWE_Block::setBoundaryConditions() {
         h[nx+1][j] = h[nx][j];
         hu[nx+1][j] = hu[nx][j];
         hv[nx+1][j] = hv[nx][j];
-        b[nx+1][j] = b[nx][j];
       };
       break;
     }
@@ -589,7 +598,6 @@ void SWE_Block::setBoundaryConditions() {
         h[i][0] = h[i][1];
         hu[i][0] = hu[i][1];
         hv[i][0] = -hv[i][1];
-        b[i][0] = b[i][1];
       };
       break;
     }
@@ -599,7 +607,6 @@ void SWE_Block::setBoundaryConditions() {
         h[i][0] = h[i][1];
         hu[i][0] = hu[i][1];
         hv[i][0] = hv[i][1];
-        b[i][0] = b[i][1];
       };
       break;
     }
@@ -619,7 +626,6 @@ void SWE_Block::setBoundaryConditions() {
         h[i][ny+1] = h[i][ny];
         hu[i][ny+1] = hu[i][ny];
         hv[i][ny+1] = -hv[i][ny];
-        b[i][ny+1] = b[i][ny];
       };
       break;
     }
@@ -629,7 +635,6 @@ void SWE_Block::setBoundaryConditions() {
         h[i][ny+1] = h[i][ny];
         hu[i][ny+1] = hu[i][ny];
         hv[i][ny+1] = hv[i][ny];
-        b[i][ny+1] = b[i][ny];
       };
       break;
     }
