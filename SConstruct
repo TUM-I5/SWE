@@ -37,8 +37,8 @@ print '  Department of Informatics'
 print '  Chair of Scientific Computing'
 print '  http://www5.in.tum.de/SWE'
 print ''
-print 'This program comes with ABSOLUTELY NO WARRANTY.'
-print 'This is free software, and you are welcome to redistribute it'
+print 'SWE comes with ABSOLUTELY NO WARRANTY.'
+print 'SWE free software, and you are welcome to redistribute it'
 print 'under certain conditions.'
 print 'Details can be found in the file \'gpl.txt\'.'
 print ''
@@ -48,10 +48,16 @@ print ''
 #
 vars = Variables()
 
+# read parameters from a file if given
+vars.AddVariables(
+  PathVariable( 'buildVariablesFile', 'location of the python file, which contains the build variables', None, PathVariable.PathIsFile )
+)
+env = Environment(variables=vars)
+if 'buildVariablesFile' in env:
+  vars = Variables(env['buildVariablesFile'])
+
 # SWE specific variables
 vars.AddVariables(
-  PathVariable( 'xmlFile', 'location of the xml-file, which contains compile parameters', None, PathVariable.PathIsFile ),
-
   PathVariable( 'buildDir', 'where to build the code', 'build', PathVariable.PathIsDirCreate ),
 
   EnumVariable( 'compiler', 'used compiler', 'gnu',
@@ -83,6 +89,8 @@ vars.AddVariables(
 
 # external variables
 vars.AddVariables(
+  PathVariable( 'compilerPath', 'location of the C++ compiler', None, PathVariable.PathIsFile ),
+  PathVariable( 'linkerPath', 'location of the C++ linker', None, PathVariable.PathIsFile ),
   PathVariable( 'cudaToolkitDir', 'location of the CUDA toolkit', None ),
   PathVariable( 'cudaSDKDir', 'location of the CUDA SDK', None),
   PathVariable( 'netCDFDir', 'location of netCDF', None),
@@ -98,6 +106,12 @@ Help(vars.GenerateHelpText(env))
 
 # handle unknown, maybe misspelled variables
 unknownVariables = vars.UnknownVariables()
+
+# remove the buildVariablesFile from the list of unknown variables (used before)
+if 'buildVariablesFile' in unknownVariables:
+  unknownVariables.pop('buildVariablesFile')
+
+# exit in the case of unknown variables
 if unknownVariables:
   print "*** The following build variables are unknown:", unknownVariables.keys()
   Exit(1)
@@ -174,12 +188,18 @@ if env['parallelization'] in ['mpi_with_cuda']:
 # set the precompiler flags for MPI (C++)
 if env['parallelization'] in ['mpi_with_cuda', 'mpi']:
   env.Append(CPPDEFINES=['USEMPI'])
-  env['CXX'] = 'mpiCC.openmpi'
-  env['LINKERFORPROGRAMS'] = 'mpiCC.openmpi'
+  if 'compilerPath' in env:
+    env['CXX'] = env['compilerPath']
+  else:
+    env['CXX'] = 'mpiCC'
+  if 'linkerPath' in env:
+    env['LINKERFORPROGRAMS'] = env['linkerPath']
+  env['LINKERFORPROGRAMS'] = 'mpiCC'
 
 # set the precompiler flags and includes for netCDF
 if env['writeNetCDF'] == True:
   env.Append(CPPDEFINES=['WRITENETCDF'])
+  env.Append(LIBS=['netcdf','netcdf_c++'])
   # set netCDF location
   if 'netCDFDir' in env:
     env.Append(CPPPATH=[env['netCDFDir']+'/include'])
@@ -193,7 +213,7 @@ if env['asagi'] == True:
   env.Append(LIBS=['asagi'])
   if 'asagiDir' in env:
     env.Append(CPPPATH=[env['asagiDir']+'/include'])
-    env.Append(LIBPATH=[env['asagiDir']])
+    env.Append(LIBPATH=[env['asagiDir']+'/lib'])
   if 'netCDFDir' in env:
     env.Append(LIBPATH=[env['netCDFDir']+'/lib'])
 
