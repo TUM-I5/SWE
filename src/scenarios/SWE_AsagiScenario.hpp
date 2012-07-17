@@ -25,19 +25,15 @@
  * Access to bathymetry and displacement files with ASAGI.
  */
 
-#ifndef ASAGI_HPP_
-#define ASAGI_HPP_
+#ifndef SWEASAGISCENARIO_HPP_
+#define SWEASAGISCENARIO_HPP_
 
 #include <cassert>
 #include <string>
 #include <asagi.h>
 #include "SWE_Scenario.h"
 
-namespace scenarios {
-  class Asagi;
-}
-
-class scenarios::Asagi: public SWE_Scenario {
+class SWE_AsagiScenario: public SWE_Scenario {
 //private:
     //! pointer to the Asagi bathymetry grid
     asagi::Grid* bathymetryGrid;
@@ -75,17 +71,17 @@ class scenarios::Asagi: public SWE_Scenario {
      * @param i_displacementFile path to the netCDF-displacement file
      * @param i_duration time the simulation runs (in seconds)
      */
-    Asagi ( const std::string i_bathymetryFile,
-            const std::string i_displacementFile,
-            const float i_duration,
-            const float i_simulationArea[4],
-            const bool i_dynamicDisplacement = false ):
-              dynamicDisplacement(i_dynamicDisplacement),
-              duration(i_duration) {
-      //create the bathymetry grid
-      bathymetryGrid = asagi::Grid::create( asagi::Grid::FLOAT );
-      //create the displacement grid
-      displacementGrid = asagi::Grid::create( asagi::Grid::FLOAT );
+   SWE_AsagiScenario ( const std::string i_bathymetryFile,
+                       const std::string i_displacementFile,
+                       const float i_duration,
+                       const float i_simulationArea[4],
+                       const bool i_dynamicDisplacement = false ):
+                       dynamicDisplacement(i_dynamicDisplacement),
+                       duration(i_duration) {
+                       //create the bathymetry grid
+                       bathymetryGrid = asagi::Grid::create( asagi::Grid::FLOAT );
+                       //create the displacement grid
+                       displacementGrid = asagi::Grid::create( asagi::Grid::FLOAT );
 
       int l_asagiOpen = bathymetryGrid->open(i_bathymetryFile.c_str());
       //open the bathymetry grid
@@ -154,7 +150,7 @@ class scenarios::Asagi: public SWE_Scenario {
 
     }
 
-    virtual ~Asagi() {
+    virtual ~SWE_AsagiScenario() {
     }
 
     void deleteGrids() {
@@ -287,4 +283,4 @@ class scenarios::Asagi: public SWE_Scenario {
     };
 };
 
-#endif /* ASAGI_HPP_ */
+#endif /* SWEASAGISCENARIO_HPP_ */

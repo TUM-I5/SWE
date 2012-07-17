@@ -57,7 +57,7 @@ sourceFiles = ['SWE_Block.cpp']
 
 # netCDF writer
 if env['writeNetCDF'] == True:
-  sourceFiles.append( ['io/NetCdfWriter.cpp'] )
+  sourceFiles.append( ['tools/NetCdfWriter.cpp'] )
 
 # xml reader
 if env['xmlRuntime'] == True:
