@@ -68,6 +68,9 @@
     <ClCompile Include="src\SWE_Block.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\SWE_WavePropagationBlock.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\opengl\simulation.cu">
@@ -85,6 +88,12 @@
     <CudaCompile Include="src\SWE_RusanovBlockCUDA.cu">
       <Filter>Quelldateien</Filter>
     </CudaCompile>
+    <CudaCompile Include="src\SWE_WavePropagationBlockCuda.cu">
+      <Filter>Quelldateien</Filter>
+    </CudaCompile>
+    <CudaCompile Include="src\SWE_WavePropagationBlockCuda_kernels.cu">
+      <Filter>Quelldateien</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\SWE_RusanovBlockCUDA_kernels.hh">
@@ -100,6 +109,15 @@
       <Filter>Headerdateien</Filter>
     </None>
     <None Include="src\SWE_Block.hh">
+      <Filter>Headerdateien</Filter>
+    </None>
+    <None Include="src\SWE_WavePropagationBlock.hh">
+      <Filter>Headerdateien</Filter>
+    </None>
+    <None Include="src\SWE_WavePropagationBlockCuda.hh">
+      <Filter>Headerdateien</Filter>
+    </None>
+    <None Include="src\SWE_WavePropagationBlockCuda_kernels.hh">
       <Filter>Headerdateien</Filter>
     </None>
   </ItemGroup>

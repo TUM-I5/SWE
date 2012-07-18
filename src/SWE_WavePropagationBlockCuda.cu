@@ -169,6 +169,35 @@ void SWE_WavePropagationBlockCuda::simulateTimestep(float i_dT) {
 }
 
 /**
+ * perform forward-Euler time steps, starting with simulation time tStart,:
+ * until simulation time tEnd is reached; 
+ * device-global variables hd, hud, hvd are updated;
+ * unknowns h, hu, hv in main memory are not updated.
+ * Ghost layers and bathymetry sources are updated between timesteps.
+ * intended as main simulation loop between two checkpoints
+ */
+__host__
+float SWE_WavePropagationBlockCuda::simulate(float tStart, float tEnd) {
+  float t = tStart;
+  do {
+     // set values in ghost cells:
+     setGhostLayer();
+     
+     // Compute the numerical fluxes/net-updates in the wave propagation formulation.
+     computeNumericalFluxes();
+
+     // Update the unknowns with the net-updates.
+     updateUnknowns(maxTimestep);
+	 
+	 t += maxTimestep;
+//     cout << "Simulation at time " << t << endl << flush;
+  } while(t < tEnd);
+
+  return t;
+}
+
+
+/**
  * Compute the numerical fluxes (net-update formulation here) on all edges.
  *
  * The maximum wave speed is computed within the net-updates kernel for each CUDA-block.

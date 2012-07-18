@@ -58,6 +58,7 @@
     </Link>
     <CudaCompile>
       <Runtime>MD</Runtime>
+      <CodeGeneration>compute_20,sm_20</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)SDL\lib\SDL.dll" "$(OutDir)" </Command>
@@ -106,6 +107,7 @@
     <ClCompile Include="src\scenarios\SWE_VtkScenario.cpp" />
     <ClCompile Include="src\scenarios\SWE_VtkScenarioVisInfo.cpp" />
     <ClCompile Include="src\SWE_Block.cpp" />
+    <ClCompile Include="src\SWE_WavePropagationBlock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\opengl\simulation.cu">
@@ -115,6 +117,8 @@
     <CudaCompile Include="src\SWE_BlockCUDA_kernels.cu" />
     <CudaCompile Include="src\SWE_RusanovBlockCUDA.cu" />
     <CudaCompile Include="src\SWE_RusanovBlockCUDA_kernels.cu" />
+    <CudaCompile Include="src\SWE_WavePropagationBlockCuda.cu" />
+    <CudaCompile Include="src\SWE_WavePropagationBlockCuda_kernels.cu" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\SWE_Block.hh" />
@@ -122,6 +126,9 @@
     <None Include="src\SWE_BlockCUDA_kernels.hh" />
     <None Include="src\SWE_RusanovBlockCUDA.hh" />
     <None Include="src\SWE_RusanovBlockCUDA_kernels.hh" />
+    <None Include="src\SWE_WavePropagationBlock.hh" />
+    <None Include="src\SWE_WavePropagationBlockCuda.hh" />
+    <None Include="src\SWE_WavePropagationBlockCuda_kernels.hh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

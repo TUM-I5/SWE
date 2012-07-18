@@ -26,7 +26,8 @@
 #include "../scenarios/SWE_simple_scenarios_vis.h"
 #include "../scenarios/SWE_VtkScenarioVisInfo.h"
 #include "../SWE_BlockCUDA.hh"
-#include "../SWE_RusanovBlockCUDA.hh"
+// #include "../SWE_RusanovBlockCUDA.hh"
+#include "../SWE_WavePropagationBlockCUDA.hh"
 
 // For SDL compatibility
 #undef main
@@ -105,7 +106,8 @@ int main(int argc, char *argv[])
 
 	SWE_Block::initGridData(nx,ny,dx,dy);
 
-    splash = new SWE_RusanovBlockCUDA();
+    // splash = new SWE_RusanovBlockCUDA();
+    splash = new SWE_WavePropagationBlockCuda();
 	// define boundary type at all four domain boundaries:
 	splash->setWallBoundaries(); // walls at all boundaries
 
