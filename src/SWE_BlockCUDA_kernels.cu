@@ -205,27 +205,3 @@ void kernelTopCopyLayer(float* hd, float* hud, float* hvd,
 }
 
 
-
-// //******************************************************************
-// // kernels to implement boundary conditions
-// //******************************************************************
-// 
-// 
-// /**
-//  * CUDA kernel for maximum reduction
-//  * required to compute maximum water height and velocities to determine 
-//  * allow time step
-//  */
-// __global__ 
-// void kernelMaximum(float* maxhd, float* maxvd, int start, int size) {
-//   int tx = start+threadIdx.x;
-//   for (int i=size>>1; i>0; i>>=1) {
-//      __syncthreads();
-//      if (tx < i) {
-//         if( maxhd[tx] < maxhd[tx+i] ) maxhd[tx] = maxhd[tx+i];
-//         if( maxvd[tx] < maxvd[tx+i] ) maxvd[tx] = maxvd[tx+i];
-//      };
-//   };
-// }
-// 
-// 

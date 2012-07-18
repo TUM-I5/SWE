@@ -122,14 +122,6 @@ SWE_BlockCUDA::SWE_BlockCUDA(float _offsetX, float _offsetY, const int i_cudaDev
   cudaMalloc((void**)&bd, size); 
      checkCUDAError("allocate device memory for bd");
 
-//----> COULD BE IMPLEMENTED AS (INEFFICIENT) REFERENCE IMPLEMENTATION
-//   // allocate CUDA unknowns: maxmimum height and velocity
-//   size = (nx/TILE_SIZE)*(ny/TILE_SIZE)*sizeof(float);
-//   cudaMalloc((void**)&maxhd, size);
-//      checkCUDAError("allocate device memory for maxhd");
-//   cudaMalloc((void**)&maxvd, size);
-//      checkCUDAError("allocate device memory for maxvd");
-
   // allocate consecutive memory for 2 columns with three unknowns each
   // (h, hu, hv, excluding b) for copy/ghost layer at bottom/top boundary
   size = nx+2;
