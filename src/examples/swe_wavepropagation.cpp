@@ -127,7 +127,7 @@ int main( int argc, char** argv ) {
 
   SWE_AsagiScenario l_scenario( "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
                                 "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
-                                (float) 28800., simulationArea, true);
+                                (float) 28800., simulationArea);
   #else
   // create a simple artificial scenario
   SWE_BathymetryDamBreakScenario l_scenario;

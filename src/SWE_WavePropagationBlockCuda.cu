@@ -60,7 +60,7 @@ static tools::Logger s_sweLogger;
  *
  *   A left/right net update with index (i-1,j) is located on the edge between
  *   cells with index (i-1,j) and (i,j):
- *
+ * <pre>
  *   *********************
  *   *         *         *
  *   * (i-1,j) *  (i,j)  *
@@ -75,11 +75,11 @@ static tools::Logger s_sweLogger;
  *   NetUpdatesLeft(i-1,j)
  *             or
  *   NetUpdatesRight(i-1,j)
- *
+ * </pre>
  *
  *   A below/above net update with index (i, j-1) is located on the edge between
  *   cells with index (i, j-1) and (i,j):
- *
+ * <pre>
  *   ***********
  *   *         *
  *   * (i, j)  *   *
@@ -89,7 +89,7 @@ static tools::Logger s_sweLogger;
  *   * (i,j-1) *   *
  *   *         *
  *   ***********
- *
+ * </pre>
  * @param i_offsetX spatial offset of the block in x-direction.
  * @param i_offsetY spatial offset of the offset in y-direction.
  * @param i_cudaDevice ID of the CUDA-device, which should be used.
@@ -206,7 +206,7 @@ void SWE_WavePropagationBlockCuda::computeNumericalFluxes() {
    *
    * The CUDA-blocks (here 8*8) mentioned above would cover all edges except
    * the ones lying between the computational domain and the right/top ghost layer:
-   *
+   * <pre>
    *                                                          *
    *                                                         **        top ghost layer,
    *                                                        ********   cell ids
@@ -228,6 +228,7 @@ void SWE_WavePropagationBlockCuda::computeNumericalFluxes() {
    *                        *                              *
    *                  left ghost layer,             right ghost layer,
    *                  cell ids = (0,*)             cell ids = (nx+1, *)
+   * </pre>
    */
   dim3 dimGrid(nx/TILE_SIZE,ny/TILE_SIZE);
 

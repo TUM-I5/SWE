@@ -201,12 +201,9 @@ int main( int argc, char** argv ) {
   simulationArea[2] = -2450000;
   simulationArea[3] = 1450000;
 
-  //  scenarios::Asagi scene( "/naslx/ptmp/2/di56dok/data/tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
-  //                          "/naslx/ptmp/2/di56dok/data/tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
-  //                          (float) 300., simulationArea);
   SWE_AsagiScenario l_scenario( "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
                                 "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
-                                (float) 14400., simulationArea, true);
+                                (float) 14400., simulationArea);
   #else
   // create a simple artificial scenario
   SWE_BathymetryDamBreakScenario l_scenario;

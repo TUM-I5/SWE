@@ -47,7 +47,7 @@
  *
  *   A left/right net update with index (i-1,j-1) is located on the edge between
  *   cells with index (i-1,j) and (i,j):
- *
+ * <pre>
  *   *********************
  *   *         *         *
  *   * (i-1,j) *  (i,j)  *
@@ -62,11 +62,11 @@
  *   NetUpdatesLeft(i-1,j-1)
  *             or
  *   NetUpdatesRight(i-1,j-1)
- *
+ * </pre>
  *
  *   A below/above net update with index (i-1, j-1) is located on the edge between
  *   cells with index (i, j-1) and (i,j):
- *
+ * <pre>
  *   ***********
  *   *         *
  *   * (i, j)  *   *
@@ -76,7 +76,7 @@
  *   * (i,j-1) *   *
  *   *         *
  *   ***********
- *
+ * </pre>
  */
 SWE_WavePropagationBlock::SWE_WavePropagationBlock( float _offsetX,
                                                     float _offsetY ):

@@ -222,7 +222,7 @@ void computeNetUpdatesKernel(
      *
      *   Same Example as in SWE_WavePropagationBlockCuda::computeNumericalFluxes(), assume the CUDA-grid/-blocks has
      *   the following layout:
-     *
+     * <pre>
      *                                                          *
      *                                                         **        top ghost layer,
      *                        * block 8 * block 9 * block 10* ********   cell ids
@@ -243,7 +243,7 @@ void computeNetUpdatesKernel(
      *                        *                              *
      *                        *                              *
      *                  left ghost layer              right ghost layer
-     *
+     * </pre>
      *   This results in a 'main' part containing of (3*2) blocks and two 'boundary' parts containing
      *   of (1*2) blocks and (3*1) blocks.
      *
@@ -317,7 +317,7 @@ void updateUnknownsKernel(
   /**
    *  Compute the positions of the net updates relative to a given cell
    *
-   *
+   * <pre>
    *                  netUpdateRight(i-1, j)
    *
    *                           |           |
@@ -332,7 +332,7 @@ void updateUnknownsKernel(
    *                           |           |
    *                           |           |
    *                                netUpdatesLeft(i,j)
-   *
+   * </pre>
    */
   l_netUpdatesRightPosition = computeOneDPositionKernel(l_cellIndexI-1, l_cellIndexJ, i_nY+1);
   l_netUpdatesLeftPosition  = computeOneDPositionKernel(l_cellIndexI,   l_cellIndexJ, i_nY+1);
