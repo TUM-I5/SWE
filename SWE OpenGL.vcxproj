@@ -82,6 +82,9 @@
     <PostBuildEvent>
       <Command>xcopy /y $(ProjectDir)SDL\lib\SDL.dll $(OutDir) </Command>
     </PostBuildEvent>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\opengl\camera.h" />
