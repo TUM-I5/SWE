@@ -41,7 +41,7 @@ class SWE_RadialDamBreakScenario : public SWE_Scenario {
   public:
 
     float getWaterHeight(float x, float y) { 
-       return ( sqrt( (x-0.5f)*(x-0.5f) + (y-0.5f)*(y-0.5f) ) < 0.1f ) ? 12.0f: 10.0f;
+       return ( sqrt( (x-0.5f)*(x-0.5f) + (y-0.5f)*(y-0.5f) ) < 0.1f ) ? 10.5f: 10.0f;
     };
 
     virtual BoundaryType getBoundaryType(BoundaryEdge edge) { return OUTFLOW; };
@@ -58,7 +58,8 @@ class SWE_BathymetryDamBreakScenario : public SWE_Scenario {
     float getBathymetry(float x, float y) { 
        return ( std::sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 50.f ) ? -250.f: -260.f;
     };
-    virtual float endSimulation() { return (float) 15; };
+    
+	virtual float endSimulation() { return (float) 15; };
 
     virtual BoundaryType getBoundaryType(BoundaryEdge edge) { return OUTFLOW; };
 

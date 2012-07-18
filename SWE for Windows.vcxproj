@@ -102,6 +102,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_20,sm_20</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\examples\swe_wavepropagation.cpp" />
@@ -113,6 +116,12 @@
     <ClInclude Include="src\scenarios\SWE_AsagiScenario.hpp" />
     <ClInclude Include="src\scenarios\SWE_Scenario.h" />
     <ClInclude Include="src\scenarios\SWE_simple_scenarios.h" />
+    <ClInclude Include="src\solvers\augrie.hpp" />
+    <ClInclude Include="src\solvers\augriegeoclaw.hpp" />
+    <ClInclude Include="src\solvers\fwave.hpp" />
+    <ClInclude Include="src\solvers\FWaveCuda.h" />
+    <ClInclude Include="src\solvers\hybrid.hpp" />
+    <ClInclude Include="src\solvers\wavepropagation.hpp" />
     <ClInclude Include="src\tools\Logger.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -143,6 +152,15 @@
     <ClInclude Include="src\SWE_WavePropagationBlockCuda_kernels.hh">
       <FileType>Document</FileType>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\swe_block.hh" />
+    <None Include="src\swe_blockcuda.hh" />
+    <None Include="src\SWE_BlockCUDA_kernels.hh" />
+    <None Include="src\swe_rusanovblock.hh" />
+    <None Include="src\SWE_RusanovBlockCUDA.hh" />
+    <None Include="src\SWE_RusanovBlockCUDA_kernels.hh" />
+    <None Include="src\swe_wavepropagationblock.hh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

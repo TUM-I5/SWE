@@ -43,6 +43,24 @@
     </ClInclude>
     <ClInclude Include="src\SWE_WavePropagationBlockCuda.hh" />
     <ClInclude Include="src\SWE_WavePropagationBlockCuda_kernels.hh" />
+    <ClInclude Include="src\solvers\augrie.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\solvers\augriegeoclaw.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\solvers\fwave.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\solvers\FWaveCuda.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\solvers\hybrid.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\solvers\wavepropagation.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\SWE_BlockCUDA.cu" />
@@ -51,5 +69,14 @@
     <CudaCompile Include="src\SWE_RusanovBlockCUDA_kernels.cu" />
     <CudaCompile Include="src\SWE_WavePropagationBlockCuda.cu" />
     <CudaCompile Include="src\SWE_WavePropagationBlockCuda_kernels.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\swe_blockcuda.hh" />
+    <None Include="src\swe_rusanovblock.hh" />
+    <None Include="src\SWE_BlockCUDA_kernels.hh" />
+    <None Include="src\swe_block.hh" />
+    <None Include="src\SWE_RusanovBlockCUDA.hh" />
+    <None Include="src\SWE_RusanovBlockCUDA_kernels.hh" />
+    <None Include="src\swe_wavepropagationblock.hh" />
   </ItemGroup>
 </Project>

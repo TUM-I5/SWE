@@ -74,11 +74,8 @@ class SWE_WavePropagationBlockCuda: public SWE_BlockCUDA {
     // compute a single time step (net-updates + update of the cells).
     void simulateTimestep( float i_dT );
 
-    // TODO: Not implemented
-    float simulate(float, float) {
-      assert(false);
-      return 0;
-    };
+    // simulate multiple time steps (start and end time provided as parameters)
+    float simulate(float, float);
 
     // TODO: not implemented, max time step reduction is done in each call of computeNumericalFluxes(...)
     void computeMaxTimestep() {
