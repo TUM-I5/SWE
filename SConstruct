@@ -76,6 +76,8 @@ vars.AddVariables(
                 allowed_values=('sm_20', 'sm_21', 'sm_22', 'sm_23')
               ),
 
+  BoolVariable( 'openGL', 'compile with OpenGL visualization', False),
+
   BoolVariable( 'writeNetCDF', 'write output in the netCDF-format', False ),
 
   BoolVariable( 'asagi', 'use ASAGI', False ),
@@ -93,6 +95,7 @@ vars.AddVariables(
   PathVariable( 'linkerPath', 'location of the C++ linker', None, PathVariable.PathIsFile ),
   PathVariable( 'cudaToolkitDir', 'location of the CUDA toolkit', None ),
   PathVariable( 'cudaSDKDir', 'location of the CUDA SDK', None),
+  PathVariable( 'libSDLDir', 'location of libSDL', None),
   PathVariable( 'netCDFDir', 'location of netCDF', None),
   PathVariable( 'asagiDir', 'location of ASAGI', None),
   PathVariable( 'libxmlDir', 'location of libxml2', None)
@@ -120,6 +123,11 @@ if unknownVariables:
 # valid solver for CUDA?
 if env['parallelization'] in ['cuda', 'mpi_with_cuda'] and env['solver'] != 'rusanov' and env['solver'] != 'fwave':
   print '** The "'+env['solver']+'" solver is not supported in CUDA.'
+  Exit(1)
+
+# CUDA parallelization for openGL
+if env['parallelization'] != 'cuda' and env['openGL'] == True:
+  print '** The parallelization "'+env['parallelization']+'" does not support OpenGL visualization (CUDA only).'
   Exit(1)
 
 #
@@ -195,6 +203,14 @@ if env['parallelization'] in ['mpi_with_cuda', 'mpi']:
   if 'linkerPath' in env:
     env['LINKERFORPROGRAMS'] = env['linkerPath']
   env['LINKERFORPROGRAMS'] = 'mpiCC'
+
+if env['openGL'] == True:
+  env.Append(LIBS=['SDL', 'GLU'])
+
+# set the compiler flags for libSDL
+if 'libSDLDir' in env:
+  env.Append(CPPPATH=[env['libSDLDir']+'/include/SDL'])
+  env.Append(LIBPATH=[env['libSDLDir']+'/lib'])
 
 # set the precompiler flags and includes for netCDF
 if env['writeNetCDF'] == True:

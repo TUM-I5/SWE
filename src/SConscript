@@ -47,6 +47,8 @@ else:
     sourceFiles.append( [ 'SWE_WavePropagationBlockCuda.cu',
                           'SWE_WavePropagationBlockCuda_kernels.cu']
                       )
+  if env['openGL'] == True:
+    sourceFiles.append( ['opengl/simulation.cu'] )
   
 # compile the files defined so far, important step because of possible different compilers                  
 for i in sourceFiles:
@@ -54,6 +56,15 @@ for i in sourceFiles:
 
 # SWE_Block is used in every implementation
 sourceFiles = ['SWE_Block.cpp']
+
+# OpenGL CPU-files
+if env['openGL'] == True:
+  sourceFiles.append( ['scenarios/SWE_VtkScenario.cpp'] )
+  sourceFiles.append( ['scenarios/SWE_VtkScenarioVisInfo.cpp'] )
+  sourceFiles.append( ['opengl/camera.cpp'] )
+  sourceFiles.append( ['opengl/controller.cpp'] )
+  sourceFiles.append( ['opengl/shader.cpp'] )
+  sourceFiles.append( ['opengl/visualization.cpp'] )
 
 # netCDF writer
 if env['writeNetCDF'] == True:
@@ -66,7 +77,10 @@ if env['xmlRuntime'] == True:
 # file containing the main-function
 if env['parallelization'] in ['none', 'cuda']:
   if env['solver'] != 'rusanov':
-    sourceFiles.append( ['examples/swe_wavepropagation.cpp'] )
+    if env['openGL'] == False:
+      sourceFiles.append( ['examples/swe_wavepropagation.cpp'] )
+    else:
+      sourceFiles.append( ['examples/swe_opengl.cpp'] )
   else:
    print '** The selected configuration is not implemented.'
    Exit(1)

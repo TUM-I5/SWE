@@ -27,7 +27,7 @@
 #include "../scenarios/SWE_VtkScenarioVisInfo.h"
 #include "../SWE_BlockCUDA.hh"
 // #include "../SWE_RusanovBlockCUDA.hh"
-#include "../SWE_WavePropagationBlockCUDA.hh"
+#include "../SWE_WavePropagationBlockCuda.hh"
 
 // For SDL compatibility
 #undef main
