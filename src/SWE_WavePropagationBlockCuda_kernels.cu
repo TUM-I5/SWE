@@ -192,9 +192,13 @@ void computeNetUpdatesKernel(
       reductionPartner = computeOneDPositionKernel(threadIdx.x, threadIdx.y+reductionBlockDimY, blockDim.y);
     }
 #ifndef NDEBUG
+#if defined(__CUDA_ARCH__) & (__CUDA_ARCH__ < 200)
+#warning skipping printf command, which was introduced for compute capability >= 2.0
+#else
     else {
       printf("computeNetUpdatesKernel(...): There was an error in the reducing procedure!\n");
     }
+#endif
 #endif
     if(threadIdx.x < reductionBlockDimX && threadIdx.y < reductionBlockDimY) { // use only half the threads in each reduction
       //execute the reduction routine (maximum)
@@ -307,8 +311,12 @@ void updateUnknownsKernel(
   l_cellPosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ, i_nY+2);
 
 #ifndef NDEBUG
+#if defined(__CUDA_ARCH__) & (__CUDA_ARCH__ < 200)
+#warning skipping printf command, which was introduced for compute capability >= 2.0
+#else
   if(l_cellPosition > (i_nX+2)*(i_nY+2))
     printf("Warning: cellPosition(%i) > (i_nx+2)*(i_ny+2)\n", l_cellPosition);
+#endif
 #endif
 
   //! positions of the net-updates in the global CUDA-arrays.
