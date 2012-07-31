@@ -189,6 +189,10 @@ if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
   # set the compute capability of the cuda compiler (needs to be set after the CudaTool
   env.Append(NVCCFLAGS=' --gpu-architecture=')
   env.Append(NVCCFLAGS=env['computeCapability'])
+  
+  # compile explicitly with 64-bit on Mac OS X
+  if env['PLATFORM'] == 'darwin':
+    env.Append(NVCCFLAGS=' -m64')
 
 # set the precompiler flags for MPI (CUDA)
 if env['parallelization'] in ['mpi_with_cuda']:

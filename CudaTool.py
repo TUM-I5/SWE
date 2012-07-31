@@ -33,6 +33,7 @@ CUDA Tool for SCons
 breuera - changes (see original: http://www.scons.org/wiki/CudaTool)
  * commented out *.linkinfo
  * lib64 instead of lib
+ * removed unnecessary SDK, "cudaSDKPath + '/lib64', cudaSDKPath + '/common/lib64' + cudaSDKSubLibDir, ", from LIBSPATH
 ***
 
 """
@@ -172,7 +173,7 @@ def generate(env):
 
         # add required libraries
         env.Append(CPPPATH=[cudaSDKPath + '/common/inc', cudaToolkitPath + '/include'])
-        env.Append(LIBPATH=[cudaSDKPath + '/lib64', cudaSDKPath + '/common/lib64' + cudaSDKSubLibDir, cudaToolkitPath + '/lib64'])
+        env.Append(LIBPATH=[cudaToolkitPath + '/lib64'])
         env.Append(LIBS=['cudart'])
 
 def exists(env):
