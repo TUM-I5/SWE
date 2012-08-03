@@ -246,6 +246,7 @@ void Simulation::calculateWaterSurface(float3* destBuffer) {
 		//splash->simulateConstTimestep();
 		// curTime = splash->simulate(curTime, curTime + 5*splash->getMaxTimestep());
 		float dt = splash->getMaxTimestep();
+		splash->setGhostLayer();
 		splash->simulateTimestep(dt);
 		curTime += dt;
 	}
