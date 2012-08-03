@@ -27,9 +27,10 @@
 
 #include "SWE_Block.hh"
 #include "tools/help.hh"
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <cassert>
+#include <limits>
 
 
 // define static variables:
@@ -492,29 +493,44 @@ void SWE_Block::setGhostLayer() {
 }
 
 /**
- * compute the largest allowed time step for the current grid block
+ * Compute the largest allowed time step for the current grid block
  * (reference implementation) depending on the current values of 
  * variables h, hu, and hv, and store this time step size in member 
  * variable maxTimestep.
- * This protect variable can be accessed by the method getMaxTimestep().
+ *
+ * @param i_dryTol dry tolerance (dry cells do not affect the time step).
+ * @param i_cflNumber CFL number of the used method.
  */
-void SWE_Block::computeMaxTimestep() {
+void SWE_Block::computeMaxTimestep( const float i_dryTol,
+                                    const float i_cflNumber ) {
+  
+  // initialize the maximum wave speed
+  float l_maximumWaveSpeed = (float) 0;
 
-  float hmax = 0.0;
-  float vmax = 0.0;
-  float meshSize = (dx<dy) ? dx : dy;
-   
-  for(int i=1; i<=nx; i++)
-    for(int j=1; j<=ny; j++) {
-      if (h[i][j]> hmax) hmax = h[i][j];
-      if (fabs(hu[i][j])> vmax) vmax = fabs(hu[i][j]);
-      if (fabs(hv[i][j])> vmax) vmax = fabs(hv[i][j]);
-    };
+  // compute the maximum wave speed within the grid
+  for(int i=1; i <= nx; i++) {
+    for(int j=1; j <= ny; j++) {
+      if( h[i][j] > i_dryTol ) {
+        float l_momentum = std::max( std::abs( hu[i][j] ),
+                                     std::abs( hv[i][j] ) );
 
-  // sqrt(g*hmax) + vmax is the velocity of a characteristic shallow-water wave
-  // such that a wave must not propagate farther than dx in a single time step
-  maxTimestep = meshSize/(sqrt(g*hmax) + vmax);
+        float l_particleVelocity = l_momentum / h[i][j];
+        
+        // approximate the wave speed
+        float l_waveSpeed = l_particleVelocity + std::sqrt( g * h[i][j] );
+        
+        l_maximumWaveSpeed = std::max( l_maximumWaveSpeed, l_waveSpeed );
+      }
+    }
+  }
+  
+  float l_minimumCellLength = std::min( dx, dy );
 
+  // set the maximum time step variable
+  maxTimestep = l_minimumCellLength / l_maximumWaveSpeed;
+
+  // apply the CFL condition
+  maxTimestep *= i_cflNumber;
 }
 
 

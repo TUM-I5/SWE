@@ -166,6 +166,9 @@ class SWE_Block {
     * @return	current value of the member variable #maxTimestep 
     */
     float getMaxTimestep() { return maxTimestep; };
+  
+    // compute the largest allowed time step for the current grid block
+    void computeMaxTimestep( const float i_dryTol = 0.1, const float i_cflNumber = 0.4 );
 
     /// execute a single time step of the simulation
     virtual void simulateTimestep(float dt) = 0;
@@ -244,9 +247,6 @@ class SWE_Block {
     
     /// set boundary conditions in ghost layers (set boundary conditions)
     virtual void setBoundaryConditions();
-
-    // compute the largest allowed time step for the current grid block
-    virtual void computeMaxTimestep();
 
     // define arrays for unknowns: 
     // h (water level) and u,v (velocity in x and y direction)
