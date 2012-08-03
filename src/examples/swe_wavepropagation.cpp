@@ -29,6 +29,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <string>
+#include <iostream>
 #include "../tools/help.hh"
 
 #include "../SWE_Block.hh"
@@ -217,6 +218,11 @@ int main( int argc, char** argv ) {
     while( l_t < l_checkPoints[c] ) {
       // set values in ghost cells:
       l_wavePropgationBlock.setGhostLayer();
+      
+      // approximate the maximum time step
+      // TODO: This calculation should be replaced by the usage of the wave speeds occuring during the flux computation
+      // Remark: The code is executed on the CPU, therefore a "valid result" depends on the CPU-GPU-synchronization.
+//      l_wavePropgationBlock.computeMaxTimestep();
 
       // compute numerical flux on each edge
       l_wavePropgationBlock.computeNumericalFluxes();

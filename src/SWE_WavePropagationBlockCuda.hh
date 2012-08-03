@@ -78,9 +78,9 @@ class SWE_WavePropagationBlockCuda: public SWE_BlockCUDA {
     float simulate(float, float);
 
     // TODO: not implemented, max time step reduction is done in each call of computeNumericalFluxes(...)
-    void computeMaxTimestep() {
-      assert(false);
-    };
+    //void computeMaxTimestep() {
+    //  assert(false);
+    //};
 
     // compute the numerical fluxes (net-update formulation here).
     void computeNumericalFluxes();
