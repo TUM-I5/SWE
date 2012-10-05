@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -49,6 +50,7 @@
  *                                                        );
  *         To reduce the effect of branch-mispredictions the kernel provides optional offsets, which can be used to compute the missing edges.
  *
+ * {@link SWE_WavePropagationBlockCuda::computeNumericalFluxes()} explains the coalesced memory access.
  *
  * @param i_h water heights (CUDA-array).
  * @param i_hu momentums in x-direction (CUDA-array).
@@ -87,7 +89,7 @@ void computeNetUpdatesKernel(
   __shared__ float l_maxWaveSpeedShared[TILE_SIZE*TILE_SIZE];
 
   //! thread local index in the shared maximum wave speed array
-  int l_maxWaveSpeedPosition = computeOneDPositionKernel(threadIdx.x, threadIdx.y, blockDim.y);
+  int l_maxWaveSpeedPosition = computeOneDPositionKernel(threadIdx.y, threadIdx.x, blockDim.x);
 
   // initialize shared maximum wave speed with zero
   l_maxWaveSpeedShared[l_maxWaveSpeedPosition] = (float) 0.0;
@@ -106,8 +108,8 @@ void computeNetUpdatesKernel(
   int l_leftCellPosition, l_rightCellPosition, l_netUpdatePosition;
 
   // compute (l_cellIndexI,l_cellIndexJ) for the cell lying right/above of the edge
-  l_cellIndexI += blockDim.x * blockIdx.x + threadIdx.x + 1; //+1: start at cell with index (1,0)
-  l_cellIndexJ += blockDim.y * blockIdx.y + threadIdx.y + 1; //+1: start at cell with index (1,1)
+  l_cellIndexI += blockDim.y * blockIdx.x + threadIdx.y + 1; //+1: start at cell with index (1,0)
+  l_cellIndexJ += blockDim.x * blockIdx.y + threadIdx.x + 1; //+1: start at cell with index (1,1)
 
   /*
    * Computation of horizontal net-updates
@@ -174,8 +176,8 @@ void computeNetUpdatesKernel(
   __syncthreads();
 
   // initialize reduction block size with the original block size
-  int reductionBlockDimX = blockDim.x;
-  int reductionBlockDimY = blockDim.y;
+  int reductionBlockDimX = blockDim.y;
+  int reductionBlockDimY = blockDim.x;
 
   // do the reduction
   while(reductionBlockDimX != 1 || reductionBlockDimY != 1) { // if the reduction block size == 1*1 (1 cell) -> done.
@@ -185,11 +187,11 @@ void computeNetUpdatesKernel(
     // split the block in the x-direction (size in x-dir. > 1) or y-direction (size in x-dir. == 1, size in y-dir. > 1)
     if(reductionBlockDimX != 1) {
       reductionBlockDimX /= 2; //reduce column wise
-      reductionPartner = computeOneDPositionKernel(threadIdx.x + reductionBlockDimX, threadIdx.y, blockDim.y);
+      reductionPartner = computeOneDPositionKernel(threadIdx.y + reductionBlockDimX, threadIdx.x, blockDim.x);
     }
     else if(reductionBlockDimY != 1) {
       reductionBlockDimY /= 2; //reduce row wise
-      reductionPartner = computeOneDPositionKernel(threadIdx.x, threadIdx.y+reductionBlockDimY, blockDim.y);
+      reductionPartner = computeOneDPositionKernel(threadIdx.y, threadIdx.x+reductionBlockDimY, blockDim.x);
     }
 #ifndef NDEBUG
 #if defined(__CUDA_ARCH__) & (__CUDA_ARCH__ < 200)
@@ -200,7 +202,7 @@ void computeNetUpdatesKernel(
     }
 #endif
 #endif
-    if(threadIdx.x < reductionBlockDimX && threadIdx.y < reductionBlockDimY) { // use only half the threads in each reduction
+    if(threadIdx.y < reductionBlockDimX && threadIdx.x < reductionBlockDimY) { // use only half the threads in each reduction
       //execute the reduction routine (maximum)
       l_maxWaveSpeedShared[l_maxWaveSpeedPosition] = fmax( l_maxWaveSpeedShared[l_maxWaveSpeedPosition],
                                                            l_maxWaveSpeedShared[reductionPartner]
@@ -210,7 +212,7 @@ void computeNetUpdatesKernel(
     __syncthreads();
   }
 
-  if(threadIdx.x == 0 && threadIdx.y == 0) {
+  if(threadIdx.y == 0 && threadIdx.x == 0) {
     /**
      * Position of the maximum wave speed in the global device array.
      *
