@@ -176,22 +176,21 @@ void computeNetUpdatesKernel(
   __syncthreads();
 
   // initialize reduction block size with the original block size
-  int reductionBlockDimX = blockDim.y;
-  int reductionBlockDimY = blockDim.x;
+  int reductionBlockDimY = blockDim.y;
+  int reductionBlockDimX = blockDim.x;
 
   // do the reduction
-  while(reductionBlockDimX != 1 || reductionBlockDimY != 1) { // if the reduction block size == 1*1 (1 cell) -> done.
+  while(reductionBlockDimY != 1 || reductionBlockDimX != 1) { // if the reduction block size == 1*1 (1 cell) -> done.
     //! reduction partner for a thread
     int reductionPartner = 0;
 
     // split the block in the x-direction (size in x-dir. > 1) or y-direction (size in x-dir. == 1, size in y-dir. > 1)
     if(reductionBlockDimX != 1) {
-      reductionBlockDimX /= 2; //reduce column wise
-      reductionPartner = computeOneDPositionKernel(threadIdx.y + reductionBlockDimX, threadIdx.x, blockDim.x);
-    }
-    else if(reductionBlockDimY != 1) {
-      reductionBlockDimY /= 2; //reduce row wise
-      reductionPartner = computeOneDPositionKernel(threadIdx.y, threadIdx.x+reductionBlockDimY, blockDim.x);
+      reductionBlockDimX >>= 1; //reduce row wise (divide by 2)
+      reductionPartner = computeOneDPositionKernel(threadIdx.y, threadIdx.x + reductionBlockDimX, blockDim.x);
+    } else if(reductionBlockDimY != 1) {
+      reductionBlockDimY >>= 1; //reduce column wise (divide by 2)
+      reductionPartner = computeOneDPositionKernel(threadIdx.y + reductionBlockDimY, threadIdx.x, blockDim.x);
     }
 #ifndef NDEBUG
 #if defined(__CUDA_ARCH__) & (__CUDA_ARCH__ < 200)
@@ -202,7 +201,7 @@ void computeNetUpdatesKernel(
     }
 #endif
 #endif
-    if(threadIdx.y < reductionBlockDimX && threadIdx.x < reductionBlockDimY) { // use only half the threads in each reduction
+    if(threadIdx.y < reductionBlockDimY && threadIdx.x < reductionBlockDimX) { // use only half the threads in each reduction
       //execute the reduction routine (maximum)
       l_maxWaveSpeedShared[l_maxWaveSpeedPosition] = fmax( l_maxWaveSpeedShared[l_maxWaveSpeedPosition],
                                                            l_maxWaveSpeedShared[reductionPartner]
