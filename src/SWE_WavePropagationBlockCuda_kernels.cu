@@ -271,6 +271,8 @@ void computeNetUpdatesKernel(
 /**
  * The "update unknowns"-kernel updates the unknowns in the cells with precomputed net-updates.
  *
+ * {@link SWE_WavePropagationBlockCuda::computeNumericalFluxes()} explains the coalesced memory access.
+ *
  * @param i_hNetUpdatesLeftD left going net-updates for the water height (CUDA-array).
  * @param i_hNetUpdatesRightD right going net-updates for the water height (CUDA-array).
  * @param i_huNetUpdatesLeftD left going net-updates for the momentum in x-direction (CUDA-array).
@@ -306,8 +308,8 @@ void updateUnknownsKernel(
   int l_cellPosition;
 
   // compute the thread local cell indices (start at cell (1,1))
-  l_cellIndexI = blockDim.x * blockIdx.x + threadIdx.x + 1;
-  l_cellIndexJ = blockDim.y * blockIdx.y + threadIdx.y + 1;
+  l_cellIndexI = blockDim.y * blockIdx.x + threadIdx.y + 1;
+  l_cellIndexJ = blockDim.x * blockIdx.y + threadIdx.x + 1;
 
   // compute the global cell position
   l_cellPosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ, i_nY+2);
