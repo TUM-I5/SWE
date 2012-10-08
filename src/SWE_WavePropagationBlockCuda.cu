@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -218,8 +219,19 @@ void SWE_WavePropagationBlockCuda::computeNumericalFluxes() {
   /*
    * Initialization.
    */
+
+  /**
+   * <b>Row-major vs column-major</b>
+   *
+   * C/C++ arrays are row-major whereas warps are constructed in column-major order from threads/blocks. To get coalesced
+   * memory access in CUDA, we can use a 2-dimensional CUDA structure but we have to switch x and y inside a block.
+   *
+   * This means, we have to switch threadIdx.x <-> threadIdx.y as well as blockDim.x <-> blockDim.y.
+   * Important: blockDim has to be switched for the kernel call as well!
+   */
+
   //! definition of one CUDA-block. Typical size are 8*8 or 16*16
-  dim3 dimBlock(TILE_SIZE,TILE_SIZE);
+  dim3 dimBlock(TILE_SIZE, TILE_SIZE);
 
   /**
    * Definition of the "main" CUDA-grid.
@@ -288,7 +300,7 @@ void SWE_WavePropagationBlockCuda::computeNumericalFluxes() {
 
   // compute the "remaining" net updates (edges "simulation domain"/"top ghost layer" and "simulation domain"/"right ghost layer")
   // edges between cell nx and ghost layer nx+1
-  dim3 dimRightBlock(1, TILE_SIZE);
+  dim3 dimRightBlock(TILE_SIZE, 1);
   dim3 dimRightGrid(1, ny/TILE_SIZE);
   computeNetUpdatesKernel<<<dimRightGrid, dimRightBlock>>>( hd, hud, hvd, bd,
                                                             hNetUpdatesLeftD,  hNetUpdatesRightD,
@@ -301,7 +313,7 @@ void SWE_WavePropagationBlockCuda::computeNumericalFluxes() {
                                                             dimGrid.x, 0);
 
   // edges between cell ny and ghost layer ny+1
-  dim3 dimTopBlock(TILE_SIZE, 1);
+  dim3 dimTopBlock(1, TILE_SIZE);
   dim3 dimTopGrid(nx/TILE_SIZE, 1);
   computeNetUpdatesKernel<<<dimTopGrid, dimTopBlock>>>( hd, hud, hvd, bd,
                                                         hNetUpdatesLeftD,  hNetUpdatesRightD,
