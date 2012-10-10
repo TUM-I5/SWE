@@ -181,9 +181,6 @@ if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
   if 'cudaToolkitDir' in env:
     env['CUDA_TOOLKIT_PATH'] = env['cudaToolkitDir']
     env.Append(RPATH=[os.path.join(env['cudaToolkitDir'], 'lib64')])
-  if 'cudaSDKDir' in env:
-    env['CUDA_SDK_PATH'] = env['cudaSDKDir']
-    env.Append(RPATH=[os.path.join(env['cudaSDKDir'], 'lib64')])
 
   env.Tool('CudaTool', toolpath = ['.'])
   

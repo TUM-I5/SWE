@@ -34,6 +34,8 @@ breuera - changes (see original: http://www.scons.org/wiki/CudaTool)
  * commented out *.linkinfo
  * lib64 instead of lib
  * removed unnecessary SDK, "cudaSDKPath + '/lib64', cudaSDKPath + '/common/lib64' + cudaSDKSubLibDir, ", from LIBSPATH
+rettenbs
+ * removed SDK path completely
 ***
 
 """
@@ -128,51 +130,11 @@ def generate(env):
                         sys.exit("Cannot find the CUDA Toolkit path. Please modify your SConscript or add the path in cudaenv.py")
         env['CUDA_TOOLKIT_PATH'] = cudaToolkitPath
 
-        # find CUDA SDK path and set CUDA_SDK_PATH
-        try:
-                cudaSDKPath = env['CUDA_SDK_PATH']
-        except:
-                paths=[home + '/NVIDIA_CUDA_SDK', # i am just guessing here
-                       home + '/Apps/NVIDIA_CUDA_SDK',
-                           home + '/Apps/CudaSDK',
-                           '/usr/local/NVIDIA_CUDA_SDK',
-                           '/usr/local/CUDASDK',
-                           '/usr/local/cuda_sdk',
-                           '/Developer/NVIDIA CUDA SDK',
-                           '/Developer/CUDA SDK',
-                           '/Developer/CUDA',
-                           '/Developer/GPU Computing/C',
-                           programfiles + 'NVIDIA Corporation/NVIDIA CUDA SDK',
-                           programfiles + 'NVIDIA/NVIDIA CUDA SDK',
-                           programfiles + 'NVIDIA CUDA SDK',
-                           programfiles + 'CudaSDK',
-                           homedrive + '/NVIDIA CUDA SDK',
-                           homedrive + '/CUDA SDK',
-                           homedrive + '/CUDA/SDK']
-                pathFound = False
-                for path in paths:
-                        if os.path.isdir(path):
-                                pathFound = True
-                                print 'scons: CUDA SDK found in ' + path
-                                cudaSDKPath = path
-                                break
-                if not pathFound:
-                        sys.exit("Cannot find the CUDA SDK path. Please set env['CUDA_SDK_PATH'] to point to your SDK path")
-        env['CUDA_SDK_PATH'] = cudaSDKPath
-
-        # cuda libraries
-        if env['PLATFORM'] == 'posix':
-                cudaSDKSubLibDir = '/linux'
-        elif env['PLATFORM'] == 'darwin':
-                cudaSDKSubLibDir = '/darwin'
-        else:
-                cudaSDKSubLibDir = ''
-
         # add nvcc to PATH
         env.PrependENVPath('PATH', cudaToolkitPath + '/bin')
 
         # add required libraries
-        env.Append(CPPPATH=[cudaSDKPath + '/common/inc', cudaToolkitPath + '/include'])
+        env.Append(CPPPATH=[cudaToolkitPath + '/include'])
         env.Append(LIBPATH=[cudaToolkitPath + '/lib64'])
         env.Append(LIBS=['cudart'])
 
