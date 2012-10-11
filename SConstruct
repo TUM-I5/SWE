@@ -4,6 +4,7 @@
 # This file is part of SWE.
 #
 # @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+# @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
 #
 # @section LICENSE
 #
@@ -236,8 +237,10 @@ if env['asagi'] == True:
   if 'asagiDir' in env:
     env.Append(CPPPATH=[env['asagiDir']+'/include'])
     env.Append(LIBPATH=[env['asagiDir']+'/lib'])
+    env.Append(RPATH=[os.path.join(env['asagiDir'], 'lib')])
   if 'netCDFDir' in env:
     env.Append(LIBPATH=[env['netCDFDir']+'/lib'])
+    env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
 
 # xml runtime parameters
 if env['xmlRuntime'] == True: #TODO
