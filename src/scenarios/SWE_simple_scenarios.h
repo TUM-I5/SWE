@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader, Kaveh Rahnema, Tobias Schnabel
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -45,7 +46,7 @@ class SWE_RadialDamBreakScenario : public SWE_Scenario {
     };
 
     float getWaterHeight(float x, float y) { 
-       return ( sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 100.f ) ? 261.f: 260.0f;
+       return ( sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 100.f ) ? 265.f: 260.0f;
     };
 
 	virtual float endSimulation() { return (float) 15; };
@@ -146,7 +147,7 @@ class SWE_SplashingPoolScenario : public SWE_Scenario {
     };
 
     float getWaterHeight(float x, float y) {
-    	return 260.0f+(1.0f-(x+y)/1000);
+    	return 260.0f+(1.0f-(x+y)/950);
     };
 
 	virtual float endSimulation() { return (float) 15; };
