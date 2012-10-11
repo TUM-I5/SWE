@@ -243,11 +243,10 @@ void Simulation::calculateWaterSurface(float3* destBuffer) {
 	if (isFirstStep == 1) {
 		isFirstStep = 0;
 	} else {
-		//splash->simulateConstTimestep();
-		// curTime = splash->simulate(curTime, curTime + 5*splash->getMaxTimestep());
-		float dt = splash->getMaxTimestep();
 		splash->setGhostLayer();
-		splash->simulateTimestep(dt);
+		splash->computeNumericalFluxes();
+		float dt = splash->getMaxTimestep();
+		splash->updateUnknowns(dt);
 		curTime += dt;
 	}
 	// splash->updateVisBuffer(destBuffer, wAverage, wScale, wOffset);
