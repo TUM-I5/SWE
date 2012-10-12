@@ -47,7 +47,7 @@ Controller::~Controller()
 {
 	// Delete scenarios
 	for (int i = 0; i < SCENARIO_COUNT; i++)
-		delete scenarios;
+		delete scenarios[i];
 }
 
 /**
