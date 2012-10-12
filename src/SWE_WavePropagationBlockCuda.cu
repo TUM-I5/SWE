@@ -95,9 +95,9 @@ static tools::Logger s_sweLogger;
  * @param i_offsetY spatial offset of the offset in y-direction.
  * @param i_cudaDevice ID of the CUDA-device, which should be used.
  */
-SWE_WavePropagationBlockCuda::SWE_WavePropagationBlockCuda( const float i_offsetX,
-                                                            const float i_offsetY,
-                                                            const int i_cudaDevice ): SWE_BlockCUDA(i_offsetX, i_offsetY, i_cudaDevice) {
+SWE_WavePropagationBlockCuda::SWE_WavePropagationBlockCuda(const int i_cudaDevice )
+	: SWE_BlockCUDA(i_cudaDevice)
+{
   // compute the size of one 1D net-update array.
   int sizeOfNetUpdates = (nx+1)*(ny+1)*sizeof(float);
 

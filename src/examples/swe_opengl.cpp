@@ -98,7 +98,6 @@ int main(int argc, char *argv[])
 	   // use splashing pool scenario ...
 	   SWE_SplashingPoolScenarioVisInfo* newScene = new SWE_SplashingPoolScenarioVisInfo();
 	   scene = newScene;
-	   visInfo = newScene;
 	};
 	
 	// define grid size and initial time step

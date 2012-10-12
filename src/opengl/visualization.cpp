@@ -2,6 +2,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -541,8 +542,6 @@ void Visualization::createVertexVBO(GLuint* vboID, int size, struct cudaGraphics
 void Visualization::createIndicesVBO(GLuint* vboID, int xsize, int ysize)
 {
 	// Create an array describing the vertex indices to be drawn
-	xsize = xsize;
-	ysize = ysize;
 
 	int noVertices = (xsize-1)*(ysize-1)*6;
 	if ((xsize < 1) || (ysize < 1)) {

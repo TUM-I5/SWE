@@ -4,6 +4,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,6 +29,8 @@ public:
 	void setCamera ();
 
 	// Change viewing properties
+	void reset();
+
 	void orient( float angX, float angY );
 	void zoomIn( float scaleFactor );
 	void zoomOut( float scaleFactor );
@@ -38,6 +41,8 @@ public:
 	void displayImage();
 
 private:
+	float view_distance;
+
 	// Position of the camera
 	float cameraX;
 	float cameraY;

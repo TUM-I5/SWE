@@ -147,7 +147,7 @@ class SWE_SplashingPoolScenario : public SWE_Scenario {
     };
 
     float getWaterHeight(float x, float y) {
-    	return 260.0f+(1.0f-(x+y)/950);
+    	return 260.0f+(1.0f-(x+y)/200);
     };
 
 	virtual float endSimulation() { return (float) 15; };

@@ -66,7 +66,6 @@ Simulation::~Simulation () {
 }
 
 void Simulation::loadNewScenario(SWE_Scenario* scene, SWE_VisInfo* visInfo) {
-	delete myScenario;
 	myScenario = scene;
 	curTime = 0.0f;
 	isFirstStep = 1;
@@ -133,7 +132,14 @@ void Simulation::runCuda(struct cudaGraphicsResource **vbo_resource, struct cuda
 */
 void Simulation::initBoundaries(SWE_Scenario* scene) {
 std::cout << "Init Scenario\n" << flush;
-	splash->initScenario(*scene);
+
+	float l_originX, l_originY;
+
+	// get the origin from the scenario
+	l_originX = scene->getBoundaryPos(BND_LEFT);
+	l_originY = scene->getBoundaryPos(BND_BOTTOM);
+
+	splash->initScenario(l_originX, l_originY, *scene);
 
 	splash->setGhostLayer();
 }

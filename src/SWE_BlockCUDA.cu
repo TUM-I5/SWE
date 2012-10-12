@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader, Kaveh Rahnema, Tobias Schnabel
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -86,8 +87,7 @@ void tryCUDA(cudaError_t err, const char *msg)
  * @param _offsetY offset in y-direction.
  * @param i_cudaDevice ID of the CUDA-device, which should be used.
  */
-SWE_BlockCUDA::SWE_BlockCUDA(float _offsetX, float _offsetY, const int i_cudaDevice )
- : SWE_Block(_offsetX,_offsetY)
+SWE_BlockCUDA::SWE_BlockCUDA(const int i_cudaDevice )
 {
   s_sweLogger.setProcessRank(i_cudaDevice);
 

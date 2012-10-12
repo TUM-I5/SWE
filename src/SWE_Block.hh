@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader, Kaveh Rahnema, Tobias Schnabel
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -118,7 +119,8 @@ class SWE_Block {
   public:
   // object methods
     /// initialise unknowns to a specific scenario:
-    void initScenario(SWE_Scenario &i_scenario, const bool i_multipleBlocks = false );
+    void initScenario(float _offsetX, float _offsetY,
+    		SWE_Scenario &i_scenario, const bool i_multipleBlocks = false );
     // set unknowns
     /// set the water height to a uniform value
     void setWaterHeight(float _h);
@@ -229,7 +231,7 @@ class SWE_Block {
 	
   protected:
     // Constructor und Destructor
-    SWE_Block(float _offsetX, float _offsetY);
+    SWE_Block();
     virtual ~SWE_Block();
 
     // synchronisation Methods

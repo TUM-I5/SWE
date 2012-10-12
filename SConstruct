@@ -86,6 +86,8 @@ vars.AddVariables(
 
   BoolVariable( 'asagi', 'use ASAGI', False ),
 
+  PathVariable( 'asagiInputDir', 'location of netcdf input files', '', PathVariable.PathAccept ),
+
   EnumVariable( 'solver', 'Riemann solver', 'augrie',
                 allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid')
               ),
@@ -241,6 +243,8 @@ if env['asagi'] == True:
   if 'netCDFDir' in env:
     env.Append(LIBPATH=[env['netCDFDir']+'/lib'])
     env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
+  if 'asagiInputDir' in env:
+    env.Append(CPPFLAGS=['\'-DASAGI_INPUT_DIR="'+env['asagiInputDir']+'"\''])
 
 # xml runtime parameters
 if env['xmlRuntime'] == True: #TODO
