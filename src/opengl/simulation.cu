@@ -21,6 +21,10 @@
 #include <stdlib.h>
 #include "../SWE_BlockCUDA.hh"
 
+// Taken form FWaveCuda.h
+// TODO: Put it in a common header file
+const float dryTol = 100.;
+
 /**
     Constructor. 
 	Initializes SWE_BlockCUDA and creates a new instance of it.
@@ -35,32 +39,16 @@
 Simulation::Simulation (int nx, int ny, float dx, float dy, 
 			SWE_Scenario* scene, SWE_VisInfo* visInfo, 
                         SWE_BlockCUDA* _splash) 
-: myScenario(scene),
-  maxDim( (nx > ny) ? nx : ny ),
+: maxDim( (nx > ny) ? nx : ny ),
   maxCellSize( (dx > dy) ? dx : dy ),
   splash(_splash),
-  curTime(0.0f),
-  isFirstStep(1),
-  fileNumber(0),
-  useFileInput(false)
+  fileNumber(0)
 {
-
-        Simulation::initBoundaries(myScenario);
-
-	if (visInfo != NULL) {
-		wAverage = visInfo->waterHeightAtRest();
-		wScale = visInfo->waterVerticalScaling()*(maxDim/20.0f);
-		wOffset = visInfo->waterDistanceFromGround()*(maxDim/20.0f);
-		bAverage = visInfo->bathyVerticalCenter();
-		bScale = visInfo->bathyVerticalScaling()*(maxDim/20.0f);
-		bOffset = visInfo->bathyDistanceFromGround()*(maxDim/20.0f);
-	} else {
-		getScalingApproximation(splash->getWaterHeight(), splash->getBathymetry());
-	}
+	loadNewScenario(scene, visInfo);
 }
+
 /** 
-	Destructor. 
-	Delete current SWE_BlockCUDA and SWE_Scenario instance.
+	Destructor.
 */
 Simulation::~Simulation () {
 }
@@ -72,12 +60,9 @@ void Simulation::loadNewScenario(SWE_Scenario* scene, SWE_VisInfo* visInfo) {
 	useFileInput = false;
 	Simulation::initBoundaries(myScenario);
 	if (visInfo != NULL) {
-		wAverage = visInfo->waterHeightAtRest();
-		wScale = visInfo->waterVerticalScaling()*(maxDim/20.0f);
-		wOffset = visInfo->waterDistanceFromGround()*(maxDim/20.0f);
-		bAverage = visInfo->bathyVerticalCenter();
-		bScale = visInfo->bathyVerticalScaling()*(maxDim/20.0f);
-		bOffset = visInfo->bathyDistanceFromGround()*(maxDim/20.0f);
+		wScale = visInfo->waterVerticalScaling();
+		bScale = visInfo->bathyVerticalScaling();
+		bOffset = visInfo->bathyVerticalOffset();
 	} else {
 		getScalingApproximation(splash->getWaterHeight(), splash->getBathymetry());
 	}
@@ -162,8 +147,6 @@ void Simulation::restart() {
     @param bath				float array in which computed values will be stored
 */
 void Simulation::setBathBuffer(float* bath) {
-	// splash->setBathBuffer(output, bAverage, bScale, bOffset);
-	
         const Float2D& b = splash->getBathymetry();
         int nx = b.getRows()-2;
         int ny = b.getCols()-2;
@@ -172,8 +155,7 @@ void Simulation::setBathBuffer(float* bath) {
 	for (int j=0; j<ny+1;j++) {
 		for (int i=0;i<nx+1;i++) {
 				bath[(j*(ny+1) + i)*6] = (float) i;
-				bath[(j*(ny+1) + i)*6 + 1]= scaleFunction(0.25f*(b[i][j]+b[i+1][j]+b[i][j+1]+b[i+1][j+1]), 
-                                                                          bAverage, bScale, bOffset);
+				bath[(j*(ny+1) + i)*6 + 1]= bScale * 0.25f * (b[i][j]+b[i+1][j]+b[i][j+1]+b[i+1][j+1]) + bOffset;
 				bath[(j*(ny+1) + i)*6 + 2] = (float) j;
 				bath[(j*(ny+1) + i)*6 + 3] = 0.0f;
 				bath[(j*(ny+1) + i)*6 + 4] = 0.0f;
@@ -269,9 +251,8 @@ void Simulation::calculateWaterSurface(float3* destBuffer) {
 	@param h	Fload2D array that holds water height
 	@param b	Fload2D array that holds bathymetry data
 */	
-void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b) {
-	// Averages of B and (B + H)
-	float avgB, avgH; 
+void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b)
+{
 	// Minimum values
 	float minB, minH;
 	// Maximum values
@@ -281,8 +262,6 @@ void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b) {
         int ny = h.getCols()-2;
 	int maxDim = (nx > ny) ? nx : ny;
 
-	avgH = 0.0f;
-	avgB = 0.0f;
 	minB = b[1][1];
 	minH = h[1][1];
 	maxB = b[1][1];
@@ -290,9 +269,6 @@ void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b) {
 
 	for(int i=1; i<=nx; i++) {
 		for(int j=1; j<=ny; j++) {
-			// Update averages
-			avgH += (h[i][j] + b[i][j])/(nx*ny);
-			avgB += b[i][j]/(nx*ny);
 			// Update minima
 			if ((h[i][j] + b[i][j]) < minH)
 				minH = (h[i][j] + b[i][j]);
@@ -305,22 +281,10 @@ void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b) {
 				maxB = b[i][j];			
 		}
 	}
-	// cout << "max and min bathymetry: " << maxB << " ; " << minB << endl;
-	// bAverage = avgB;
-	bAverage = (maxB+minB)/2;
-	cout << "Average bathymetry: " << bAverage << endl;
-	if (abs(maxB - minB) > 0.0001f) {
-		bScale = (maxDim/20.0f)/(maxB - minB);
-	} else {
-		bScale = (maxDim/20.0f);
-	}
+	bOffset = 0;	// This should be !=0 only in some artificial scenarios
+	bScale = -50/minB;
 	cout << "Scaling of bathymetry: " << bScale << endl;
-	bOffset = bScale*(avgB - minB) + maxDim/15.0f;
-	// bOffset = minB+100;
-	cout << "bathymetry offset: " << bOffset << endl;
 
-	wAverage = avgH;
-	cout << "Average water height: " << avgH << endl;
 	if ((maxH - minH) < 0.0001f) {
 		wScale = 1.0f/(maxH- minH);
 	} else {
@@ -328,8 +292,6 @@ void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b) {
 	}
 	wScale = (maxDim/40.0)*wScale;
 	cout << "Scaling of water level: " << wScale << endl;
-	wOffset = bOffset + (maxDim/5.0f);
-	cout << "water level offset: " << wOffset << endl;
 
 }
 
@@ -361,8 +323,8 @@ void Simulation::calculateNormal(float fVert1[], float fVert2[],
     Scale function used for visualization 
 */	
 __device__ __host__ 
-float scaleFunction(float val, float average, float scale, float offset) {
-	return (val - average)*scale + offset;
+float scaleFunction(float val, float scale) {
+	return  val * scale;
 }
 
 // /**
@@ -391,20 +353,25 @@ float scaleFunction(float val, float average, float scale, float offset) {
  */
 __global__
 void kernelCalcVisBuffer(float3* visBuffer, const float* hd, const float* bd, 
-                         int nx, int ny, float average, float scale, float offset)
+                         int nx, int ny, float scale)
 {
    int i = TILE_SIZE*blockIdx.x + threadIdx.x;
    int j = TILE_SIZE*blockIdx.y + threadIdx.y;
    if ((i <= nx) && (j <= ny)) {
 	   int index = i*(nx+2) + j;
 	   int index2 = (i+1)*(nx+2) + j;	
-	   visBuffer[j*(ny+1) + i] = make_float3(
-		   i, 
-		   scaleFunction(0.25*(
-				hd[index]+hd[index + 1]+ hd[index2] + hd[index2 + 1] +
-				bd[index]+bd[index + 1]+ bd[index2] + bd[index2 + 1])
-				, average, scale, offset),
-		   j);
+	   if (hd[index] <= dryTol
+			   || hd[index+1] <= dryTol
+			   || hd[index2] <= dryTol
+			   || hd[index2+1] <= dryTol)
+		   visBuffer[j*(ny+1)+i] = make_float3(i, 0, j);
+   	   else
+   		   visBuffer[j*(ny+1) + i] = make_float3(
+   				   i,
+   				   scale * 0.25 * (
+   						   hd[index]+hd[index + 1]+ hd[index2] + hd[index2 + 1] +
+   						   bd[index]+bd[index + 1]+ bd[index2] + bd[index2 + 1]),
+				   j);
    } 
    //Corresponding C-Code:
    //	for (int j=0; j<ny+1;j++)
@@ -430,8 +397,7 @@ void Simulation::updateVisBuffer(float3* _visBuffer) {
 	// Interpolate cell centered h-values
 	dim3 dimBlock(TILE_SIZE,TILE_SIZE);
 	dim3 dimGrid((nx+TILE_SIZE)/TILE_SIZE,(ny+TILE_SIZE)/TILE_SIZE);
-	kernelCalcVisBuffer<<<dimGrid,dimBlock>>>(_visBuffer, hd, bd, nx, ny, 
-                                                  wAverage, wScale, wOffset);
+	kernelCalcVisBuffer<<<dimGrid,dimBlock>>>(_visBuffer, hd, bd, nx, ny, wScale);
 }
 /**
 	Function used for debugging. Outputs the current visBuffer 

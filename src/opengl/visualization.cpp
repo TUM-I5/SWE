@@ -91,7 +91,7 @@ void Visualization::renderDisplay() {
 	camera->setCamera();
 	
 	// Draw Scene
-	DrawBottom();
+	//DrawBottom();
 	DrawBathymetry(vboBathymetry, verticesIndex);
 	
 	// Shaded pass

@@ -24,7 +24,7 @@
 #include "../opengl/visualization.h"
 #include "../opengl/controller.h"
 #include "../scenarios/SWE_Scenario.h"
-#include "../scenarios/SWE_simple_scenarios_vis.h"
+#include "../scenarios/SWE_simple_scenarios.h"
 #include "../scenarios/SWE_VtkScenarioVisInfo.h"
 #include "../SWE_BlockCUDA.hh"
 // #include "../SWE_RusanovBlockCUDA.hh"
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	if (scene == NULL) { 
 	   // ... if VTK file not specified (or was not read successfully)
 	   // use splashing pool scenario ...
-	   SWE_SplashingPoolScenarioVisInfo* newScene = new SWE_SplashingPoolScenarioVisInfo();
+	   SWE_SplashingPoolScenario* newScene = new SWE_SplashingPoolScenario();
 	   scene = newScene;
 	};
 	

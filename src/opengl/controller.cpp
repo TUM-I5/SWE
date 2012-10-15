@@ -19,6 +19,7 @@
 // =====================================================================
 #include "controller.h"
 
+#include "../scenarios/SWE_simple_scenarios.h"
 #include "../scenarios/SWE_simple_scenarios_vis.h"
 #ifdef ASAGI
 #include "../scenarios/SWE_AsagiScenario.hpp"
@@ -41,13 +42,16 @@ Controller::Controller(Simulation* sim, Visualization* vis) {
 
 	// No scenario loaded
 	memset(scenarios, 0, SCENARIO_COUNT*sizeof(SWE_Scenario*));
+	memset(visInfos, 0, SCENARIO_COUNT*sizeof(SWE_VisInfo*));
 }
 
 Controller::~Controller()
 {
 	// Delete scenarios
-	for (int i = 0; i < SCENARIO_COUNT; i++)
+	for (int i = 0; i < SCENARIO_COUNT; i++) {
 		delete scenarios[i];
+		delete visInfos[i];
+	}
 }
 
 /**
@@ -174,7 +178,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  allowStep = paused;
 
 			  if (scenarios[0] == 0)
-				  scenarios[0] = new SWE_RadialDamBreakScenario();
+				  scenarios[0] = new SWE_RadialDamBreakScenario;
 
 			  SWE_Scenario* newScene = scenarios[0];
 
@@ -192,8 +196,10 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			{
 			  allowStep = paused;
 
-			  if (scenarios[1] == 0)
+			  if (scenarios[1] == 0) {
 				  scenarios[1] = new SWE_BathymetryDamBreakScenario();
+				  visInfos[1] = new SWE_BathymetryDamBreakVisInfo();
+			  }
 
 			  SWE_Scenario* newScene = scenarios[1];
 
@@ -202,7 +208,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-			  simulation->loadNewScenario(newScene, NULL);
+			  simulation->loadNewScenario(newScene, visInfos[1]);
 			  visualization->updateBathymetryVBO(simulation);
 			}
 			break;
@@ -212,7 +218,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  allowStep = paused;
 
 			  if (scenarios[2] == 0)
-				  scenarios[2] = new SWE_SplashingPoolScenarioVisInfo();
+				  scenarios[2] = new SWE_SplashingPoolScenario();
 
 			  SWE_Scenario* newScene = scenarios[2];
 

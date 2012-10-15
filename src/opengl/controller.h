@@ -50,7 +50,9 @@ private:
 	Simulation* simulation;
 	Visualization* visualization;
 	
+	/** Store scenarios, thus we only have to create them once */
 	SWE_Scenario *scenarios[SCENARIO_COUNT];
+	SWE_VisInfo *visInfos[SCENARIO_COUNT];
 
 	// Handle keyboard events
 	bool handleKeyPress( SDL_keysym *keysym);

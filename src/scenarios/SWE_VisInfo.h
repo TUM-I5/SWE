@@ -4,6 +4,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Michael Bader, Kaveh Rahnema, Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,6 +20,8 @@
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
 
+#include "SWE_Scenario.h"
+
 /**
  * SWE_VisInfo defines an interface that can be used for online 
  * visualisation of a shallow water simulation. 
@@ -28,14 +31,14 @@
 class SWE_VisInfo {
 
  public:
+	/**
+	 * Empty virtual destructor
+	 */
+	virtual ~SWE_VisInfo() {};
 
     // Scaling factors for custom visualization
-//     virtual bool useCustomScaling() { return false; };
-    virtual float waterHeightAtRest() { return 10.0f; };
-    virtual float waterDistanceFromGround() { return 10.0f; };
     virtual float waterVerticalScaling() { return 10.0f; };
-    virtual float bathyVerticalCenter() { return 0.0f; };
-    virtual float bathyDistanceFromGround() { return 0.0f; };
+    virtual float bathyVerticalOffset() { return 0.0f; };
     virtual float bathyVerticalScaling() { return 10.0f; };
 
 };

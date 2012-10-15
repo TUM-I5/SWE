@@ -46,7 +46,7 @@ class SWE_RadialDamBreakScenario : public SWE_Scenario {
     };
 
     float getWaterHeight(float x, float y) { 
-       return ( sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 100.f ) ? 265.f: 260.0f;
+       return ( sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 100.f ) ? 253.f: 250.0f;
     };
 
 	virtual float endSimulation() { return (float) 15; };
@@ -111,7 +111,7 @@ class SWE_BathymetryDamBreakScenario : public SWE_Scenario {
      */
     float getWaterHeight( float i_positionX,
                           float i_positionY ) {
-      return (float) 270;
+      return (float) 260;
     }
 };
 
