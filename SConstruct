@@ -234,8 +234,10 @@ if env['asagi'] == True:
   env.Append(CPPDEFINES=['ASAGI'])
   if env['parallelization'] == 'none' or env['parallelization'] == 'cuda':
     env.Append(CPPDEFINES=['ASAGI_NOMPI'])
+    env.Append(LIBS=['asagi_nompi'])
+  else:
+    env.Append(LIBS=['asagi'])
   env.Append(LIBS=['netcdf_c++4'])
-  env.Append(LIBS=['asagi'])
   if 'asagiDir' in env:
     env.Append(CPPPATH=[env['asagiDir']+'/include'])
     env.Append(LIBPATH=[env['asagiDir']+'/lib'])
