@@ -233,7 +233,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			break;
 #ifdef ASAGI
 		case SDLK_4:
-			// Load scenario 3
+			// Load scenario 4
 			{
 				allowStep = paused;
 
@@ -251,6 +251,35 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				}
 
 				SWE_Scenario* newScene = scenarios[3];
+
+				  // define grid size and initial time step
+				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+				  simulation->loadNewScenario(newScene, NULL);
+				  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
+		case SDLK_5:
+			// Load scenario 5
+			{
+				allowStep = paused;
+
+				if (scenarios[4] == 0) {
+					//simulation area
+					float simulationArea[4];
+					simulationArea[0] = -450000;
+					simulationArea[1] = 700000;
+					simulationArea[2] = -1000000;
+					simulationArea[3] = 1450000;
+					scenarios[4] = new SWE_AsagiScenario(
+							ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
+				            ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
+				            (float) 28800., simulationArea);
+				}
+
+				SWE_Scenario* newScene = scenarios[4];
 
 				  // define grid size and initial time step
 				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
