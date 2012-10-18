@@ -214,7 +214,7 @@ if env['parallelization'] in ['mpi_with_cuda', 'mpi']:
   env['LINKERFORPROGRAMS'] = 'mpiCC'
 
 if env['openGL'] == True:
-  env.Append(LIBS=['SDL', 'GLU'])
+  env.Append(LIBS=['SDL', 'GL', 'GLU'])
 
 # set the compiler flags for libSDL
 if 'libSDLDir' in env:
