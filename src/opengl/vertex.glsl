@@ -2,6 +2,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,8 +19,8 @@
 // =====================================================================
 
 varying vec3 N;
-varying vec3 V;
 varying vec4 ambient;
+varying vec4 worldCoordinates;
 
 /* Shading of water surfaces with fresnel effect */
 
@@ -32,9 +33,8 @@ void main()
 	// Transform our normal into eye space
 	N = normalize(gl_NormalMatrix * gl_Normal);
 	
-	// Calculate vector from vertex to the eye, 
-	// which resides at (0,0,0)
-	V = -vec3(gl_ModelViewMatrix*gl_Vertex);
+	// Save world coordinates	
+	worldCoordinates = gl_Vertex;
 	
 	// Compute vertex position via internal transform function
 	gl_Position = ftransform();
