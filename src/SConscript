@@ -66,6 +66,7 @@ if env['openGL'] == True:
   sourceFiles.append( ['opengl/controller.cpp'] )
   sourceFiles.append( ['opengl/shader.cpp'] )
   sourceFiles.append( ['opengl/visualization.cpp'] )
+  sourceFiles.append( ['opengl/text.cpp'] )
 
 # Asagi scenario
 if env['asagi'] == True:

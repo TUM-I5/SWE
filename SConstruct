@@ -82,6 +82,8 @@ vars.AddVariables(
 
   BoolVariable( 'openGL', 'compile with OpenGL visualization', False),
 
+  BoolVariable( 'openGL_instr', 'add instructions to openGL version (requires SDL_ttf)', False),
+
   BoolVariable( 'writeNetCDF', 'write output in the netCDF-format', False ),
 
   BoolVariable( 'asagi', 'use ASAGI', False ),
@@ -215,6 +217,10 @@ if env['parallelization'] in ['mpi_with_cuda', 'mpi']:
 
 if env['openGL'] == True:
   env.Append(LIBS=['SDL', 'GL', 'GLU'])
+  if env['openGL_instr'] == True:
+    # We assume that SDL_ttf is in the same directory as SDL
+    env.Append(LIBS=['SDL_ttf'])
+    env.Append(CPPDEFINES=['USESDLTTF'])
 
 # set the compiler flags for libSDL
 if 'libSDLDir' in env:
