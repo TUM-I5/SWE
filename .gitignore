@@ -1,0 +1,6 @@
+*.pyc
+.sconsign.dblite
+
+.settings
+.project
+.cproject

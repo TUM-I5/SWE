@@ -2,6 +2,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +19,11 @@
 // =====================================================================
 #include "controller.h"
 
+#include "../scenarios/SWE_simple_scenarios.h"
 #include "../scenarios/SWE_simple_scenarios_vis.h"
+#ifdef ASAGI
+#include "../scenarios/SWE_AsagiScenario.hpp"
+#endif // ASAGI
 
 /**
     Constructor
@@ -34,6 +39,19 @@ Controller::Controller(Simulation* sim, Visualization* vis) {
 	done = false;
 	paused = false;
 	allowStep = false;
+
+	// No scenario loaded
+	memset(scenarios, 0, SCENARIO_COUNT*sizeof(SWE_Scenario*));
+	memset(visInfos, 0, SCENARIO_COUNT*sizeof(SWE_VisInfo*));
+}
+
+Controller::~Controller()
+{
+	// Delete scenarios
+	for (int i = 0; i < SCENARIO_COUNT; i++) {
+		delete scenarios[i];
+		delete visInfos[i];
+	}
 }
 
 /**
@@ -67,13 +85,15 @@ bool Controller::handleEvents() {
 				visualization->camera->zoomOut(1.2f);
 			} else if (event.button.button == SDL_BUTTON_RIGHT) {
 				visualization->camera->startPanning(event.button.x, event.button.y);
-			}
 			break;
 		case SDL_MOUSEBUTTONUP:
 			// Scroll wheel up
 			if ( event.button.button == SDL_BUTTON_WHEELUP ) {
 				// Zoom in
 				visualization->camera->zoomIn(1.15f);
+			}
+			} else if (event.button.button == SDL_BUTTON_MIDDLE) {
+				visualization->camera->reset();
 			}
 			break;
 		case SDL_ACTIVEEVENT:
@@ -121,6 +141,8 @@ bool Controller::isPaused() {
     Process single keyboard event
 	@param *keysym			pointer to the sdl keyevent structure
 
+	@todo Refector!!
+
 */	
 bool Controller::handleKeyPress( SDL_keysym *keysym) {
 
@@ -154,24 +176,12 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			// Load scenario 1
 			{
 			  allowStep = paused;
-                          SWE_RadialDamBreakScenarioVisInfo* 
-                            newScene = new SWE_RadialDamBreakScenarioVisInfo();
-			  SWE_VisInfo* visInfo = newScene;
 
-			  // define grid size and initial time step
-			  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+			  if (scenarios[0] == 0)
+				  scenarios[0] = new SWE_RadialDamBreakScenario;
 
-			  simulation->loadNewScenario(newScene, visInfo);
-			  visualization->updateBathymetryVBO(simulation);
-			}
-			break;
-		case SDLK_2:
-			// Load scenario 2
-			{
-			  allowStep = paused;
-			  SWE_Scenario* newScene = new SWE_BathymetryDamBreakScenario;
+			  SWE_Scenario* newScene = scenarios[0];
+
 			  // define grid size and initial time step
 			  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
 			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
@@ -181,22 +191,164 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  visualization->updateBathymetryVBO(simulation);
 			}
 			break;
-		case SDLK_3:
-			// Load scenario 3
+		case SDLK_2:
+			// Load scenario 2
 			{
 			  allowStep = paused;
-			  SWE_SplashingPoolScenarioVisInfo* 
-                            newScene = new SWE_SplashingPoolScenarioVisInfo;
+
+			  if (scenarios[1] == 0) {
+				  scenarios[1] = new SWE_BathymetryDamBreakScenario();
+				  visInfos[1] = new SWE_BathymetryDamBreakVisInfo();
+			  }
+
+			  SWE_Scenario* newScene = scenarios[1];
 
 			  // define grid size and initial time step
 			  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
 			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-			  simulation->loadNewScenario(newScene, newScene);
+			  simulation->loadNewScenario(newScene, visInfos[1]);
 			  visualization->updateBathymetryVBO(simulation);
 			}
 			break;
+		case SDLK_3:
+			// Load scenario 3
+			{
+			  allowStep = paused;
+
+			  if (scenarios[2] == 0)
+				  scenarios[2] = new SWE_SplashingPoolScenario();
+
+			  SWE_Scenario* newScene = scenarios[2];
+
+			  // define grid size and initial time step
+			  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+			  simulation->loadNewScenario(newScene, NULL);
+			  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
+#ifdef ASAGI
+		case SDLK_4:
+			// Load scenario 4
+			{
+				allowStep = paused;
+
+				if (scenarios[3] == 0) {
+					//simulation area
+					float simulationArea[4];
+					simulationArea[0] = -450000;
+					simulationArea[1] = 6450000;
+					simulationArea[2] = -2450000;
+					simulationArea[3] = 1450000;
+					scenarios[3] = new SWE_AsagiScenario(
+							ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
+				            ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
+				            (float) 28800., simulationArea);
+				}
+
+				SWE_Scenario* newScene = scenarios[3];
+
+				  // define grid size and initial time step
+				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+				  simulation->loadNewScenario(newScene, NULL);
+				  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
+		case SDLK_5:
+			// Load scenario 5
+			{
+				allowStep = paused;
+
+				if (scenarios[4] == 0) {
+					//simulation area
+					float simulationArea[4];
+					simulationArea[0] = -450000;
+					simulationArea[1] = 700000;
+					simulationArea[2] = -1000000;
+					simulationArea[3] = 1450000;
+					scenarios[4] = new SWE_AsagiScenario(
+							ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
+				            ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
+				            (float) 28800., simulationArea);
+				}
+
+				SWE_Scenario* newScene = scenarios[4];
+
+				  // define grid size and initial time step
+				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+				  simulation->loadNewScenario(newScene, NULL);
+				  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
+		case SDLK_6:
+			// Load scenario 6
+			{
+				allowStep = paused;
+
+				if (scenarios[5] == 0) {
+					//simulation area
+					float simulationArea[4];
+					simulationArea[0] = -13775000;
+					simulationArea[1] = 1655000;
+					simulationArea[2] = -2765000;
+					simulationArea[3] = 8870000;
+					scenarios[5] = new SWE_AsagiScenario(
+							ASAGI_INPUT_DIR "chile_gebco_usgs_500m_bath.nc",
+				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
+				            (float) 28800., simulationArea);
+				}
+
+				SWE_Scenario* newScene = scenarios[5];
+
+				  // define grid size and initial time step
+				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+				  simulation->loadNewScenario(newScene, NULL);
+				  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
+		case SDLK_7:
+			// Load scenario 7
+			{
+				allowStep = paused;
+
+				if (scenarios[6] == 0) {
+					//simulation area
+					float simulationArea[4];
+					simulationArea[0] = -2275000;
+					simulationArea[1] = 1655000;
+					simulationArea[2] = -2265000;
+					simulationArea[3] = 1870000;
+					scenarios[6] = new SWE_AsagiScenario(
+							ASAGI_INPUT_DIR "chile_gebco_usgs_500m_bath.nc",
+				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
+				            (float) 28800., simulationArea);
+				}
+
+				SWE_Scenario* newScene = scenarios[6];
+
+				  // define grid size and initial time step
+				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+				  simulation->loadNewScenario(newScene, NULL);
+				  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
+#endif // ASAGI
 		default:
 			break;
 	}

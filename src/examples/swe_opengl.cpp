@@ -2,6 +2,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cpp for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +24,7 @@
 #include "../opengl/visualization.h"
 #include "../opengl/controller.h"
 #include "../scenarios/SWE_Scenario.h"
-#include "../scenarios/SWE_simple_scenarios_vis.h"
+#include "../scenarios/SWE_simple_scenarios.h"
 #include "../scenarios/SWE_VtkScenarioVisInfo.h"
 #include "../SWE_BlockCUDA.hh"
 // #include "../SWE_RusanovBlockCUDA.hh"
@@ -36,7 +37,7 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 // Number of nodes (not cells) of grid
-#define GRID_XSIZE 401 
+#define GRID_XSIZE 401
 #define GRID_YSIZE 401
 #define WINDOW_TITLE "Shallow Water Equations v1.2"
 
@@ -95,9 +96,8 @@ int main(int argc, char *argv[])
 	if (scene == NULL) { 
 	   // ... if VTK file not specified (or was not read successfully)
 	   // use splashing pool scenario ...
-	   SWE_SplashingPoolScenarioVisInfo* newScene = new SWE_SplashingPoolScenarioVisInfo();
+	   SWE_SplashingPoolScenario* newScene = new SWE_SplashingPoolScenario();
 	   scene = newScene;
-	   visInfo = newScene;
 	};
 	
 	// define grid size and initial time step

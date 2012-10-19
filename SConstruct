@@ -4,6 +4,7 @@
 # This file is part of SWE.
 #
 # @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+# @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
 #
 # @section LICENSE
 #
@@ -81,9 +82,13 @@ vars.AddVariables(
 
   BoolVariable( 'openGL', 'compile with OpenGL visualization', False),
 
+  BoolVariable( 'openGL_instr', 'add instructions to openGL version (requires SDL_ttf)', False),
+
   BoolVariable( 'writeNetCDF', 'write output in the netCDF-format', False ),
 
   BoolVariable( 'asagi', 'use ASAGI', False ),
+
+  PathVariable( 'asagiInputDir', 'location of netcdf input files', '', PathVariable.PathAccept ),
 
   EnumVariable( 'solver', 'Riemann solver', 'augrie',
                 allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid')
@@ -181,9 +186,6 @@ if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
   if 'cudaToolkitDir' in env:
     env['CUDA_TOOLKIT_PATH'] = env['cudaToolkitDir']
     env.Append(RPATH=[os.path.join(env['cudaToolkitDir'], 'lib64')])
-  if 'cudaSDKDir' in env:
-    env['CUDA_SDK_PATH'] = env['cudaSDKDir']
-    env.Append(RPATH=[os.path.join(env['cudaSDKDir'], 'lib64')])
 
   env.Tool('CudaTool', toolpath = ['.'])
   
@@ -214,7 +216,11 @@ if env['parallelization'] in ['mpi_with_cuda', 'mpi']:
   env['LINKERFORPROGRAMS'] = 'mpiCC'
 
 if env['openGL'] == True:
-  env.Append(LIBS=['SDL', 'GLU'])
+  env.Append(LIBS=['SDL', 'GL', 'GLU'])
+  if env['openGL_instr'] == True:
+    # We assume that SDL_ttf is in the same directory as SDL
+    env.Append(LIBS=['SDL_ttf'])
+    env.Append(CPPDEFINES=['USESDLTTF'])
 
 # set the compiler flags for libSDL
 if 'libSDLDir' in env:
@@ -234,13 +240,19 @@ if env['asagi'] == True:
   env.Append(CPPDEFINES=['ASAGI'])
   if env['parallelization'] == 'none' or env['parallelization'] == 'cuda':
     env.Append(CPPDEFINES=['ASAGI_NOMPI'])
+    env.Append(LIBS=['asagi_nompi'])
+  else:
+    env.Append(LIBS=['asagi'])
   env.Append(LIBS=['netcdf_c++4'])
-  env.Append(LIBS=['asagi'])
   if 'asagiDir' in env:
     env.Append(CPPPATH=[env['asagiDir']+'/include'])
     env.Append(LIBPATH=[env['asagiDir']+'/lib'])
+    env.Append(RPATH=[os.path.join(env['asagiDir'], 'lib')])
   if 'netCDFDir' in env:
     env.Append(LIBPATH=[env['netCDFDir']+'/lib'])
+    env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
+  if 'asagiInputDir' in env:
+    env.Append(CPPFLAGS=['\'-DASAGI_INPUT_DIR="'+env['asagiInputDir']+'"\''])
 
 # xml runtime parameters
 if env['xmlRuntime'] == True: #TODO

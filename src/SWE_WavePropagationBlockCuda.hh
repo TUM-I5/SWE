@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -64,9 +65,7 @@ class SWE_WavePropagationBlockCuda: public SWE_BlockCUDA {
 
   public:
     // constructor of SWE_WavePropagationBlockCuda
-    SWE_WavePropagationBlockCuda( const float i_offsetX = 0,
-                                  const float i_offsetY = 0,
-                                  const int i_cudaDevice = 0 );
+    SWE_WavePropagationBlockCuda( const int i_cudaDevice = 0 );
 
     // destructor of SWE_WavePropagationBlockCuda
     ~SWE_WavePropagationBlockCuda();

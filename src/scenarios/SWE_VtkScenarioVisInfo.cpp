@@ -103,10 +103,10 @@ SWE_VtkScenarioVisInfo* SWE_VtkScenarioVisInfo::readVtkFile(char const * filenam
                dimx = atoi(values[1].c_str());
                dimy = atoi(values[2].c_str());
                scene = new SWE_VtkScenarioVisInfo(dimx,dimy);
-	       h = scene->h.elemVector();
-	       u = scene->u.elemVector();
-	       v = scene->v.elemVector();
-	       b = scene->b.elemVector();
+               h = scene->h.elemVector();
+               u = scene->u.elemVector();
+               v = scene->v.elemVector();
+               b = scene->b.elemVector();
                state = 5;
             }
          } 

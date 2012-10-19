@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader, Kaveh Rahnema, Tobias Schnabel
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -56,9 +57,8 @@
  * generated.
  *
  */
-SWE_Block::SWE_Block(float _offsetX, float _offsetY) 
-: h(nx+2,ny+2), hu(nx+2,ny+2), hv(nx+2,ny+2), b(nx+2,ny+2),
-  offsetX(_offsetX), offsetY(_offsetY)
+SWE_Block::SWE_Block()
+: h(nx+2,ny+2), hu(nx+2,ny+2), hv(nx+2,ny+2), b(nx+2,ny+2)
 {
   // set WALL as default boundary condition
   for(int i=0; i<4;i++) {
@@ -91,8 +91,11 @@ SWE_Block::~SWE_Block() {
  * @param i_scenario scenario, which is used during the setup.
  * @param i_multipleBlocks are the multiple SWE_blocks?
  */
-void SWE_Block::initScenario( SWE_Scenario &i_scenario,
+void SWE_Block::initScenario( float _offsetX, float _offsetY,
+							  SWE_Scenario &i_scenario,
                               const bool i_multipleBlocks ) {
+	offsetX = _offsetX;
+	offsetY = _offsetY;
 
   // initialize water height and discharge
   for(int i=1; i<=nx; i++)

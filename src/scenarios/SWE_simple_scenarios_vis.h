@@ -4,6 +4,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Michael Bader, Kaveh Rahnema, Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,44 +20,15 @@
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
 
-#include <math.h>
-
-#include "SWE_simple_scenarios.h"
 #include "SWE_VisInfo.h"
 
 /**
- * Scenario "Radial Dam Break":
- * elevated water in the center of the domain
+ * VisInfo "Bathymetry Dam Break":
+ * uniform water depth, but elevated bathymetry in the center of the domain
+ * Set bathymetry offset hence it is visible in the screen
  */
-class SWE_RadialDamBreakScenarioVisInfo 
-: public SWE_RadialDamBreakScenario,
-  public SWE_VisInfo {
-
-  virtual float waterVerticalScaling() { return 5.0f; };
-  /* use inherited default implementations */
+class SWE_BathymetryDamBreakVisInfo : public SWE_VisInfo {
+	float bathyVerticalOffset() { return 2500.0f; };
 };
-
-/**
- * Scenario "Splashing Pool with custom scaling":
- * intial water surface has a fixed slope (diagonal to x,y)
- * shows how to use custom scaling to enhance visualization 
- * results
- */
-class SWE_SplashingPoolScenarioVisInfo 
- : public SWE_SplashingPoolScenario, 
-   public SWE_VisInfo {
-
-  public:
-
-    float waterDistanceFromGround() { return 9.0f; };
-    float waterVerticalScaling() { return 5.0f; };
-    float bathyVerticalCenter() { return 0.0f; };
-    float bathyDistanceFromGround() { return 0.0f; };
-    float bathyVerticalScaling() { return 0.0f; };
-
-    virtual BoundaryType getBoundaryType(BoundaryEdge edge) { return OUTFLOW; };
-};
-
-
 
 #endif

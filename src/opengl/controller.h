@@ -4,6 +4,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,10 +23,15 @@
 #include "simulation.h"
 #include "visualization.h"
 
+/** The number of different scenarios */
+#define SCENARIO_COUNT 7
+
 class Controller {
 public:
 	Controller(Simulation* sim, Visualization* vis);
 	
+	virtual ~Controller();
+
 	// Process new events
 	bool handleEvents();
 
@@ -44,6 +50,10 @@ private:
 	Simulation* simulation;
 	Visualization* visualization;
 	
+	/** Store scenarios, thus we only have to create them once */
+	SWE_Scenario *scenarios[SCENARIO_COUNT];
+	SWE_VisInfo *visInfos[SCENARIO_COUNT];
+
 	// Handle keyboard events
 	bool handleKeyPress( SDL_keysym *keysym);
 };

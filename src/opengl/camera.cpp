@@ -2,6 +2,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,23 +26,15 @@
 	@param window_title		title of the current window
 
 */
-Camera::Camera(float view_distance, const char* window_title) {
+Camera::Camera(float _view_distance, const char* window_title)
+	: view_distance(_view_distance)
+{
 	// Initialize member variables
-	cameraX = -0.3f;
-	cameraY = 1.0f;
-	cameraZ = 2.0f;
-	objectX = 0.0f;
-	objectY = 0.0f;
-	objectZ = 0.0f;
-	angleX = 0.0f;
-	angleY = 0.0f;
-	zoomfactor = 0.85f*view_distance;
+
 	win_title = window_title;
-	frames = 0;
-	lastTime = 0;
-	oldMouseX = 0;
-	oldMouseY = 0;
 	
+	reset();
+
 	// Reset framebuffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
@@ -73,6 +66,23 @@ void Camera::setCamera() {
 	// by OpenGL
 	GLfloat LightPosition[]=	{ 1.0f, 1.0f, 0.0f, 0.0f };
 	glLightfv(GL_LIGHT0, GL_POSITION,LightPosition);	
+}
+
+void Camera::reset()
+{
+	cameraX = -0.3f;
+	cameraY = 1.0f;
+	cameraZ = 2.0f;
+	objectX = 0.0f;
+	objectY = 0.0f;
+	objectZ = 0.0f;
+	angleX = 0.0f;
+	angleY = 0.0f;
+	zoomfactor = 0.85f*view_distance;
+	frames = 0;
+	lastTime = 0;
+	oldMouseX = 0;
+	oldMouseY = 0;
 }
 
 /**

@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -30,16 +31,71 @@
 
 #include <cassert>
 #include <string>
+#include <iostream>
+#include <map>
 #include <asagi.h>
 #include "SWE_Scenario.h"
 
+class SWE_AsagiGrid
+{
+private:
+	/** Pointer to the grid in ASAGI */
+	asagi::Grid* _grid;
+	/** Number of scenarios that use this grid */
+	unsigned int _refCount;
+public:
+	SWE_AsagiGrid()
+	{
+		_grid = asagi::Grid::create();
+		_refCount = 0;
+	}
+
+	void open(const std::string &i_filename)
+	{
+		_refCount++;
+
+		if (_refCount > 1)
+			return;
+
+		int l_asagiOpen = _grid->open(i_filename.c_str());
+
+		//open the grid
+		if( l_asagiOpen != 0 ) {
+			std::cout << "Could not open bathymetry file: " << i_filename << std::endl;
+	        std::cout << "Error code: " << l_asagiOpen << std::endl;
+	        assert(false);
+		}
+	}
+
+	void close()
+	{
+		_refCount--;
+
+		if (_refCount > 0)
+			// At least one more scenario is using this grid
+			// -> do nothing
+			return;
+
+		// This grid is no longer used
+		delete _grid;
+	}
+
+	asagi::Grid& grid()
+	{
+		return *_grid;
+	}
+};
+
 class SWE_AsagiScenario: public SWE_Scenario {
 //private:
-    //! pointer to the Asagi bathymetry grid
-    asagi::Grid* bathymetryGrid;
+	/** All Asagi grids */
+	static std::map<std::string, SWE_AsagiGrid> grids;
 
-    //! pointer the the Asagi displacement grid
-    asagi::Grid* displacementGrid;
+    //! the bathymetry grid
+    SWE_AsagiGrid &bathymetryGrid;
+
+    //! the displacement grid
+    SWE_AsagiGrid &displacementGrid;
 
     //! flag whether the displacement is dynamic or static
     const bool dynamicDisplacement;
@@ -77,46 +133,35 @@ class SWE_AsagiScenario: public SWE_Scenario {
                        const float i_simulationArea[4],
                        const bool i_dynamicDisplacement = false ):
                        dynamicDisplacement(i_dynamicDisplacement),
-                       duration(i_duration) {
-                       //create the bathymetry grid
-                       bathymetryGrid = asagi::Grid::create( asagi::Grid::FLOAT );
-                       //create the displacement grid
-                       displacementGrid = asagi::Grid::create( asagi::Grid::FLOAT );
+                       duration(i_duration),
+                       bathymetryGrid(grids[i_bathymetryFile]),
+                       displacementGrid(grids[i_displacementFile])
+  {
 
-      int l_asagiOpen = bathymetryGrid->open(i_bathymetryFile.c_str());
-      //open the bathymetry grid
-      if( l_asagiOpen != 0 ) {
-        std::cout << "Could not open bathymetry file: " << i_bathymetryFile << std::endl;
-        std::cout << "Error code: " << l_asagiOpen << std::endl;
-        assert(false);
-      }
+       // open bathymetry grid
+	   bathymetryGrid.open(i_bathymetryFile);
 
-      l_asagiOpen = displacementGrid->open(i_displacementFile.c_str());
-      //open the displacement grid
-      if( l_asagiOpen != 0 ) {
-        std::cout << "Could not open displacement file: " << i_displacementFile << std::endl;
-        std::cout << "Error code: " << l_asagiOpen << std::endl;
-        assert(false);
-      }
+       // open displacement grid
+      displacementGrid.open(i_displacementFile);
 
 #ifndef NDEBUG
       //read grid information
-      bathymetryRange[0] = bathymetryGrid->getXMin();
-      bathymetryRange[1] = bathymetryGrid->getXMax();
-      bathymetryRange[2] = bathymetryGrid->getYMin();
-      bathymetryRange[3] = bathymetryGrid->getYMax();
+      bathymetryRange[0] = bathymetryGrid.grid().getXMin();
+      bathymetryRange[1] = bathymetryGrid.grid().getXMax();
+      bathymetryRange[2] = bathymetryGrid.grid().getYMin();
+      bathymetryRange[3] = bathymetryGrid.grid().getYMax();
 #endif
 
-      displacementRange[0] = displacementGrid->getXMin();
-      displacementRange[1] = displacementGrid->getXMax();
-      displacementRange[2] = displacementGrid->getYMin();
-      displacementRange[3] = displacementGrid->getYMax();
+      displacementRange[0] = displacementGrid.grid().getXMin();
+      displacementRange[1] = displacementGrid.grid().getXMax();
+      displacementRange[2] = displacementGrid.grid().getYMin();
+      displacementRange[3] = displacementGrid.grid().getYMax();
       if(dynamicDisplacement == false) {
         dynamicDisplacementTimeRange[0] = dynamicDisplacementTimeRange[1] = 0;
       }
       else {
-        dynamicDisplacementTimeRange[0] = displacementGrid->getZMin();
-        dynamicDisplacementTimeRange[1] = displacementGrid->getZMax();
+        dynamicDisplacementTimeRange[0] = displacementGrid.grid().getZMin();
+        dynamicDisplacementTimeRange[1] = displacementGrid.grid().getZMax();
       }
 
       simulationArea[0] = i_simulationArea[0];
@@ -154,8 +199,8 @@ class SWE_AsagiScenario: public SWE_Scenario {
     }
 
     void deleteGrids() {
-      delete bathymetryGrid;
-      delete displacementGrid;
+      bathymetryGrid.close();
+      displacementGrid.close();
     }
 
     //methods from SWE_SCENARIO
@@ -174,7 +219,7 @@ class SWE_AsagiScenario: public SWE_Scenario {
       assert(i_positionY > bathymetryRange[2]);
       assert(i_positionY < bathymetryRange[3]);
 
-      float bathymetryValue = bathymetryGrid->getFloat2D(i_positionX, i_positionY);
+      float bathymetryValue = bathymetryGrid.grid().getFloat2D(i_positionX, i_positionY);
 
       if( bathymetryValue > (float)0. ) {
         return 0.;
@@ -216,7 +261,7 @@ class SWE_AsagiScenario: public SWE_Scenario {
       assert(i_positionY > bathymetryRange[2]);
       assert(i_positionY < bathymetryRange[3]);
 
-      float bathymetryValue = bathymetryGrid->getFloat2D(i_positionX, i_positionY);
+      float bathymetryValue = bathymetryGrid.grid().getFloat2D(i_positionX, i_positionY);
 
       //bathymetryValue = (float) 0.; //TODO: remove: old file format
 
@@ -227,9 +272,9 @@ class SWE_AsagiScenario: public SWE_Scenario {
            i_positionY > displacementRange[2] &&
            i_positionY < displacementRange[3] ) {
         if(dynamicDisplacement == false)
-          displacementValue = displacementGrid->getFloat2D(i_positionX, i_positionY);
+          displacementValue = displacementGrid.grid().getFloat2D(i_positionX, i_positionY);
         else
-          displacementValue = displacementGrid->getFloat3D(i_positionX, i_positionY, i_time);
+          displacementValue = displacementGrid.grid().getFloat3D(i_positionX, i_positionY, i_time);
       }
 
       return bathymetryValue + displacementValue;

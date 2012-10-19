@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader, Kaveh Rahnema, Tobias Schnabel
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -40,11 +41,33 @@ class SWE_RadialDamBreakScenario : public SWE_Scenario {
 
   public:
 
-    float getWaterHeight(float x, float y) { 
-       return ( sqrt( (x-0.5f)*(x-0.5f) + (y-0.5f)*(y-0.5f) ) < 0.1f ) ? 10.5f: 10.0f;
+    float getBathymetry(float x, float y) {
+       return -250.f;
     };
 
+    float getWaterHeight(float x, float y) { 
+       return ( sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 100.f ) ? 253.f: 250.0f;
+    };
+
+	virtual float endSimulation() { return (float) 15; };
+
     virtual BoundaryType getBoundaryType(BoundaryEdge edge) { return OUTFLOW; };
+
+    /** Get the boundary positions
+     *
+     * @param i_edge which edge
+     * @return value in the corresponding dimension
+     */
+    float getBoundaryPos(BoundaryEdge i_edge) {
+       if ( i_edge == BND_LEFT )
+         return (float)0;
+       else if ( i_edge == BND_RIGHT)
+         return (float)1000;
+       else if ( i_edge == BND_BOTTOM )
+         return (float)0;
+       else
+         return (float)1000;
+    };
 };
 
 /**
@@ -56,7 +79,7 @@ class SWE_BathymetryDamBreakScenario : public SWE_Scenario {
   public:
 
     float getBathymetry(float x, float y) { 
-       return ( std::sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 50.f ) ? -250.f: -260.f;
+       return ( std::sqrt( (x-500.f)*(x-500.f) + (y-500.f)*(y-500.f) ) < 50.f ) ? -255.f: -260.f;
     };
     
 	virtual float endSimulation() { return (float) 15; };
@@ -88,7 +111,7 @@ class SWE_BathymetryDamBreakScenario : public SWE_Scenario {
      */
     float getWaterHeight( float i_positionX,
                           float i_positionY ) {
-      return (float) 270;
+      return (float) 260;
     }
 };
 
@@ -119,8 +142,31 @@ class SWE_SplashingPoolScenario : public SWE_Scenario {
 
   public:
 
-    float getWaterHeight(float x, float y) { return 10.0f+(1.0f-(x+y));};
-    float endSimulation() { return 1.0f; };
+    float getBathymetry(float x, float y) {
+       return -250.f;
+    };
+
+    float getWaterHeight(float x, float y) {
+    	return 250.0f+(5.0f-(x+y)/200);
+    };
+
+	virtual float endSimulation() { return (float) 15; };
+
+    /** Get the boundary positions
+     *
+     * @param i_edge which edge
+     * @return value in the corresponding dimension
+     */
+    float getBoundaryPos(BoundaryEdge i_edge) {
+       if ( i_edge == BND_LEFT )
+         return (float)0;
+       else if ( i_edge == BND_RIGHT)
+         return (float)1000;
+       else if ( i_edge == BND_BOTTOM )
+         return (float)0;
+       else
+         return (float)1000;
+    };
 
 };
 
