@@ -4,6 +4,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,6 +26,9 @@
 #include "camera.h"
 #include "simulation.h"
 #include "shader.h"
+#ifdef USESDLTTF
+#include "text.h"
+#endif // USESDLTTF
 
 void checkCUDAError(const char *msg);
 typedef enum RenderMode {
@@ -90,6 +94,12 @@ private:
 
 	// Shader helper class
 	Shader* shaders;
+
+#ifdef USESDLTTF
+	// Text helper class
+	Text* text;
+	int windowHeight;
+#endif // USESDLTTF
 
 	// Helper function
 	int coord(int x, int y, int width = -1);

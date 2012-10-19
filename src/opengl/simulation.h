@@ -4,6 +4,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Michael Bader, Kaveh Rahnema, Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -63,10 +64,10 @@ class Simulation {
     // Maximum of cell sizes
     float maxCellSize;
     // Scaling factors used by visualization
-    float bOffset, bScale, wOffset, wScale, bAverage, wAverage;
-    // Initalize boundaries defined by the scene
+    float bScale, bOffset, wScale;
+    // Initialize boundaries defined by the scene
     void initBoundaries(SWE_Scenario* scene);
-    // Initalize boundaries defined by an input file 
+    // Initialize boundaries defined by an input file
 
     int fileNumber;
     // Use file input as boundary data
@@ -82,14 +83,6 @@ class Simulation {
 
     void updateVisBuffer(float3* _visBuffer);
     void debugVisBuffer(float3* _visBuffer);
-
-    /**
-        Scale function used for visualization 
-    */	
-    __device__ __host__ 
-    static float scaleFunction(float val, float average, float scale, float offset) {
-       return (val - average)*scale + offset;
-    }
 
     static void calculateNormal(float fVert1[], float fVert2[],
 				float fVert3[], float fNormal[]);

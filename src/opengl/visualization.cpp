@@ -2,6 +2,7 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
 // SWE_CUDA is free software: you can redristribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,7 +30,9 @@
 
 */
 Visualization::Visualization(int windowWidth, int windowHeight, const char* window_title, 
-							 int _grid_xsize, int _grid_ysize) {
+							 int _grid_xsize, int _grid_ysize)
+	: windowHeight(windowHeight)
+{
 	// Initialize member variables
 	grid_xsize = _grid_xsize;
 	grid_ysize = _grid_ysize;
@@ -40,6 +43,9 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 	initGLWindow(windowWidth, windowHeight);
 	initGLDefaults();
 	initCUDA();
+#ifdef USESDLTTF
+	text = new Text();
+#endif // USESDLTTF
 	
 	// Load camera and shaders
 	camera = new Camera(_grid_xsize*1.5f, window_title);
@@ -63,6 +69,9 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 Visualization::~Visualization() {
 	delete camera;
 	delete shaders;
+#ifdef USESDLTTF
+	delete text;
+#endif // USESDLTTF
 	SDL_Quit();
 }
 
@@ -90,11 +99,40 @@ void Visualization::renderDisplay() {
 	camera->setCamera();
 	
 	// Draw Scene
-	DrawBottom();
+	//DrawBottom();
 	DrawBathymetry(vboBathymetry, verticesIndex);
 	
 	// Shaded pass
 	DrawWaterSurface(vboWaterSurface, vboNormals, verticesIndex);
+
+#ifdef USESDLTTF
+	text->startTextMode();
+	SDL_Rect location = {5, windowHeight-5, 0, 0};
+	text->showText("Keys:", location);
+	location.y -= location.h;
+#ifdef ASAGI
+	text->showText("  1-7: Select scenario", location);
+#else // ASAGI
+	text->showText("  1-3: Select scenario", location);
+#endif // ASAGI
+	location.y -= location.h;
+	text->showText("  Space: Pause/Resume", location);
+	location.y -= location.h;
+	text->showText("  ->: Next frame (when paused)", location);
+	location.y -= location.h;
+	text->showText("  r: Restart scenario", location);
+	location.y -= location.h;
+	text->showText("Mouse:", location);
+	location.y -= location.h;
+	text->showText("  Left button: rotate", location);
+	location.y -= location.h;
+	text->showText("  Right button: move", location);
+	location.y -= location.h;
+	text->showText("  Middle button: reset camera", location);
+	location.y -= location.h;
+	text->showText("  Wheel: zoom in/out", location);
+	text->endTextMode();
+#endif // USESDLTTF
 
 	// Update framebuffer
 	camera->displayImage();  
@@ -373,16 +411,20 @@ void Visualization::initGLWindow(int width, int height) {
 
 */
 int Visualization::resizeWindow(int newWidth, int newHeight) {
-	if ( SDL_SetVideoMode( newWidth, newHeight, 0, 
-		SDL_OPENGL | SDL_RESIZABLE | SDL_ANYFORMAT ) == NULL ) 
+#ifdef USESDLTTF
+	// We need this, to set the text correctly
+	windowHeight = newHeight;
+#endif // USESDLTTF
+
+	if ( SDL_SetVideoMode( newWidth, newHeight, 0,
+		SDL_OPENGL | SDL_RESIZABLE | SDL_ANYFORMAT ) == NULL )
 	{
 		fprintf( stderr, "Could not get a surface after resize: %s\n", SDL_GetError( ) );
 		return 1;
-	} else {
-		initGLWindow ( newWidth, newHeight );
-		return 0;
 	}
-	initGLWindow(newWidth, newHeight);
+
+	initGLWindow ( newWidth, newHeight );
+	return 0;
 }
 
 /**
@@ -541,8 +583,6 @@ void Visualization::createVertexVBO(GLuint* vboID, int size, struct cudaGraphics
 void Visualization::createIndicesVBO(GLuint* vboID, int xsize, int ysize)
 {
 	// Create an array describing the vertex indices to be drawn
-	xsize = xsize;
-	ysize = ysize;
 
 	int noVertices = (xsize-1)*(ysize-1)*6;
 	if ((xsize < 1) || (ysize < 1)) {
@@ -626,7 +666,6 @@ void Visualization::initCUDA() {
     cudaChooseDevice( &dev, &prop );
     cudaGLSetGLDevice( dev ) ;
 }
-
 
 /**
     Sets current rendering mode

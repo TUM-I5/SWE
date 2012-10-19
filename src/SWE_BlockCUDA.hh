@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader, Kaveh Rahnema, Tobias Schnabel
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -53,7 +54,7 @@ class SWE_BlockCUDA : public SWE_Block {
 
   public:
     // Constructor und Destructor
-    SWE_BlockCUDA(float _offsetX = 0, float _offsetY = 0, const int i_cudaDevice = 0);
+    SWE_BlockCUDA(const int i_cudaDevice = 0);
     virtual ~SWE_BlockCUDA();
     
   // object methods
