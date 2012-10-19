@@ -24,7 +24,7 @@
 #include "visualization.h"
 
 /** The number of different scenarios */
-#define SCENARIO_COUNT 5
+#define SCENARIO_COUNT 7
 
 class Controller {
 public:

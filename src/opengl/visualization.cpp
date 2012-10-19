@@ -111,16 +111,16 @@ void Visualization::renderDisplay() {
 	text->showText("Keys:", location);
 	location.y -= location.h;
 #ifdef ASAGI
-	text->showText("  Scenarios: 1-5", location);
+	text->showText("  1-7: Select scenario", location);
 #else // ASAGI
-	text->showText("  Scenarios: 1-3", location);
+	text->showText("  1-3: Select scenario", location);
 #endif // ASAGI
 	location.y -= location.h;
-	text->showText("  Pause/Resume: Space", location);
+	text->showText("  Space: Pause/Resume", location);
 	location.y -= location.h;
-	text->showText("  Next frame (when paused): ->", location);
+	text->showText("  ->: Next frame (when paused)", location);
 	location.y -= location.h;
-	text->showText("  Reset scenario: r", location);
+	text->showText("  r: Restart scenario", location);
 	location.y -= location.h;
 	text->showText("Mouse:", location);
 	location.y -= location.h;

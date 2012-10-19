@@ -290,6 +290,64 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				  visualization->updateBathymetryVBO(simulation);
 			}
 			break;
+		case SDLK_6:
+			// Load scenario 6
+			{
+				allowStep = paused;
+
+				if (scenarios[5] == 0) {
+					//simulation area
+					float simulationArea[4];
+					simulationArea[0] = -13775000;
+					simulationArea[1] = 1655000;
+					simulationArea[2] = -2765000;
+					simulationArea[3] = 8870000;
+					scenarios[5] = new SWE_AsagiScenario(
+							ASAGI_INPUT_DIR "chile_gebco_usgs_500m_bath.nc",
+				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
+				            (float) 28800., simulationArea);
+				}
+
+				SWE_Scenario* newScene = scenarios[5];
+
+				  // define grid size and initial time step
+				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+				  simulation->loadNewScenario(newScene, NULL);
+				  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
+		case SDLK_7:
+			// Load scenario 7
+			{
+				allowStep = paused;
+
+				if (scenarios[6] == 0) {
+					//simulation area
+					float simulationArea[4];
+					simulationArea[0] = -2275000;
+					simulationArea[1] = 1655000;
+					simulationArea[2] = -2265000;
+					simulationArea[3] = 1870000;
+					scenarios[6] = new SWE_AsagiScenario(
+							ASAGI_INPUT_DIR "chile_gebco_usgs_500m_bath.nc",
+				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
+				            (float) 28800., simulationArea);
+				}
+
+				SWE_Scenario* newScene = scenarios[6];
+
+				  // define grid size and initial time step
+				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
+				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
+				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
+
+				  simulation->loadNewScenario(newScene, NULL);
+				  visualization->updateBathymetryVBO(simulation);
+			}
+			break;
 #endif // ASAGI
 		default:
 			break;
