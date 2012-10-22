@@ -55,8 +55,8 @@ else:
 for i in sourceFiles:
   env.src_files.append(env.Object(i))
 
-# SWE_Block is used in every implementation
-sourceFiles = ['SWE_Block.cpp']
+# SWE_Block and Logger is used in every implementation
+sourceFiles = ['SWE_Block.cpp', 'tools/Logger.cpp']
 
 # OpenGL CPU-files
 if env['openGL'] == True:
@@ -66,7 +66,9 @@ if env['openGL'] == True:
   sourceFiles.append( ['opengl/controller.cpp'] )
   sourceFiles.append( ['opengl/shader.cpp'] )
   sourceFiles.append( ['opengl/visualization.cpp'] )
-  sourceFiles.append( ['opengl/text.cpp'] )
+  sourceFiles.append( ['opengl/vbo.cpp'] )
+  if env['openGL_instr'] == True:
+    sourceFiles.append( ['opengl/text.cpp'] )
 
 # Asagi scenario
 if env['asagi'] == True:

@@ -28,7 +28,8 @@
  * Set bathymetry offset hence it is visible in the screen
  */
 class SWE_BathymetryDamBreakVisInfo : public SWE_VisInfo {
-	float bathyVerticalOffset() { return 2500.0f; };
+public:
+	float bathyVerticalOffset() { return 2450.0f; };
 };
 
 #endif

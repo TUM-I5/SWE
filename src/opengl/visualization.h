@@ -26,6 +26,8 @@
 #include "camera.h"
 #include "simulation.h"
 #include "shader.h"
+#include "vbo.h"
+#include "../scenarios/SWE_VisInfo.h"
 #ifdef USESDLTTF
 #include "text.h"
 #endif // USESDLTTF
@@ -40,7 +42,8 @@ public:
 	// Constructor and Destructor
 	Visualization(int windowWidth, int windowHeight, const char* window_title, int _grid_xsize, int _grid_ysize);
 	~Visualization();
-	void init(Simulation* sim);
+
+	void init(Simulation &sim, SWE_VisInfo *visInfo = 0L);
 	void cleanUp();
 	Camera* camera;
 
@@ -51,49 +54,60 @@ public:
 	// Main rendering function
 	void renderDisplay();
 	
+	// Rescale water
+	void modifyWaterScaling(float factor);
+
 	// Helper functions
 	void setRenderingMode(RenderMode mode);
-	void updateBathymetryVBO(Simulation* sim);
 	void toggleRenderingMode();
 	int resizeWindow(int newWidth, int newHeight);
+
+	static bool isExtensionSupported(const char* szTargetExtension );
 private:	
 	// Init helper functions
 	void initSDL(int windowWidth, int windowHeight);
 	void initGLWindow(int width, int height);
 	void initGLDefaults();
 	void initCUDA();
-	bool IsExtensionSupported(const char* szTargetExtension );
+
+	void updateBathymetryVBO(Simulation &sim);
 
 	// Drawing functions
-	void DrawWaterSurface(GLuint vboID, GLuint vboNormals, GLuint verticesIndex);
-	void DrawBathymetry(GLuint vboID, GLuint verticesIndex);
+	void DrawWaterSurface();
+	void DrawBathymetry();
 	void DrawBottom();
 	int grid_xsize;
 	int grid_ysize;
 
 	// Vertex Buffer objects
-	GLuint vboBathymetry;
-	GLuint verticesIndex;
-	GLuint vboWaterSurface;
-	GLuint vboNormals;
+	VBO vboBathymetry;
+	VBO vboVerticesIndex;
+	VBO vboWaterSurface;
+	VBO vboNormals;
+	// Bathymetry color
+	VBO vboBathColor;
 
 	struct cudaGraphicsResource* cuda_vbo_watersurface;
 	struct cudaGraphicsResource* cuda_vbo_normals;
 
 	// VBO management functions
-	void createIndicesVBO(GLuint* vboID, int xsize, int ysize);
-	void createVertexVBO(GLuint* vboID, int size);
-	void createBathymetryVBO(GLuint* vboID, int size, Simulation* sim);
-	void createVertexVBO(GLuint* vboID, int size, struct cudaGraphicsResource **vbo_res, 
+	void createIndicesVBO(int xsize, int ysize);
+	void createVertexVBO(VBO &vbo, struct cudaGraphicsResource *&vbo_res,
 		unsigned int vbo_res_flags);
-	void deleteVBO(GLuint* vbo);
-	void deleteVBO(GLuint* vbo, struct cudaGraphicsResource *vbo_res);
+
+	void deleteCudaResource(struct cudaGraphicsResource *&vbo_res);
 
 	// Rendering mode
 	RenderMode renderMode;
 
-	// Shader helper class
-	Shader* shaders;
+	// Water/Bathymetry scaling/offset
+	float wScale, bScale, bOffset;
+
+	/** Location of the water scaling in the shader */
+	GLint wScaleLocation;
+
+	// Shaders
+	Shader* waterShader;
 
 #ifdef USESDLTTF
 	// Text helper class
@@ -104,10 +118,10 @@ private:
 	// Helper function
 	int coord(int x, int y, int width = -1);
 
-	// VBO Extension Function Pointers
-	PFNGLGENBUFFERSARBPROC glGenBuffers;					// VBO Name Generation Procedure
-	PFNGLBINDBUFFERARBPROC glBindBuffer;					// VBO Bind Procedure
-	PFNGLBUFFERDATAARBPROC glBufferData;					// VBO Data Loading Procedure
-	PFNGLDELETEBUFFERSARBPROC glDeleteBuffers;			// VBO Deletion Procedure
+	static void height2Color(float height, GLfloat *color);
+	static GLfloat mix(GLfloat a, GLfloat b, float factor)
+	{
+		return a * (1-factor) + b * factor;
+	}
 };
 #endif

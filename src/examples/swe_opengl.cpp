@@ -37,8 +37,8 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 // Number of nodes (not cells) of grid
-#define GRID_XSIZE 401
-#define GRID_YSIZE 401
+#define GRID_XSIZE 801
+#define GRID_YSIZE 801
 #define WINDOW_TITLE "Shallow Water Equations v1.2"
 
 /**
@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
 
 	// Initialize scenario:
 	SWE_Scenario* scene = NULL;
-	SWE_VisInfo* visInfo = NULL;
 	SWE_BlockCUDA* splash = NULL;
 	
 	// If input file specified, then read from VTK file:
@@ -89,7 +88,6 @@ int main(int argc, char *argv[])
 	   SWE_VtkScenarioVisInfo* newScene = SWE_VtkScenarioVisInfo::readVtkFile(argv[1]);
 	   // NOTE: Simulation uses a fixed resolution (independent of VTK file)
            scene = newScene;
-           visInfo = newScene;
            printf("Scenario read from input file %s\n\n", argv[1]);
 	};
 	
@@ -113,9 +111,9 @@ int main(int argc, char *argv[])
 
 	// Initialize simulation
 	printf("Init simulation\n\n");
-	Simulation sim(nx,ny,dx,dy, scene, visInfo, splash); 
+	Simulation sim(nx,ny,dx,dy, scene, splash);
 	printf("Init visualisation\n\n");
-	visualization.init(&sim);
+	visualization.init(sim);
 
 	// Initialize controller
 	Controller controller(&sim, &visualization);

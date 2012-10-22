@@ -23,6 +23,7 @@
 #include "../scenarios/SWE_simple_scenarios_vis.h"
 #ifdef ASAGI
 #include "../scenarios/SWE_AsagiScenario.hpp"
+#include "../scenarios/SWE_AsagiScenario_vis.hpp"
 #endif // ASAGI
 
 /**
@@ -172,6 +173,14 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			// Pause/Resume
 			paused = !paused;
 			break;
+		case SDLK_PLUS:
+			// Increase water scaling
+			visualization->modifyWaterScaling(1.5);
+			break;
+		case SDLK_MINUS:
+			// Decrease water scaling
+			visualization->modifyWaterScaling(1/1.5);
+			break;
 		case SDLK_1:
 			// Load scenario 1
 			{
@@ -187,8 +196,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-			  simulation->loadNewScenario(newScene, NULL);
-			  visualization->updateBathymetryVBO(simulation);
+			  simulation->loadNewScenario(newScene);
+			  visualization->init(*simulation);
 			}
 			break;
 		case SDLK_2:
@@ -208,8 +217,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-			  simulation->loadNewScenario(newScene, visInfos[1]);
-			  visualization->updateBathymetryVBO(simulation);
+			  simulation->loadNewScenario(newScene);
+			  visualization->init(*simulation, visInfos[1]);
 			}
 			break;
 		case SDLK_3:
@@ -227,8 +236,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-			  simulation->loadNewScenario(newScene, NULL);
-			  visualization->updateBathymetryVBO(simulation);
+			  simulation->loadNewScenario(newScene);
+			  visualization->init(*simulation);
 			}
 			break;
 #ifdef ASAGI
@@ -257,8 +266,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-				  simulation->loadNewScenario(newScene, NULL);
-				  visualization->updateBathymetryVBO(simulation);
+				  simulation->loadNewScenario(newScene);
+				  visualization->init(*simulation);
 			}
 			break;
 		case SDLK_5:
@@ -277,6 +286,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 							ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
 				            ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
 				            (float) 28800., simulationArea);
+
+					visInfos[4] = new SWE_AsagiJapanSmallVisInfo();
 				}
 
 				SWE_Scenario* newScene = scenarios[4];
@@ -286,8 +297,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-				  simulation->loadNewScenario(newScene, NULL);
-				  visualization->updateBathymetryVBO(simulation);
+				  simulation->loadNewScenario(newScene);
+				  visualization->init(*simulation, visInfos[4]);
 			}
 			break;
 		case SDLK_6:
@@ -315,8 +326,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-				  simulation->loadNewScenario(newScene, NULL);
-				  visualization->updateBathymetryVBO(simulation);
+				  simulation->loadNewScenario(newScene);
+				  visualization->init(*simulation);
 			}
 			break;
 		case SDLK_7:
@@ -344,8 +355,8 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
 				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
 
-				  simulation->loadNewScenario(newScene, NULL);
-				  visualization->updateBathymetryVBO(simulation);
+				  simulation->loadNewScenario(newScene);
+				  visualization->init(*simulation);
 			}
 			break;
 #endif // ASAGI

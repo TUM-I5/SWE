@@ -33,13 +33,13 @@ class Simulation {
   public:
     // Constructor + Destructor 
     Simulation (int nx, int ny, float dx, float dy, 
-                SWE_Scenario* scene, SWE_VisInfo* visInfo, SWE_BlockCUDA* init_splash);
+                SWE_Scenario* scene, SWE_BlockCUDA* init_splash);
     ~Simulation();
 
     // Restart simulation
     void restart();
     // Load new scenario after initialization
-    void loadNewScenario(SWE_Scenario* scene, SWE_VisInfo* visInfo);
+    void loadNewScenario(SWE_Scenario* scene);
     // Save simulation state to file
     void saveToFile();
     // Return the bathymetry data
@@ -51,6 +51,7 @@ class Simulation {
     void writeDebugOutput(float3* destBuffer = NULL);
 
   protected:
+  public:
 
     // Instance of SWE_BlockCUDA 
     SWE_BlockCUDA* splash;
@@ -63,8 +64,6 @@ class Simulation {
     int isFirstStep;
     // Maximum of cell sizes
     float maxCellSize;
-    // Scaling factors used by visualization
-    float bScale, bOffset, wScale;
     // Initialize boundaries defined by the scene
     void initBoundaries(SWE_Scenario* scene);
     // Initialize boundaries defined by an input file
@@ -79,7 +78,7 @@ class Simulation {
     // Compute normals of the water surface for shading
     void calculateNormals(float3* vertexBuffer, float3* destBuffer);
 
-    void getScalingApproximation(const Float2D& h, const Float2D& b);
+    void getScalingApproximation(float &bScale, float &bOffset, float &wScale);
 
     void updateVisBuffer(float3* _visBuffer);
     void debugVisBuffer(float3* _visBuffer);

@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -152,7 +153,7 @@ class tools::Logger {
      * @param i_largeDelimiter definition of the large delimiter.
      * @param i_indentation definition of the indentation (used in all messages, except welcome, start and finish).
      */
-    Logger( const int i_processRank = 0,
+    Logger( const int i_processRank = -1,
             const std::string i_programName = "SWE",
             const std::string i_welcomeMessage = "Welcome to",
             const std::string i_copyRights =  "\n\nSWE Copyright (C) 2012\n"
@@ -180,9 +181,13 @@ class tools::Logger {
       //set time to zero
       cpuTime = cpuCommTime = wallClockTime = 0.;
 
-      #ifndef USEMPI
-        printWelcomeMessage();
-      #endif
+#ifdef USEMPI
+      // determine local MPI rank
+      MPI_Comm_rank(MPI_COMM_WORLD, &processRank);
+#else
+      processRank = 0;
+      printWelcomeMessage();
+#endif
     }
 
     /**
@@ -503,6 +508,10 @@ class tools::Logger {
                 << i_cpuCommunicationTimeMessage << ": "
                 << cpuCommTime << " seconds"<< std::endl;
     }
+
+  public:
+    /** The logger all classes shoud use */
+    static Logger logger;
 };
 
 

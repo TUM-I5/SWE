@@ -2,8 +2,9 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
-// SWE_CUDA is free software: you can redristribute it and/or modify
+// SWE_CUDA is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
@@ -19,6 +20,8 @@
 
 #include "shader.h"
 
+#include "../tools/Logger.hpp"
+
 /**
     Constructor.
 	Check whether shaders are supported. If yes, load vertex and fragment 
@@ -30,30 +33,43 @@
 								shader code
 	
 */	
-Shader::Shader(char const * vertexShaderFile,  char const * fragmentShaderFile) {
-	shdrSupport = isExtensionSupported("GL_ARB_vertex_shader") 
-					&& isExtensionSupported("GL_ARB_shader_objects")
-					&& isExtensionSupported("GL_ARB_fragment_shader");
+Shader::Shader(char const * vertexShaderFile, char const * fragmentShaderFile)
+{
+	if (!shdrSupport) {
+		// Shaders are either not supported or we did not try yet
+		// This if-statement makes sure, we only load the extensions once
+
+		shdrSupport = isExtensionSupported("GL_ARB_vertex_shader")
+						&& isExtensionSupported("GL_ARB_shader_objects")
+						&& isExtensionSupported("GL_ARB_fragment_shader");
+
+		if (shdrSupport) {
+			tools::Logger::logger.printString("Shaders supported!");
+
+			// Load extensions
+			glCreateShader = (PFNGLCREATESHADERPROC) SDL_GL_GetProcAddress("glCreateShader");
+			glCreateProgram = (PFNGLCREATEPROGRAMPROC) SDL_GL_GetProcAddress("glCreateProgram");
+			glAttachShader = (PFNGLATTACHSHADERPROC)SDL_GL_GetProcAddress("glAttachShader");
+			glCompileShader = (PFNGLCOMPILESHADERPROC)SDL_GL_GetProcAddress("glCompileShader");
+			glUseProgram = (PFNGLUSEPROGRAMPROC)SDL_GL_GetProcAddress("glUseProgram");
+			glDetachShader = (PFNGLDETACHSHADERPROC)SDL_GL_GetProcAddress("glDetachShader");
+			glDeleteShader = (PFNGLDELETESHADERPROC) SDL_GL_GetProcAddress("glDeleteShader");
+			glLinkProgram = (PFNGLLINKPROGRAMPROC)SDL_GL_GetProcAddress("glLinkProgram");
+			glShaderSource = (PFNGLSHADERSOURCEPROC)SDL_GL_GetProcAddress("glShaderSource");
+			glDeleteProgram = (PFNGLDELETEPROGRAMPROC)SDL_GL_GetProcAddress("glDeleteProgram");
+			glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC) SDL_GL_GetProcAddress("glGetUniformLocation");
+			glUniform1f = (PFNGLUNIFORM1FPROC) SDL_GL_GetProcAddress("glUniform1f");
+			glGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC) SDL_GL_GetProcAddress("glGetObjectParameterivARB");
+			glGetShaderiv = (PFNGLGETSHADERIVPROC) SDL_GL_GetProcAddress("glGetShaderiv");
+			glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC) SDL_GL_GetProcAddress("glGetShaderInfoLog");
+			glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC) SDL_GL_GetProcAddress("glGetProgramInfoLog");
+		} else
+			tools::Logger::logger.printString("Shaders are NOT supported! Normal rendering mode");
+	}
 
 	shdrLoaded = false;
 
 	if (shdrSupport) {
-		// Load extensions
-		glCreateShader = (PFNGLCREATESHADERPROC) SDL_GL_GetProcAddress("glCreateShader");
-		glCreateProgram = (PFNGLCREATEPROGRAMPROC) SDL_GL_GetProcAddress("glCreateProgram");
-		glAttachShader = (PFNGLATTACHSHADERPROC)SDL_GL_GetProcAddress("glAttachShader");
-		glCompileShader = (PFNGLCOMPILESHADERPROC)SDL_GL_GetProcAddress("glCompileShader");
-		glUseProgram = (PFNGLUSEPROGRAMPROC)SDL_GL_GetProcAddress("glUseProgram");
-		glDetachShader = (PFNGLDETACHSHADERPROC)SDL_GL_GetProcAddress("glDetachShader");
-		glDeleteShader = (PFNGLDELETESHADERPROC) SDL_GL_GetProcAddress("glDeleteShader");
-		glLinkProgram = (PFNGLLINKPROGRAMPROC)SDL_GL_GetProcAddress("glLinkProgram");
-		glShaderSource = (PFNGLSHADERSOURCEPROC)SDL_GL_GetProcAddress("glShaderSource");
-		glDeleteProgram = (PFNGLDELETEPROGRAMPROC)SDL_GL_GetProcAddress("glDeleteProgram");
-		glGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC) SDL_GL_GetProcAddress("glGetObjectParameterivARB");
-		glGetShaderiv = (PFNGLGETSHADERIVPROC) SDL_GL_GetProcAddress("glGetShaderiv");
-		glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC) SDL_GL_GetProcAddress("glGetShaderInfoLog");
-		glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC) SDL_GL_GetProcAddress("glGetProgramInfoLog");
-
 		// Read shader files
 		bool readSuccess = false;
 		vertexShaderSource = NULL;
@@ -84,7 +100,6 @@ Shader::Shader(char const * vertexShaderFile,  char const * fragmentShaderFile) 
 				shdrLoaded = true;
 			} else {
 				// Errors while compiling shaders
-				shdrSupport = false;
 				glDeleteShader(vertexShader);
 				delete[] vertexShaderSource;
 				glDeleteShader(fragmentShader);
@@ -133,13 +148,6 @@ void Shader::disableShader() {
 	if (shdrLoaded) {
 		glUseProgram(0);
 	}
-}
-
-/**
-	Returns, whether shaders are supported by graphics hardware
-*/
-bool Shader::shadersSupported() {
-	return shdrSupport;
 }
 
 /**
@@ -333,3 +341,23 @@ bool Shader::isProgramLinked(GLuint program, char const * prefix)
 
 	return (linked != 0);
 }
+
+bool Shader::shdrSupport = false;
+
+PFNGLCREATESHADERPROC Shader::glCreateShader;
+PFNGLCREATEPROGRAMPROC Shader::glCreateProgram;
+PFNGLATTACHSHADERPROC Shader::glAttachShader;
+PFNGLCOMPILESHADERPROC Shader::glCompileShader;
+PFNGLUSEPROGRAMPROC Shader::glUseProgram;
+PFNGLDETACHSHADERPROC Shader::glDetachShader;
+PFNGLDELETESHADERPROC Shader::glDeleteShader;
+PFNGLLINKPROGRAMPROC Shader::glLinkProgram;
+PFNGLSHADERSOURCEPROC Shader::glShaderSource;
+PFNGLDELETEPROGRAMPROC Shader::glDeleteProgram;
+PFNGLGETUNIFORMLOCATIONPROC Shader::glGetUniformLocation;
+PFNGLUNIFORM1FPROC Shader::glUniform1f;
+
+PFNGLGETOBJECTPARAMETERIVARBPROC Shader::glGetObjectParameterivARB;
+PFNGLGETSHADERIVPROC Shader::glGetShaderiv;
+PFNGLGETSHADERINFOLOGPROC Shader::glGetShaderInfoLog;
+PFNGLGETPROGRAMINFOLOGPROC Shader::glGetProgramInfoLog;

@@ -31,13 +31,9 @@
 
 #include "SWE_WavePropagationBlockCuda_kernels.hh"
 
-#include <cassert>
-
-#ifndef STATICLOGGER
-#define STATICLOGGER
 #include "tools/Logger.hpp"
-static tools::Logger s_sweLogger;
-#endif
+
+#include <cassert>
 
 // CUDA-C includes
 #include <cuda.h>
@@ -146,7 +142,7 @@ SWE_WavePropagationBlockCuda::~SWE_WavePropagationBlockCuda() {
   cudaFree(hvNetUpdatesAboveD);
 
   // reset the cuda device
-  s_sweLogger.printString("Resetting the CUDA devices");
+  tools::Logger::logger.printString("Resetting the CUDA devices");
   cudaDeviceReset();
 }
 

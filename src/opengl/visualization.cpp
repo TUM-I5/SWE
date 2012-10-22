@@ -20,6 +20,8 @@
 
 #include "visualization.h"
 
+#include "../tools/Logger.hpp"
+
 /**
 	Constructor. All dimensions are node-based, this means a grid consisting of 
 	2x2 cells would have 3x3 nodes.
@@ -38,6 +40,9 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 	grid_ysize = _grid_ysize;
 	renderMode = SHADED;
 
+	cuda_vbo_watersurface = 0L;
+	cuda_vbo_normals = 0L;
+
 	// Initialize rendering
 	initSDL(windowWidth, windowHeight);
 	initGLWindow(windowWidth, windowHeight);
@@ -49,18 +54,23 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 	
 	// Load camera and shaders
 	camera = new Camera(_grid_xsize*1.5f, window_title);
-	shaders = new Shader("vertex.glsl", "fragment.glsl");
-	if (shaders->shadersSupported()) {
-		printf("Shaders supported!\n");
-	} else {
-		printf("Shaders are NOT supported! Normal rendering mode\n");
-	}
-	if (shaders->shadersLoaded()) {
-		printf("Shaders successfully loaded!\n");
+	waterShader = new Shader("vertex.glsl", "fragment.glsl");
+	if (waterShader->shadersLoaded()) {
+		tools::Logger::logger.printString("Water shaders successfully loaded!");
 		renderMode = WATERSHADER;
-	} else {
-		printf("Shaders error while loading shaders\n");
-	}
+	} else
+		tools::Logger::logger.printString("Error while loading water shaders");
+
+	wScaleLocation = waterShader->getUniformLocation("scale");
+
+	// Create openGL buffers
+	vboBathymetry.init();
+	vboVerticesIndex.init();
+	vboWaterSurface.init();
+	vboNormals.init();
+	vboBathColor.init();
+
+	createIndicesVBO(grid_xsize, grid_ysize);
 }
 
 /** 
@@ -68,7 +78,7 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 */
 Visualization::~Visualization() {
 	delete camera;
-	delete shaders;
+	delete waterShader;
 #ifdef USESDLTTF
 	delete text;
 #endif // USESDLTTF
@@ -76,16 +86,39 @@ Visualization::~Visualization() {
 }
 
 /**
+	Allocates memory for vertices and other geometry data.
+
+	@param sim				instance of the simulation class
+*/
+void Visualization::init(Simulation &sim, SWE_VisInfo *visInfo) {
+	updateBathymetryVBO(sim);
+
+	createVertexVBO(vboWaterSurface, cuda_vbo_watersurface, cudaGraphicsMapFlagsNone);
+	createVertexVBO(vboNormals,	cuda_vbo_normals, cudaGraphicsMapFlagsWriteDiscard);
+
+	if (visInfo == 0L) {
+		sim.getScalingApproximation(bScale, bOffset, wScale);
+	} else {
+		bScale = visInfo->bathyVerticalScaling();
+		bOffset = visInfo->bathyVerticalOffset();
+		wScale = visInfo->waterVerticalScaling();
+	}
+}
+
+/**
 	Frees all memory we used for geometry data 
 	Needs to be called before destructor gets called 
 	in order to work correctly
-
 */
 void Visualization::cleanUp() {
-	deleteVBO(&vboWaterSurface, cuda_vbo_watersurface);
-	deleteVBO(&vboNormals, cuda_vbo_normals);
-	deleteVBO(&verticesIndex);
-	deleteVBO(&vboBathymetry);
+	deleteCudaResource(cuda_vbo_watersurface);
+	deleteCudaResource(cuda_vbo_normals);
+
+	vboBathymetry.finialize();
+	vboVerticesIndex.finialize();
+	vboWaterSurface.finialize();
+	vboNormals.finialize();
+	vboBathColor.finialize();
 }
 
 
@@ -100,10 +133,10 @@ void Visualization::renderDisplay() {
 	
 	// Draw Scene
 	//DrawBottom();
-	DrawBathymetry(vboBathymetry, verticesIndex);
+	DrawBathymetry();
 	
 	// Shaded pass
-	DrawWaterSurface(vboWaterSurface, vboNormals, verticesIndex);
+	DrawWaterSurface();
 
 #ifdef USESDLTTF
 	text->startTextMode();
@@ -122,6 +155,8 @@ void Visualization::renderDisplay() {
 	location.y -= location.h;
 	text->showText("  r: Restart scenario", location);
 	location.y -= location.h;
+	text->showText("  +/-: Scale wave height", location);
+	location.y -= location.h;
 	text->showText("Mouse:", location);
 	location.y -= location.h;
 	text->showText("  Left button: rotate", location);
@@ -137,33 +172,31 @@ void Visualization::renderDisplay() {
 	// Update framebuffer
 	camera->displayImage();  
 
+	int errCode = glGetError();
 	// Check for errors
-	if (glGetError() != GL_NO_ERROR) {
-		printf("OpenGL error occured..\n");
+	if (errCode != GL_NO_ERROR) {
+		printf("OpenGL error occured: %s\n", gluErrorString(errCode));
 	}
 }
 
 /**
     Draws the water surface geometry (triangles)
-
-    @param vboID			id of the vertex buffer object storing 
-							the vertex positions
-	@param vboID			id of the array buffer object storing
-							the corresponding normals for each vertex
-	@param verticesIndex	id of the array buffer object storing the 
-							vertex indices in rendering sequence 
-*/
-void Visualization::DrawWaterSurface(GLuint vboID, GLuint vboNormals, GLuint verticesIndex) {
+ */
+void Visualization::DrawWaterSurface()
+{
 	if (renderMode == WATERSHADER) {
 		// Depth pass first
 		glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
 		renderMode = SHADED;
-		DrawWaterSurface(vboID, vboNormals, verticesIndex);
+		DrawWaterSurface();
 		renderMode = WATERSHADER;
 		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 
 		// Now render all visible geometry
-		shaders->enableShader();
+		waterShader->enableShader();
+		// Set shader parameter
+		waterShader->setUniform(wScaleLocation, wScale);
+
 		glEnable(GL_BLEND);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
@@ -180,15 +213,16 @@ void Visualization::DrawWaterSurface(GLuint vboID, GLuint vboNormals, GLuint ver
 	glEnableClientState(GL_VERTEX_ARRAY);
 
 	// Set rendering to VBO mode
-	glBindBuffer(GL_ARRAY_BUFFER,vboNormals);
+	vboNormals.bindBuffer();
 	glNormalPointer(GL_FLOAT, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, vboID);
+	vboWaterSurface.bindBuffer();
     glVertexPointer(3, GL_FLOAT, 0, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, verticesIndex);
-	
+	vboVerticesIndex.bindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
 	// Enable VBO access and render triangles
 	glPushMatrix();
-		glTranslatef(-(grid_xsize-1)/2.0f,0.0f,-(grid_ysize-1)/2.0f);
+		glTranslatef(-(grid_xsize-1)/2.0f, 0.0f, -(grid_ysize-1)/2.0f);
+		glScalef(1.0f, wScale, 1.0f);
 		glColor3f(0.3f*1.2f, 0.45f*1.2f, 0.9f*1.2f);
 		if (renderMode == WIREFRAME)
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -201,22 +235,17 @@ void Visualization::DrawWaterSurface(GLuint vboID, GLuint vboNormals, GLuint ver
 	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_BLEND);
-	shaders->disableShader();
+	waterShader->disableShader();
 
 }
 
 /**
     Draws the bathymetry geometry
+ */
 
-    @param vboID			id of the vertex buffer object storing 
-							the vertex positions
-	@param verticesIndex	id of the array buffer object storing the 
-							vertex indices in rendering sequence 
-*/
-
-void Visualization::DrawBathymetry(GLuint vboID, GLuint verticesIndex) {
+void Visualization::DrawBathymetry() {
 	GLsizei stride = 6*sizeof(float);
-	
+
 	// Enable lighting
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_LIGHTING);
@@ -224,19 +253,23 @@ void Visualization::DrawBathymetry(GLuint vboID, GLuint verticesIndex) {
 	// Enable array rendering
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
 	
 	// Bind buffers
-	glBindBuffer(GL_ARRAY_BUFFER, vboID);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, verticesIndex);
-	
+	vboBathymetry.bindBuffer();
+	vboVerticesIndex.bindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
 	// Set VBO pointers
 	const GLvoid* normalOffset = (GLvoid*) 12;
 	glNormalPointer(GL_FLOAT, stride, normalOffset);
 	glVertexPointer(3, GL_FLOAT, stride, 0);
+	vboBathColor.bindBuffer();
+	glColorPointer(3, GL_FLOAT, 0, 0);
 
 	// Render triangles
 	glPushMatrix();
-		glTranslatef(-(grid_xsize-1)/2.0f,0.0f,-(grid_ysize-1)/2.0f);
+		glTranslatef(-(grid_xsize-1)/2.0f, bOffset, -(grid_ysize-1)/2.0f);
+		glScalef(1.0f, bScale, 1.0f);
 		glColor3f(0.4f*1.1f, 0.36f*1.1f, 0.3f*1.1f);
 		glDrawElements(GL_TRIANGLES, 6*(grid_xsize - 1)*(grid_ysize - 1), GL_UNSIGNED_INT, NULL);
 	glPopMatrix();
@@ -244,6 +277,7 @@ void Visualization::DrawBathymetry(GLuint vboID, GLuint verticesIndex) {
 	// Disable array rendering
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
 	glDisable(GL_LIGHTING);
 }
 
@@ -267,22 +301,6 @@ void Visualization::DrawBottom()
 
 
 /**
-	Allocates memory for vertices and other geometry data.
-	
-	@param sim				instance of the simulation class
-
-*/
-void Visualization::init(Simulation* sim) {
-	// Create VBOs
-	createBathymetryVBO(&vboBathymetry, grid_xsize * grid_ysize * 6 * sizeof(float), sim);
-	createIndicesVBO(&verticesIndex, grid_xsize, grid_ysize);
-	createVertexVBO(&vboWaterSurface, grid_xsize * grid_ysize * 3 * sizeof(float), 
-					&cuda_vbo_watersurface, cudaGraphicsMapFlagsNone);	
-	createVertexVBO(&vboNormals ,grid_xsize * grid_ysize * 3 * sizeof(float), 
-					&cuda_vbo_normals, cudaGraphicsMapFlagsWriteDiscard);
-}
-
-/**
 	Returns a pointer to the cuda memory object holding the
 	vertex normals
 */
@@ -304,7 +322,7 @@ cudaGraphicsResource** Visualization::getCudaWaterSurfacePtr() {
     @param	szTargetExtention	string describing the extension to look for	
 
 */	
-bool Visualization::IsExtensionSupported(const char* szTargetExtension )
+bool Visualization::isExtensionSupported(const char* szTargetExtension )
 {
 	const unsigned char *pszExtensions = NULL;
 	const unsigned char *pszStart;
@@ -360,18 +378,6 @@ void Visualization::initSDL(int windowWidth, int windowHeight) {
 		SDL_Quit();
 		exit(2);
 	}
-
-	// Check OpenGL extension(s)
-	if (!IsExtensionSupported( "GL_ARB_vertex_buffer_object" )) {
-		printf("Vertex Buffer Objects Extension not supported! Exit..\n");
-		SDL_Quit();
-		exit(1);
-	}
-	// Load Vertex Buffer Extension
-	glGenBuffers = (PFNGLGENBUFFERSARBPROC) SDL_GL_GetProcAddress("glGenBuffersARB");
-	glBindBuffer = (PFNGLBINDBUFFERARBPROC) SDL_GL_GetProcAddress("glBindBufferARB");
-	glBufferData = (PFNGLBUFFERDATAARBPROC) SDL_GL_GetProcAddress("glBufferDataARB");
-	glDeleteBuffers = (PFNGLDELETEBUFFERSARBPROC) SDL_GL_GetProcAddress("glDeleteBuffersARB");
 	
 }
 
@@ -480,90 +486,51 @@ int Visualization::coord(int x, int y, int width) {
 }
 
 /**
-    Creates a vertex buffer object in OpenGL 
-
-	@param size				size in bytes to allocate
-	@return	vboID			pointer to an integer depicting the id of the 
-							new vertex buffer object 
-
-*/	
-void Visualization::createVertexVBO(GLuint* vboID, int size)
-{
-	// Create 1 buffer object
-	glGenBuffers(1, vboID);
-	glBindBuffer(GL_ARRAY_BUFFER, *vboID);
-	
-	// Initialize buffer object
-	glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
-	
-	// Switch to default buffer
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-/**
-    Creates a vertex buffer object in OpenGL and loads it with the bathymetry
-	data from simulation
-
-
-	@param size				size in bytes to allocate
-	@param sim				pointer to an instance of the simulation class
-	@return	vboID			pointer to an integer depicting the id of the 
-							new vertex buffer object 
-
-*/	
-void Visualization::createBathymetryVBO(GLuint* vboID, int size, Simulation* sim) {
-	GLfloat* vBathy = new GLfloat[size/sizeof(GLfloat)];
-
-	// Create buffer object for vertex indices
-	glGenBuffers(1, vboID);
-	glBindBuffer(GL_ARRAY_BUFFER, *vboID);
-	
-	// Initialize buffer object
-	sim->setBathBuffer(vBathy);
-	glBufferData(GL_ARRAY_BUFFER, size, vBathy, GL_STATIC_DRAW);
-	
-	// Switch to default buffer
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	delete[] vBathy;
-}
-
-/**
     Updates vertex buffer object with new bathymetry
 	data from simulation
 
 	@param sim				pointer to an instance of the simulation class
 
 */	
-void Visualization::updateBathymetryVBO(Simulation* sim) {
-	int size = grid_xsize * grid_ysize * 6 * sizeof(float);
-	GLfloat* vBathy = new GLfloat[size/sizeof(GLfloat)];
+void Visualization::updateBathymetryVBO(Simulation &sim) {
+	int size = grid_xsize * grid_ysize * 6;
 	
-	// Select buffer
-	glBindBuffer(GL_ARRAY_BUFFER, vboBathymetry);
+	GLfloat* vBathy = new GLfloat[size];
+	sim.setBathBuffer(vBathy);
 	
-	// Update buffer object
-	sim->setBathBuffer(vBathy);
-	glBufferData(GL_ARRAY_BUFFER, size, vBathy, GL_STATIC_DRAW);
+	vboBathymetry.setBufferData(size * sizeof(GLfloat), vBathy);
 	
-	// Switch to default buffer
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	delete[] vBathy;
+
+	const Float2D &bathymetry = sim.splash->getBathymetry();
+	GLfloat* color = new GLfloat[grid_xsize*grid_ysize*3];
+	for (int i = 0; i < grid_xsize; i++) {
+		for (int j = 0; j < grid_ysize; j++) {
+			height2Color(bathymetry[i][j], &color[((j*grid_ysize)+i)*3]);
+		}
+	}
+
+	vboBathColor.setBufferData(grid_xsize*grid_ysize*3*sizeof(GLfloat), color);
+	delete[] color;
 }
 /**
     Creates a vertex buffer object in OpenGL and an associated CUDA resource
 
+	@param vbo				Vertex buffer object
 	@param size				size in bytes to allocate 
-	@param	vbo_res_flags   cuda flags for memory access
-	@return	vboID			pointer to an integer depicting the id of the 
-							new vertex buffer object 
+	@param vbo_res_flags   cuda flags for memory access
 	@return	vbo_res			cuda structure created by this function
 	
 */	
-void Visualization::createVertexVBO(GLuint* vboID, int size, struct cudaGraphicsResource **vbo_res, 
+void Visualization::createVertexVBO(VBO &vbo, struct cudaGraphicsResource *&vbo_res,
 	       unsigned int vbo_res_flags)
 {
-	createVertexVBO(vboID, size);
-	cudaGraphicsGLRegisterBuffer(vbo_res, *vboID, vbo_res_flags);
+	deleteCudaResource(vbo_res);
+
+	vbo.setBufferData(grid_xsize * grid_ysize * 3 * sizeof(float), 0L,
+			GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+
+	cudaGraphicsGLRegisterBuffer(&vbo_res, vbo.getName(), vbo_res_flags);
 	checkCUDAError("Couldn't register GL buffer");
 }
 
@@ -574,13 +541,10 @@ void Visualization::createVertexVBO(GLuint* vboID, int size, struct cudaGraphics
 	This array buffer object therefore describes how single grid points (nodes)
 	get transformed into a triangle mesh (tesselation).
 
-    @param	vbo				pointer to an integer depicting the id of a 
-							vertex buffer object 
 	@param	xsize			number of grid nodes (in x-direction)
 	@params ysize			number of grid nodes (in y-direction)
-    @return void			
 */	
-void Visualization::createIndicesVBO(GLuint* vboID, int xsize, int ysize)
+void Visualization::createIndicesVBO(int xsize, int ysize)
 {
 	// Create an array describing the vertex indices to be drawn
 
@@ -604,45 +568,24 @@ void Visualization::createIndicesVBO(GLuint* vboID, int xsize, int ysize)
 			
 		}
 	}
-
-	// Create buffer object for vertex indices
-	glGenBuffers(1, vboID);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *vboID);
 	
 	// Initialize buffer object
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*noVertices, vIndices, GL_STATIC_DRAW);
+	vboVerticesIndex.setBufferData(noVertices * sizeof(GLuint), vIndices,
+			GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 	
-	// Switch to default buffer
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	delete[] vIndices;
 }
 
 /**
-    Frees memory used by a vertex buffer object
-
-    @param	vbo				pointer to an integer depicting the id of a 
-							vertex buffer object 
-*/	
-void Visualization::deleteVBO(GLuint* vbo)
-{
-    if (vbo) {
-		glBindBuffer(1, *vbo);
-		glDeleteBuffers(1, vbo);
-		*vbo = 0;
-    }
-}
-/**
     Frees memory used by a vertex buffer object and a CUDA resource
 
-    @param	vbo				pointer to an integer depicting the id of a 
-							vertex buffer object 
 	@param	vbo_res			pointer to a CUDA resource structure		
 */	
-void Visualization::deleteVBO(GLuint* vbo, struct cudaGraphicsResource *vbo_res)
+void Visualization::deleteCudaResource(struct cudaGraphicsResource *&vbo_res)
 {
-    if (vbo) {
+    if (vbo_res != 0L) {
 		cudaGraphicsUnregisterResource(vbo_res);
-		deleteVBO(vbo);
+		vbo_res = 0L;
     }
 }
 
@@ -660,11 +603,16 @@ void Visualization::initCUDA() {
 	printf("CUDA Driver Version: %d, Runtime Version: %d\n", driver, runtime);
 	
 	// Select GPU for CUDA and OpenGL
-    memset( &prop, 0, sizeof( cudaDeviceProp ) );
+    memset(&prop, 0, sizeof(cudaDeviceProp));
     prop.major = 1;
     prop.minor = 0;
     cudaChooseDevice( &dev, &prop );
     cudaGLSetGLDevice( dev ) ;
+}
+
+void Visualization::modifyWaterScaling(float factor)
+{
+	wScale *= factor;
 }
 
 /**
@@ -689,7 +637,7 @@ void Visualization::toggleRenderingMode() {
 			break;
 		case WIREFRAME:
 			// Skip watershader if shaders not loaded
-			if (shaders->shadersLoaded()) {
+			if (waterShader->shadersLoaded()) {
 				renderMode = WATERSHADER;
 			} else {
 				renderMode = SHADED;
@@ -701,3 +649,51 @@ void Visualization::toggleRenderingMode() {
 	}
 }
 
+void Visualization::height2Color(float height, GLfloat *color)
+{
+	// Workaround "wrong" offset in colormap
+	height += 150;
+
+	if (height < -9000.0) {
+		color[0] = 0.0;
+		color[1] = 0.0;
+		color[2] = 0.2;
+	} else if (height < -8525.07) {
+		color[0] = 0.0;
+		color[1] = 0.0;
+		color[2] = mix(0.2, 1.0, (-9000-height)/(-9000+8525.07));
+	} else if (height < 189) {
+		color[0] = 0;
+		color[1] = mix(0.0, 1.0, (-8525.07-height)/(-8525.07-189));
+		color[2] = 1;
+	} else if (height < 190) {
+		float factor = (189-height)/(189-190);
+		color[0] = 0.0;
+		color[1] = mix(1.0, 0.4, factor);
+		color[2] = mix(1.0, 0.2, factor);
+	} else if (height < 1527.7) {
+		float factor = (190-height)/(190-1527.7);
+		color[0] = mix(0.0, 0.952941, factor);
+		color[1] = mix(0.4, 0.847059, factor);
+		color[2] = mix(0.2, 0.415686, factor);
+	} else if (height < 4219) {
+		float factor = (1527.7-height)/(1527.7-4219);
+		color[0] = mix(0.952941, 0.419577, factor);
+		color[1] = mix(0.847059, 0.184253, factor);
+		color[2] = mix(0.415686, 0.00648508, factor);
+	} else if (height < 4496.04) {
+		float factor = (4219-height)/(4219-4496.04);
+		color[0] = mix(0.419577, 0.983413, factor);
+		color[1] = mix(0.184253, 0.9561, factor);
+		color[2] = mix(0.00648508, 0.955749, factor);
+	} else if (height < 6000) {
+		float factor = (4496.04-height)/(4496.04-6000);
+		color[0] = mix(0.983413, 1.0, factor);
+		color[1] = mix(0.9561, 1.0, factor);
+		color[2] = mix(0.955749, 1.0, factor);
+	} else {
+		color[0] = 1.0;
+		color[1] = 1.0;
+		color[2] = 1.0;
+	}
+}

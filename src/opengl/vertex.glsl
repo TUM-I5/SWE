@@ -18,6 +18,7 @@
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
 
+uniform float scale = 10;
 varying vec3 N;
 varying vec4 ambient;
 varying vec4 worldCoordinates;
@@ -34,7 +35,7 @@ void main()
 	N = normalize(gl_NormalMatrix * gl_Normal);
 	
 	// Save world coordinates	
-	worldCoordinates = gl_Vertex;
+	worldCoordinates = gl_Vertex * scale;
 	
 	// Compute vertex position via internal transform function
 	gl_Position = ftransform();

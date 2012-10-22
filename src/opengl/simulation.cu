@@ -18,7 +18,7 @@
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
 #include "simulation.h"
-#include <stdlib.h>
+#include <cstring>
 #include "../SWE_BlockCUDA.hh"
 
 // Taken form FWaveCuda.h
@@ -37,14 +37,13 @@ const float dryTol = 100.;
 
 */
 Simulation::Simulation (int nx, int ny, float dx, float dy, 
-			SWE_Scenario* scene, SWE_VisInfo* visInfo, 
-                        SWE_BlockCUDA* _splash) 
+			SWE_Scenario* scene, SWE_BlockCUDA* _splash)
 : maxDim( (nx > ny) ? nx : ny ),
   maxCellSize( (dx > dy) ? dx : dy ),
   splash(_splash),
   fileNumber(0)
 {
-	loadNewScenario(scene, visInfo);
+	loadNewScenario(scene);
 }
 
 /** 
@@ -53,19 +52,12 @@ Simulation::Simulation (int nx, int ny, float dx, float dy,
 Simulation::~Simulation () {
 }
 
-void Simulation::loadNewScenario(SWE_Scenario* scene, SWE_VisInfo* visInfo) {
+void Simulation::loadNewScenario(SWE_Scenario* scene) {
 	myScenario = scene;
 	curTime = 0.0f;
 	isFirstStep = 1;
 	useFileInput = false;
-	Simulation::initBoundaries(myScenario);
-	if (visInfo != NULL) {
-		wScale = visInfo->waterVerticalScaling();
-		bScale = visInfo->bathyVerticalScaling();
-		bOffset = visInfo->bathyVerticalOffset();
-	} else {
-		getScalingApproximation(splash->getWaterHeight(), splash->getBathymetry());
-	}
+	initBoundaries(myScenario);
 }
 
 /**
@@ -79,7 +71,7 @@ void Simulation::runCuda(struct cudaGraphicsResource **vbo_resource, struct cuda
 {
     // map OpenGL buffer object for writing from CUDA
     float3 *dptr, *dptr2;
-	size_t num_bytes, num_bytes2; 
+	std::size_t num_bytes, num_bytes2;
     cudaGraphicsMapResources(1, vbo_resource, 0);
     
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes,  
@@ -155,7 +147,7 @@ void Simulation::setBathBuffer(float* bath) {
 	for (int j=0; j<ny+1;j++) {
 		for (int i=0;i<nx+1;i++) {
 				bath[(j*(ny+1) + i)*6] = (float) i;
-				bath[(j*(ny+1) + i)*6 + 1]= bScale * 0.25f * (b[i][j]+b[i+1][j]+b[i][j+1]+b[i+1][j+1]) + bOffset;
+				bath[(j*(ny+1) + i)*6 + 1]= 0.25f * (b[i][j]+b[i+1][j]+b[i][j+1]+b[i+1][j+1]);
 				bath[(j*(ny+1) + i)*6 + 2] = (float) j;
 				bath[(j*(ny+1) + i)*6 + 3] = 0.0f;
 				bath[(j*(ny+1) + i)*6 + 4] = 0.0f;
@@ -248,11 +240,12 @@ void Simulation::calculateWaterSurface(float3* destBuffer) {
 	Gets called before simulation starts and determines the average,
 	mininimum and maximum values of the bathymetry and water surface data.
 	Uses latter values to estimate the scaling factors.
-	@param h	Fload2D array that holds water height
-	@param b	Fload2D array that holds bathymetry data
 */	
-void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b)
+void Simulation::getScalingApproximation(float &bScale, float &bOffset, float &wScale)
 {
+	const Float2D &h = splash->getWaterHeight();
+	const Float2D &b = splash->getBathymetry();
+
 	// Minimum values
 	float minB, minH;
 	// Maximum values
@@ -282,7 +275,7 @@ void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b)
 		}
 	}
 	bOffset = 0;	// This should be !=0 only in some artificial scenarios
-	bScale = -50/minB;
+	bScale = -100/minB;
 	cout << "Scaling of bathymetry: " << bScale << endl;
 
 	if ((maxH - minH) < 0.0001f) {
@@ -290,7 +283,7 @@ void Simulation::getScalingApproximation(const Float2D& h, const Float2D& b)
 	} else {
 		wScale = 1.0f;
 	}
-	wScale = (maxDim/40.0)*wScale;
+	wScale = (maxDim/50.0)*wScale;
 	cout << "Scaling of water level: " << wScale << endl;
 
 }
@@ -353,7 +346,7 @@ float scaleFunction(float val, float scale) {
  */
 __global__
 void kernelCalcVisBuffer(float3* visBuffer, const float* hd, const float* bd, 
-                         int nx, int ny, float scale)
+                         int nx, int ny)
 {
    int i = TILE_SIZE*blockIdx.x + threadIdx.x;
    int j = TILE_SIZE*blockIdx.y + threadIdx.y;
@@ -368,7 +361,7 @@ void kernelCalcVisBuffer(float3* visBuffer, const float* hd, const float* bd,
    	   else
    		   visBuffer[j*(ny+1) + i] = make_float3(
    				   i,
-   				   scale * 0.25 * (
+   				   0.25 * (
    						   hd[index]+hd[index + 1]+ hd[index2] + hd[index2 + 1] +
    						   bd[index]+bd[index + 1]+ bd[index2] + bd[index2 + 1]),
 				   j);
@@ -397,7 +390,7 @@ void Simulation::updateVisBuffer(float3* _visBuffer) {
 	// Interpolate cell centered h-values
 	dim3 dimBlock(TILE_SIZE,TILE_SIZE);
 	dim3 dimGrid((nx+TILE_SIZE)/TILE_SIZE,(ny+TILE_SIZE)/TILE_SIZE);
-	kernelCalcVisBuffer<<<dimGrid,dimBlock>>>(_visBuffer, hd, bd, nx, ny, wScale);
+	kernelCalcVisBuffer<<<dimGrid,dimBlock>>>(_visBuffer, hd, bd, nx, ny);
 }
 /**
 	Function used for debugging. Outputs the current visBuffer 

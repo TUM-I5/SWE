@@ -4,8 +4,9 @@
 // This file is part of SWE_CUDA (see file SWE_Block.cu for details).
 // 
 // Copyright (C) 2010,2011 Tobias Schnabel
+// Copyright (C) 2012      Sebastian Rettenberger
 // 
-// SWE_CUDA is free software: you can redristribute it and/or modify
+// SWE_CUDA is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
@@ -30,17 +31,35 @@ public:
 	Shader(char const * vertexShaderFile,  char const * fragmentShaderFile) ;
 	~Shader();
 
-	// Check if shaders are supported
-	bool shadersSupported();
+	// Check if shaders are loaded
 	bool shadersLoaded();
 
 	// Shader control
 	void enableShader();
 	void disableShader();
 
+	/**
+	 * @return Location of the uniform variable
+	 */
+	GLint getUniformLocation(const char* name)
+	{
+		if (!shdrLoaded)
+			return -1;
+		return glGetUniformLocation(program, name);
+	}
+
+	/**
+	 * Set a uniform variable in the shader
+	 */
+	void setUniform(GLint location, GLfloat value)
+	{
+		if (location < 0)
+			return;
+		glUniform1f(location, value);
+	}
+
 private:	
 	// State flags
-	bool shdrSupport;
 	bool shdrLoaded;
 
 	// Helper functions
@@ -62,23 +81,27 @@ private:
 	// Shaders id
 	GLuint program;
 
+	/** Are shaders supported */
+	static bool shdrSupport;
+
 	// Shader extension function pointers
-	PFNGLCREATESHADERPROC glCreateShader;
-	PFNGLCREATEPROGRAMPROC glCreateProgram;
-	PFNGLATTACHSHADERPROC glAttachShader;
-	PFNGLCOMPILESHADERPROC glCompileShader;
-	PFNGLUSEPROGRAMPROC glUseProgram;
-	PFNGLDETACHSHADERPROC glDetachShader;
-	PFNGLDELETESHADERPROC glDeleteShader;
-	PFNGLLINKPROGRAMPROC glLinkProgram;
-	PFNGLSHADERSOURCEPROC glShaderSource;
-	PFNGLDELETEPROGRAMPROC glDeleteProgram;
+	static PFNGLCREATESHADERPROC glCreateShader;
+	static PFNGLCREATEPROGRAMPROC glCreateProgram;
+	static PFNGLATTACHSHADERPROC glAttachShader;
+	static PFNGLCOMPILESHADERPROC glCompileShader;
+	static PFNGLUSEPROGRAMPROC glUseProgram;
+	static PFNGLDETACHSHADERPROC glDetachShader;
+	static PFNGLDELETESHADERPROC glDeleteShader;
+	static PFNGLLINKPROGRAMPROC glLinkProgram;
+	static PFNGLSHADERSOURCEPROC glShaderSource;
+	static PFNGLDELETEPROGRAMPROC glDeleteProgram;
+	static PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+	static PFNGLUNIFORM1FPROC glUniform1f;
 	
 	// Shader objects extension pointers
-	PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
-	PFNGLGETSHADERIVPROC glGetShaderiv;
-	PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
-	PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
-
+	static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
+	static PFNGLGETSHADERIVPROC glGetShaderiv;
+	static PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+	static PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 };
 #endif
