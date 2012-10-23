@@ -37,8 +37,8 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 // Number of nodes (not cells) of grid
-#define GRID_XSIZE 801
-#define GRID_YSIZE 801
+#define GRID_XSIZE 561
+#define GRID_YSIZE 561
 #define WINDOW_TITLE "Shallow Water Equations v1.2"
 
 /**

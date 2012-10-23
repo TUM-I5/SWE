@@ -372,6 +372,9 @@ void Visualization::initSDL(int windowWidth, int windowHeight) {
 	SDL_putenv(const_cast<char *>("SDL_VIDEO_CENTERED=center"));
 	SDL_WM_SetCaption("Loading...", NULL);
 
+	// Disable swap control
+	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 0);
+
 	// Initialize window with OpenGL support
 	if ( SDL_SetVideoMode(windowWidth, windowHeight, 0, SDL_OPENGL | SDL_RESIZABLE | SDL_ANYFORMAT) == NULL ) {
 		fprintf(stderr, "Unable to create OpenGL screen: %s\n", SDL_GetError());

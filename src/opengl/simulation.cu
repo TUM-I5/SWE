@@ -275,7 +275,7 @@ void Simulation::getScalingApproximation(float &bScale, float &bOffset, float &w
 		}
 	}
 	bOffset = 0;	// This should be !=0 only in some artificial scenarios
-	bScale = -100/minB;
+	bScale = -80/minB;
 	cout << "Scaling of bathymetry: " << bScale << endl;
 
 	if ((maxH - minH) < 0.0001f) {
