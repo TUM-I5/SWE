@@ -50,6 +50,21 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 	initCUDA();
 #ifdef USESDLTTF
 	text = new Text();
+	text->addText("Keys:");
+#ifdef ASAGI
+	text->addText("  1-7: Select scenario");
+#else // ASAGI
+	text->addText("  1-3: Select scenario");
+#endif // ASAGI
+	text->addText("  Space: Pause/Resume");
+	text->addText("  ->: Next frame (when paused)");
+	text->addText("  r: Restart scenario");
+	text->addText("  +/-: Scale wave height");
+	text->addText("Mouse:");
+	text->addText("  Left button: rotate");
+	text->addText("  Right button: move");
+	text->addText("  Middle button: reset camera");
+	text->addText("  Wheel: zoom in/out");
 #endif // USESDLTTF
 	
 	// Load camera and shaders
@@ -141,31 +156,8 @@ void Visualization::renderDisplay() {
 #ifdef USESDLTTF
 	text->startTextMode();
 	SDL_Rect location = {5, windowHeight-5, 0, 0};
-	text->showText("Keys:", location);
-	location.y -= location.h;
-#ifdef ASAGI
-	text->showText("  1-7: Select scenario", location);
-#else // ASAGI
-	text->showText("  1-3: Select scenario", location);
-#endif // ASAGI
-	location.y -= location.h;
-	text->showText("  Space: Pause/Resume", location);
-	location.y -= location.h;
-	text->showText("  ->: Next frame (when paused)", location);
-	location.y -= location.h;
-	text->showText("  r: Restart scenario", location);
-	location.y -= location.h;
-	text->showText("  +/-: Scale wave height", location);
-	location.y -= location.h;
-	text->showText("Mouse:", location);
-	location.y -= location.h;
-	text->showText("  Left button: rotate", location);
-	location.y -= location.h;
-	text->showText("  Right button: move", location);
-	location.y -= location.h;
-	text->showText("  Middle button: reset camera", location);
-	location.y -= location.h;
-	text->showText("  Wheel: zoom in/out", location);
+	while (text->showNextText(location))
+		location.y -= location.h;
 	text->endTextMode();
 #endif // USESDLTTF
 

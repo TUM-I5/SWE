@@ -22,11 +22,23 @@
 
 #include <cmath>
 #include <string>
+#include <vector>
 #include <SDL_ttf.h>
 #include <SDL_opengl.h>
 
 class Text
 {
+private:
+	/** OpenGL textures containing the text */
+	std::vector<GLuint> textures;
+	/** Width of each text */
+	std::vector<int> width;
+	/** Height of each text */
+	std::vector<int> height;
+
+	/** Index of the next text, that should be rendered */
+	int nextText;
+
 public:
 	Text()
 	{
@@ -45,11 +57,42 @@ public:
 
 	~Text()
 	{
+		// We assume that std::vector is just an array ...
+		glDeleteTextures(textures.size(), &textures[0]);
+
 		instances--;
 
 		if (instances == 0) {
 			TTF_CloseFont(font);
 			TTF_Quit();
+		}
+	}
+
+	void addText(const char* text)
+	{
+		if (!font)
+			return;
+
+		// Draw string
+		SDL_Color black = {0, 0, 0, 255};
+		SDL_Surface* surf = TTF_RenderText_Blended(font, text, black);
+
+		if (surf) {
+			GLuint texture;
+
+			/* Tell GL about our new texture */
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, surf->w, surf->h, 0, GL_BGRA,
+					GL_UNSIGNED_BYTE, surf->pixels);
+
+			width.push_back(surf->w);
+			height.push_back(surf->h);
+
+			textures.push_back(texture);
+
+			/* Clean up */
+			SDL_FreeSurface(surf);
 		}
 	}
 
@@ -70,68 +113,60 @@ public:
 		glLoadIdentity();
 		glDisable(GL_DEPTH_TEST);
 	    glEnable(GL_BLEND);
+		glEnable(GL_TEXTURE_2D);
 	    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+
+	    nextText = 0;
 	}
 
-	void showText(const char* text, SDL_Rect &location)
+	/**
+	 * @return True there are more textures
+	 */
+	bool showNextText(SDL_Rect &location)
 	{
 		if (!font)
-			return;
+			return false;
 
-		// Draw string
-		SDL_Color black = {0, 0, 0, 255};
-		SDL_Surface* surf = TTF_RenderText_Blended(font, text, black);
+		if (nextText >= textures.size())
+			// No more textures to show
+			return false;
 
-		if (surf) {
-			unsigned int texture;
+		/* GL_NEAREST looks horrible, if scaled... */
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			/* Tell GL about our new texture */
-			glGenTextures(1, &texture);
-			glBindTexture(GL_TEXTURE_2D, texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, 4, surf->w, surf->h, 0, GL_BGRA,
-					GL_UNSIGNED_BYTE, surf->pixels);
+		/* prepare to render our texture */
+		glBindTexture(GL_TEXTURE_2D, textures[nextText]);
 
-			/* GL_NEAREST looks horrible, if scaled... */
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		/* Draw a quad at location */
+		glBegin(GL_QUADS);
+			/* Recall that the origin is in the lower-left corner
+			   That is why the TexCoords specify different corners
+			   than the Vertex coords seem to. */
+			glTexCoord2f(0.0f, 1.0f);
+				glVertex2f(location.x, location.y - height[nextText]);
+			glTexCoord2f(1.0f, 1.0f);
+				glVertex2f(location.x + width[nextText], location.y - height[nextText]);
+			glTexCoord2f(1.0f, 0.0f);
+				glVertex2f(location.x + width[nextText], location.y);
+			glTexCoord2f(0.0f, 0.0f);
+				glVertex2f(location.x, location.y);
+		glEnd();
 
-			/* prepare to render our texture */
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, texture);
-			glColor3f(1.0f, 1.0f, 1.0f);
+		/* return the deltas in the unused w,h part of the rect */
+		location.w = width[nextText];
+		location.h = height[nextText];
 
-			/* Draw a quad at location */
-			glBegin(GL_QUADS);
-				/* Recall that the origin is in the lower-left corner
-				   That is why the TexCoords specify different corners
-				   than the Vertex coords seem to. */
-				glTexCoord2f(0.0f, 1.0f);
-					glVertex2f(location.x, location.y - surf->h);
-				glTexCoord2f(1.0f, 1.0f);
-					glVertex2f(location.x + surf->w, location.y - surf->h);
-				glTexCoord2f(1.0f, 0.0f);
-					glVertex2f(location.x + surf->w, location.y);
-				glTexCoord2f(0.0f, 0.0f);
-					glVertex2f(location.x, location.y);
-			glEnd();
+		nextText++;
 
-			/* Bad things happen if we delete the texture before it finishes */
-			glFinish();
-
-			/* return the deltas in the unused w,h part of the rect */
-			location.w = surf->w;
-			location.h = surf->h;
-
-			/* Clean up */
-			SDL_FreeSurface(surf);
-			glDeleteTextures(1, &texture);
-		}
+		return nextText < textures.size();
 	}
 
 	void endTextMode()
 	{
 		// Disable 2D mode
 		glDisable(GL_BLEND);
+		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_DEPTH_TEST);
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
