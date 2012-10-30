@@ -29,7 +29,7 @@
  */
 class SWE_BathymetryDamBreakVisInfo : public SWE_VisInfo {
 public:
-	float bathyVerticalOffset() { return 2450.0f; };
+	float bathyVerticalOffset() { return 245.0f; };
 };
 
 #endif

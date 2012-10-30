@@ -213,8 +213,8 @@ void Visualization::DrawWaterSurface()
 
 	// Enable VBO access and render triangles
 	glPushMatrix();
-		glTranslatef(-(grid_xsize-1)/2.0f, 0.0f, -(grid_ysize-1)/2.0f);
 		glScalef(1.0f, wScale, 1.0f);
+		glTranslatef(-(grid_xsize-1)/2.0f, 0.0f, -(grid_ysize-1)/2.0f);
 		glColor3f(0.3f*1.2f, 0.45f*1.2f, 0.9f*1.2f);
 		if (renderMode == WIREFRAME)
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -260,8 +260,8 @@ void Visualization::DrawBathymetry() {
 
 	// Render triangles
 	glPushMatrix();
-		glTranslatef(-(grid_xsize-1)/2.0f, bOffset, -(grid_ysize-1)/2.0f);
 		glScalef(1.0f, bScale, 1.0f);
+		glTranslatef(-(grid_xsize-1)/2.0f, bOffset, -(grid_ysize-1)/2.0f);
 		glColor3f(0.4f*1.1f, 0.36f*1.1f, 0.3f*1.1f);
 		glDrawElements(GL_TRIANGLES, 6*(grid_xsize - 1)*(grid_ysize - 1), GL_UNSIGNED_INT, NULL);
 	glPopMatrix();
