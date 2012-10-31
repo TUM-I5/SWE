@@ -20,7 +20,7 @@
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
 
-#include "SWE_VisInfo.h"
+#include "SWE_VisInfo.hh"
 
 /**
  * VisInfo "Bathymetry Dam Break":

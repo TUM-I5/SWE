@@ -24,7 +24,7 @@
 
 #include "../SWE_BlockCUDA.hh"
 #include "../scenarios/SWE_Scenario.h"
-#include "../scenarios/SWE_VisInfo.h"
+#include "../scenarios/SWE_VisInfo.hh"
 
 void checkCUDAError(const char *msg);
 

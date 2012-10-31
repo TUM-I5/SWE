@@ -28,7 +28,7 @@
 #ifndef SWEASAGISCENARIO_VIS_HPP_
 #define SWEASAGISCENARIO_VIS_HPP_
 
-#include "SWE_VisInfo.h"
+#include "SWE_VisInfo.hh"
 
 class SWE_AsagiJapanSmallVisInfo : public SWE_VisInfo
 {
