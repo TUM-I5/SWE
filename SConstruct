@@ -110,7 +110,8 @@ vars.AddVariables(
 )
 
 # set environment
-env = Environment(variables=vars)
+env = Environment(ENV = {'PATH': os.environ['PATH']},
+        variables=vars)
 
 # generate help text
 Help(vars.GenerateHelpText(env))
