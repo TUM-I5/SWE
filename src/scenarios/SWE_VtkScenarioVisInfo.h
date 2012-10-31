@@ -21,7 +21,7 @@
 
 #include "../tools/help.hh"
 #include "SWE_VtkScenario.h"
-#include "SWE_VisInfo.h"
+#include "SWE_VisInfo.hh"
 
 /**
  * Scenario "VTK File" incl. info for visualisation:
