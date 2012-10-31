@@ -78,9 +78,8 @@
  *   ***********
  * </pre>
  */
-SWE_WavePropagationBlock::SWE_WavePropagationBlock( float _offsetX,
-                                                    float _offsetY ):
-  SWE_Block(_offsetX,_offsetY),
+SWE_WavePropagationBlock::SWE_WavePropagationBlock():
+  SWE_Block(),
   hNetUpdatesLeft  (nx+1, ny),
   hNetUpdatesRight (nx+1, ny),
   huNetUpdatesLeft (nx+1, ny),

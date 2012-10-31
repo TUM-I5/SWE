@@ -156,13 +156,13 @@ int main( int argc, char** argv ) {
 
   // create a single wave propagation block
   #ifndef CUDA
-  SWE_WavePropagationBlock l_wavePropgationBlock(l_originX, l_originY);
+  SWE_WavePropagationBlock l_wavePropgationBlock;
   #else
-  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_originX, l_originY);
+  SWE_WavePropagationBlockCuda l_wavePropgationBlock;
   #endif
 
   // initialize the wave propgation block
-  l_wavePropgationBlock.initScenario(l_scenario);
+  l_wavePropgationBlock.initScenario(l_originX, l_originY, l_scenario);
 
 
   //! time when the simulation ends.

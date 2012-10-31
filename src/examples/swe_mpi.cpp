@@ -243,7 +243,7 @@ int main( int argc, char** argv ) {
 
   // create a single wave propagation block
   #ifndef CUDA
-  SWE_WavePropagationBlock l_wavePropgationBlock(l_originX, l_originY);
+  SWE_WavePropagationBlock l_wavePropgationBlock;
   #else
   //! number of CUDA devices per node TODO: hardcoded
   int l_cudaDevicesPerNode = 7;
@@ -251,11 +251,11 @@ int main( int argc, char** argv ) {
   //! the id of the node local GPU
   int l_cudaDeviceId = l_mpiRank % l_cudaDevicesPerNode;
 
-  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_originX, l_originY, l_cudaDeviceId);
+  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_cudaDeviceId);
   #endif
 
   // initialize the wave propgation block
-  l_wavePropgationBlock.initScenario( l_scenario, true );
+  l_wavePropgationBlock.initScenario(l_originX, l_originY, l_scenario, true);
 
   //! time when the simulation ends.
   float l_endSimulation = l_scenario.endSimulation();

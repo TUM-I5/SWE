@@ -114,7 +114,7 @@ class SWE_WavePropagationBlock: public SWE_Block {
 
   public:
     //constructor of a SWE_WavePropagationBlock.
-    SWE_WavePropagationBlock( float _offsetX = (float)0., float _offsetY = (float)0. );
+    SWE_WavePropagationBlock();
 
     //executes a single timestep.
     virtual void simulateTimestep(float dt);
