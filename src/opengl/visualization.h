@@ -27,7 +27,7 @@
 #include "simulation.h"
 #include "shader.h"
 #include "vbo.h"
-#include "../scenarios/SWE_VisInfo.h"
+#include "../scenarios/SWE_VisInfo.hh"
 #ifdef USESDLTTF
 #include "text.h"
 #endif // USESDLTTF
