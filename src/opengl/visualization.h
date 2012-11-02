@@ -87,6 +87,17 @@ private:
 	// Bathymetry color
 	VBO vboBathColor;
 
+	/**
+	 * When using trinagle strip mode, this array hold the start
+	 * index of each strip
+	 */
+	GLvoid** indicesOffset;
+	/**
+	 * When using triangle strip mode, this array holds the length
+	 * of each stripe. All our strips have equal length.
+	 */
+	GLsizei* indicesCount;
+
 	struct cudaGraphicsResource* cuda_vbo_watersurface;
 	struct cudaGraphicsResource* cuda_vbo_normals;
 
@@ -123,5 +134,7 @@ private:
 	{
 		return a * (1-factor) + b * factor;
 	}
+
+	static PFNGLPRIMITIVERESTARTINDEXNVPROC glPrimitiveRestartIndexNV;
 };
 #endif

@@ -19,8 +19,9 @@
 // =====================================================================
 
 #include "visualization.h"
-
 #include "../tools/Logger.hpp"
+
+#include <limits>
 
 /**
 	Constructor. All dimensions are node-based, this means a grid consisting of 
@@ -33,7 +34,9 @@
 */
 Visualization::Visualization(int windowWidth, int windowHeight, const char* window_title, 
 							 int _grid_xsize, int _grid_ysize)
-	: windowHeight(windowHeight)
+	: windowHeight(windowHeight),
+	  indicesOffset(0L),
+	  indicesCount(0L)
 {
 	// Initialize member variables
 	grid_xsize = _grid_xsize;
@@ -94,9 +97,14 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 Visualization::~Visualization() {
 	delete camera;
 	delete waterShader;
+
 #ifdef USESDLTTF
 	delete text;
 #endif // USESDLTTF
+
+	delete [] indicesOffset;
+	delete [] indicesCount;
+
 	SDL_Quit();
 }
 
@@ -218,7 +226,16 @@ void Visualization::DrawWaterSurface()
 		glColor3f(0.3f*1.2f, 0.45f*1.2f, 0.9f*1.2f);
 		if (renderMode == WIREFRAME)
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-		glDrawElements(GL_TRIANGLES, 6*(grid_xsize - 1)*(grid_ysize - 1), GL_UNSIGNED_INT, NULL);
+
+		if (glPrimitiveRestartIndexNV) {
+//			glEnableClientState(GL_PRIMITIVE_RESTART_NV);
+			glDrawElements(GL_TRIANGLE_STRIP, 2*grid_xsize*(grid_ysize-1)+grid_ysize-1,
+					GL_UNSIGNED_INT, 0L);
+
+//			glDisableClientState(GL_PRIMITIVE_RESTART_NV);
+		} else
+			glDrawElements(GL_TRIANGLES, 6*(grid_xsize-1)*(grid_ysize-1), GL_UNSIGNED_INT, NULL);
+
 		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 	glPopMatrix();
 	
@@ -262,8 +279,15 @@ void Visualization::DrawBathymetry() {
 	glPushMatrix();
 		glScalef(1.0f, bScale, 1.0f);
 		glTranslatef(-(grid_xsize-1)/2.0f, bOffset, -(grid_ysize-1)/2.0f);
-		glColor3f(0.4f*1.1f, 0.36f*1.1f, 0.3f*1.1f);
-		glDrawElements(GL_TRIANGLES, 6*(grid_xsize - 1)*(grid_ysize - 1), GL_UNSIGNED_INT, NULL);
+
+		if (glPrimitiveRestartIndexNV) {
+//			glEnableClientState(GL_PRIMITIVE_RESTART_NV);
+			glDrawElements(GL_TRIANGLE_STRIP, 2*grid_xsize*(grid_ysize-1)+grid_ysize-1,
+					GL_UNSIGNED_INT, 0L);
+
+//			glDisableClientState(GL_PRIMITIVE_RESTART_NV);
+		} else
+			glDrawElements(GL_TRIANGLES, 6*(grid_xsize-1)*(grid_ysize-1), GL_UNSIGNED_INT, NULL);
 	glPopMatrix();
 
 	// Disable array rendering
@@ -465,6 +489,16 @@ void Visualization::initGLDefaults() {
 	glEnable(GL_LIGHT0);	
 	glEnable(GL_NORMALIZE);
 	glDisable(GL_LIGHTING);
+
+	glPrimitiveRestartIndexNV = (PFNGLPRIMITIVERESTARTINDEXNVPROC) SDL_GL_GetProcAddress("glPrimitiveRestartIndexNV");
+	if (glPrimitiveRestartIndexNV) {
+		glPrimitiveRestartIndexNV(std::numeric_limits<GLuint>::max());
+		glEnableClientState(GL_PRIMITIVE_RESTART_NV);
+	} else {
+		tools::Logger::logger.printString("glPrimitiveRestartIndexNV not found");
+		tools::Logger::logger.printString("Can not use tringular strips");
+	}
+	// TODO: Add support for glPrimitiveRestartIndex (OpenGL 3.1)
 }
 
 /**
@@ -542,25 +576,36 @@ void Visualization::createVertexVBO(VBO &vbo, struct cudaGraphicsResource *&vbo_
 void Visualization::createIndicesVBO(int xsize, int ysize)
 {
 	// Create an array describing the vertex indices to be drawn
+	int noVertices;
+	if (glPrimitiveRestartIndexNV)
+		noVertices = (xsize)*(ysize-1)*2 + ysize - 1;
+	else
+		noVertices = (xsize-1)*(ysize-1)*6;
 
-	int noVertices = (xsize-1)*(ysize-1)*6;
-	if ((xsize < 1) || (ysize < 1)) {
-		noVertices = 0;
-	}
 	GLuint* vIndices = new GLuint[noVertices];
 
-	for(int y=0; y < ysize - 1; y++)
-	{
-		for(int x=0; x < xsize - 1; x++)
-		{
-			// Create tessellation of the grid
-			vIndices[coord(x,y, xsize - 1)*6] = coord(x,y);
-			vIndices[coord(x,y, xsize - 1)*6 + 1] = coord(x+1,y+1);
-			vIndices[coord(x,y, xsize - 1)*6 + 2] = coord(x,y+1);
-			vIndices[coord(x,y, xsize - 1)*6 + 3] = coord(x,y);
-			vIndices[coord(x,y, xsize - 1)*6 + 4] = coord(x+1,y);
-			vIndices[coord(x,y, xsize - 1)*6 + 5] = coord(x+1,y+1);
-			
+	// Create tessellation of the grid
+	if (glPrimitiveRestartIndexNV) {
+		for (int y = 0; y < ysize - 1; y++) {
+			for (int x = 0; x < xsize; x++) {
+				vIndices[coord(x, y, xsize)*2 + y] = coord(x, y);
+				vIndices[coord(x, y, xsize)*2 + 1 + y] = coord(x, y+1);
+			}
+
+			// Add restart flag
+			vIndices[coord(0, y+1, xsize)*2 + y] = std::numeric_limits<GLuint>::max();
+		}
+
+	} else {
+		for(int y = 0; y < ysize - 1; y++) {
+			for(int x = 0; x < xsize - 1; x++) {
+				vIndices[coord(x,y, xsize - 1)*6] = coord(x,y);
+				vIndices[coord(x,y, xsize - 1)*6 + 1] = coord(x+1,y+1);
+				vIndices[coord(x,y, xsize - 1)*6 + 2] = coord(x,y+1);
+				vIndices[coord(x,y, xsize - 1)*6 + 3] = coord(x,y);
+				vIndices[coord(x,y, xsize - 1)*6 + 4] = coord(x+1,y);
+				vIndices[coord(x,y, xsize - 1)*6 + 5] = coord(x+1,y+1);
+			}
 		}
 	}
 	
@@ -692,3 +737,5 @@ void Visualization::height2Color(float height, GLfloat *color)
 		color[2] = 1.0;
 	}
 }
+
+PFNGLPRIMITIVERESTARTINDEXNVPROC Visualization::glPrimitiveRestartIndexNV;
