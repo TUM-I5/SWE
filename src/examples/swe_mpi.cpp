@@ -109,15 +109,15 @@ int main( int argc, char** argv ) {
   MPI_Comm_size(MPI_COMM_WORLD,&l_numberOfProcesses);
 
   // initialize a logger for every MPI process
-  tools::Logger l_sweLogger(l_mpiRank);
+  tools::Logger::logger.setProcessRank(l_mpiRank);
 
   // print the welcome message
-  l_sweLogger.printWelcomeMessage();
+  tools::Logger::logger.printWelcomeMessage();
 
   // set current wall clock time within the solver
-  l_sweLogger.initWallClockTime( MPI_Wtime() );
+  tools::Logger::logger.initWallClockTime( MPI_Wtime() );
   //print the number of processes
-  l_sweLogger.printNumberOfProcesses(l_numberOfProcesses);
+  tools::Logger::logger.printNumberOfProcesses(l_numberOfProcesses);
 
   // check if the necessary command line input parameters are given
   #ifndef READXML
@@ -172,8 +172,8 @@ int main( int argc, char** argv ) {
   l_blocksX = l_numberOfProcesses/l_blocksY;
 
   // print information about the grid
-  l_sweLogger.printNumberOfCells(l_nX, l_nY);
-  l_sweLogger.printNumberOfBlocks(l_blocksX, l_blocksY);
+  tools::Logger::logger.printNumberOfCells(l_nX, l_nY);
+  tools::Logger::logger.printNumberOfBlocks(l_blocksX, l_blocksY);
 
 
   //! local position of each MPI process in x- and y-direction.
@@ -228,8 +228,8 @@ int main( int argc, char** argv ) {
   l_dY = (l_scenario.getBoundaryPos(BND_TOP) - l_scenario.getBoundaryPos(BND_BOTTOM) )/l_nY;
 
   // print information about the cell size and local number of cells
-  l_sweLogger.printCellSize(l_dX, l_dY);
-  l_sweLogger.printNumberOfCellsPerProcess(l_nXLocal, l_nYLocal);
+  tools::Logger::logger.printCellSize(l_dX, l_dY);
+  tools::Logger::logger.printNumberOfCellsPerProcess(l_nXLocal, l_nYLocal);
 
   // initialize the grid data and the corresponding static variables
   SWE_Block::initGridData(l_nXLocal,l_nYLocal,l_dX,l_dY);
@@ -272,26 +272,26 @@ int main( int argc, char** argv ) {
    * Connect SWE blocks at boundaries
    */
   // left and right boundaries
-  l_sweLogger.printString("Connecting SWE blocks at left boundaries.");
+  tools::Logger::logger.printString("Connecting SWE blocks at left boundaries.");
   SWE_Block1D* l_leftInflow  = l_wavePropgationBlock.grabGhostLayer(BND_LEFT);
   SWE_Block1D* l_leftOutflow = l_wavePropgationBlock.registerCopyLayer(BND_LEFT);
   if (l_blockPositionX == 0)
     l_wavePropgationBlock.setBoundaryType(BND_LEFT, OUTFLOW);
 
-  l_sweLogger.printString("Connecting SWE blocks at right boundaries.");
+  tools::Logger::logger.printString("Connecting SWE blocks at right boundaries.");
   SWE_Block1D* l_rightInflow  = l_wavePropgationBlock.grabGhostLayer(BND_RIGHT);
   SWE_Block1D* l_rightOutflow = l_wavePropgationBlock.registerCopyLayer(BND_RIGHT);
   if (l_blockPositionX == l_blocksX-1)
     l_wavePropgationBlock.setBoundaryType(BND_RIGHT, OUTFLOW);
 
   // bottom and top boundaries
-  l_sweLogger.printString("Connecting SWE blocks at bottom boundaries.");
+  tools::Logger::logger.printString("Connecting SWE blocks at bottom boundaries.");
   SWE_Block1D* l_bottomInflow  = l_wavePropgationBlock.grabGhostLayer(BND_BOTTOM);
   SWE_Block1D* l_bottomOutflow = l_wavePropgationBlock.registerCopyLayer(BND_BOTTOM);
   if (l_blockPositionY == 0)
     l_wavePropgationBlock.setBoundaryType(BND_BOTTOM, OUTFLOW);
 
-  l_sweLogger.printString("Connecting SWE blocks at top boundaries.");
+  tools::Logger::logger.printString("Connecting SWE blocks at top boundaries.");
   SWE_Block1D* l_topInflow  = l_wavePropgationBlock.grabGhostLayer(BND_TOP);
   SWE_Block1D* l_topOutflow = l_wavePropgationBlock.registerCopyLayer(BND_TOP);
   if (l_blockPositionY == l_blocksY-1)
@@ -350,7 +350,7 @@ int main( int argc, char** argv ) {
   l_topNeighborRank    = (l_blockPositionY < l_blocksY-1) ? l_mpiRank+1 : MPI_PROC_NULL;
 
   // print the MPI grid
-  l_sweLogger.cout() << "neighbors: "
+  tools::Logger::logger.cout() << "neighbors: "
                      << l_leftNeighborRank << " (left), "
                      << l_rightNeighborRank << " (right), "
                      << l_bottomNeighborRank << " (bottom), "
@@ -366,7 +366,7 @@ int main( int argc, char** argv ) {
                   l_mpiRow );
 
   // write the output at time zero
-  l_sweLogger.printOutputTime(0);
+  tools::Logger::logger.printOutputTime(0);
   #ifdef WRITENETCDF
   //boundary size of the ghost layers
   int l_boundarySize[4];
@@ -394,8 +394,8 @@ int main( int argc, char** argv ) {
    * Simulation.
    */
   // print the start message and reset the wall clock time
-  l_sweLogger.printStartMessage();
-  l_sweLogger.initWallClockTime(time(NULL));
+  tools::Logger::logger.printStartMessage();
+  tools::Logger::logger.initWallClockTime(time(NULL));
 
   //! simulation time.
   float l_t = 0.0;
@@ -403,7 +403,7 @@ int main( int argc, char** argv ) {
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
     //reset CPU-Communication clock
-    l_sweLogger.resetCpuCommunicationClockToCurrentTime();
+	  tools::Logger::logger.resetCpuCommunicationClockToCurrentTime();
 
     // do time steps until next checkpoint is reached
     while( l_t < l_checkPoints[c] ) {
@@ -417,7 +417,7 @@ int main( int argc, char** argv ) {
                       l_mpiRow );
 
       // reset the cpu clock
-      l_sweLogger.resetCpuClockToCurrentTime();
+      tools::Logger::logger.resetCpuClockToCurrentTime();
 
       // set values in ghost cells
       l_wavePropgationBlock.setGhostLayer();
@@ -441,15 +441,15 @@ int main( int argc, char** argv ) {
       l_t += l_maxTimeStepWidthGlobal;
 
       // print the current simulation time
-      l_sweLogger.printSimulationTime(l_t);
+      tools::Logger::logger.printSimulationTime(l_t);
     }
 
     // update and reset the cpu time in the logger
-    l_sweLogger.updateCpuTime();
-    l_sweLogger.resetCpuClockToCurrentTime();
+    tools::Logger::logger.updateCpuTime();
+    tools::Logger::logger.resetCpuClockToCurrentTime();
 
     // print current simulation time
-    l_sweLogger.printOutputTime(l_t);
+    tools::Logger::logger.printOutputTime(l_t);
 
     // write output
     #ifdef WRITENETCDF
@@ -467,16 +467,16 @@ int main( int argc, char** argv ) {
    * Finalize.
    */
   // write the statistics message
-  l_sweLogger.printStatisticsMessage();
+  tools::Logger::logger.printStatisticsMessage();
 
   // print the cpu time
-  l_sweLogger.printCpuTime("CPU time");
+  tools::Logger::logger.printCpuTime("CPU time");
 
   // print the wall clock time (includes plotting)
-  l_sweLogger.printWallClockTime(time(NULL));
+  tools::Logger::logger.printWallClockTime(time(NULL));
 
   // print the finish message
-  l_sweLogger.printFinishMessage();
+  tools::Logger::logger.printFinishMessage();
 
   // finalize MPI execution
   MPI_Finalize();

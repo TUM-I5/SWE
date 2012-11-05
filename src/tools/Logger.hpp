@@ -153,7 +153,7 @@ class tools::Logger {
      * @param i_largeDelimiter definition of the large delimiter.
      * @param i_indentation definition of the indentation (used in all messages, except welcome, start and finish).
      */
-    Logger( const int i_processRank = -1,
+    Logger( const int i_processRank = 0,
             const std::string i_programName = "SWE",
             const std::string i_welcomeMessage = "Welcome to",
             const std::string i_copyRights =  "\n\nSWE Copyright (C) 2012\n"
@@ -181,12 +181,11 @@ class tools::Logger {
       //set time to zero
       cpuTime = cpuCommTime = wallClockTime = 0.;
 
-#ifdef USEMPI
-      // determine local MPI rank
-      MPI_Comm_rank(MPI_COMM_WORLD, &processRank);
-#else
-      processRank = 0;
-      printWelcomeMessage();
+#ifndef USEMPI
+      // Since we have one static logger, we do not know the MPI rank in this
+      // constructor. When using MPI, the process rank has to be set first,
+      // before printing the welcome message.
+  	  printWelcomeMessage();
 #endif
     }
 
