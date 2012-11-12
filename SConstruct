@@ -82,7 +82,7 @@ vars.AddVariables(
 
   BoolVariable( 'openGL', 'compile with OpenGL visualization', False),
 
-  BoolVariable( 'openGL_instr', 'add instructions to openGL version (requires SDL_ttf)', False),
+  BoolVariable( 'openGL_instr', 'add instructions to openGL version (requires SDL_ttf)', False ),
 
   BoolVariable( 'writeNetCDF', 'write output in the netCDF-format', False ),
 
@@ -93,6 +93,8 @@ vars.AddVariables(
   EnumVariable( 'solver', 'Riemann solver', 'augrie',
                 allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid')
               ),
+                  
+  BoolVariable( 'showVectorization', 'show loop vectorization (Intel compiler only)', False ),
 
   BoolVariable( 'xmlRuntime', 'use a xml-file for runtime parameters', False )
 )
@@ -183,6 +185,10 @@ elif env['compileMode'] == 'release':
     
 # Other compiler flags (for all compilers)
 env.Append(CCFLAGS=['-fstrict-aliasing'])
+
+# Vectorization?
+if env['compiler'] == 'intel' and env['showVectorization']:
+  env.Append(CCFLAGS=['-vec-report3'])
 
 # set the precompiler variables for the solver
 if env['solver'] == 'fwave':
