@@ -166,6 +166,9 @@ elif env['compileMode'] == 'release':
 
   elif env['compiler'] == 'intel':
     env.Append(CCFLAGS=['-O2'])
+    
+# Other compiler flags (for all compilers)
+env.Append(CCFLAGS=['-fstrict-aliasing'])
 
 # set the precompiler variables for the solver
 if env['solver'] == 'fwave':
