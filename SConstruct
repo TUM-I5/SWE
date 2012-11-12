@@ -143,6 +143,20 @@ if env['parallelization'] != 'cuda' and env['openGL'] == True:
 # precompiler, compiler and linker flags
 #
 
+# Set Intel compiler if selected
+# If compiler is set to gnu, we use the default compiler
+if env['parallelization'] in ['mpi', 'mpi_with_cuda']:
+  # TODO when compilerPath/linkerPath is set, this is overwritten 
+  env['CXX'] = 'mpiCC'
+  if env['compiler'] == 'intel':
+    # Environment variables to switch compiler for different MPI libraries
+    envVars = ['OMPI_CXX', 'MPICH_CXX']
+    for var in envVars:
+      env['ENV'][var] = 'icpc'
+else:
+  if env['compiler'] == 'intel':
+    env['CXX'] = 'icpc'
+
 # eclipse specific flag
 env.Append(CCFLAGS=['-fmessage-length=0'])
 
