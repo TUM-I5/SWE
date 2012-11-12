@@ -94,9 +94,8 @@ public:
         Float2D(int _cols, int _rows) : rows(_rows),cols(_cols)
 	{
 		elem = new float[rows*cols];
-		for(int i=0; i < cols; i++)
-			for(int j=0; j < rows; j++)
-				elem[i*rows+j] = 0;
+		for (int i = 0; i < rows*cols; i++)
+			elem[i];
 	}
 
 	~Float2D()
