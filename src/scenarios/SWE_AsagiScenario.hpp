@@ -30,6 +30,7 @@
 #define SWEASAGISCENARIO_HPP_
 
 #include <cassert>
+#include <cstring>
 #include <string>
 #include <iostream>
 #include <map>
@@ -164,10 +165,7 @@ class SWE_AsagiScenario: public SWE_Scenario {
         dynamicDisplacementTimeRange[1] = displacementGrid.grid().getZMax();
       }
 
-      simulationArea[0] = i_simulationArea[0];
-      simulationArea[1] = i_simulationArea[1];
-      simulationArea[2] = i_simulationArea[2];
-      simulationArea[3] = i_simulationArea[3];
+      memcpy(simulationArea, i_simulationArea, sizeof(simulationArea));
 
 #ifndef NDEBUG
 #ifdef PRINT_ASAGI_INFORMATION
