@@ -346,22 +346,31 @@ void SWE_Block::setBoundaryType( const BoundaryEdge i_edge,
   boundary[i_edge] = i_boundaryType;
   neighbour[i_edge] = i_inflow;
 
+  // TODO unrolling seams to help vectorization, but only for the first 2 loops ...
+
   // set bathymetry values in the ghost layer, if necessary
-  for(int j=0; j<=ny+1; j++) {
-    if( boundary[BND_LEFT] == OUTFLOW || boundary[BND_LEFT] == WALL ) {
-      b[0][j] = b[1][j];
-    }
-    if( boundary[BND_RIGHT] == OUTFLOW || boundary[BND_RIGHT] == WALL ) {
-      b[nx+1][j] = b[nx][j];
-    }
+  float* tmp = b.elemVector();
+  if( boundary[BND_LEFT] == OUTFLOW || boundary[BND_LEFT] == WALL ) {
+//#pragma unroll(4)
+	  for(int j=0; j<=ny+1; j++) {
+		  b[0][j] = b[1][j];
+	  }
   }
-  for(int i=0; i<=nx+1; i++) {
-    if( boundary[BND_BOTTOM] == OUTFLOW || boundary[BND_BOTTOM] == WALL ) {
-      b[i][0] = b[i][1];
-    }
-    if( boundary[BND_TOP] == OUTFLOW || boundary[BND_TOP] == WALL ) {
-      b[i][ny+1] = b[i][ny];
-    }
+  if( boundary[BND_RIGHT] == OUTFLOW || boundary[BND_RIGHT] == WALL ) {
+//#pragma unroll(4)
+	  for(int j=0; j<=ny+1; j++) {
+		  b[nx+1][j] = b[nx][j];
+	  }
+  }
+  if( boundary[BND_BOTTOM] == OUTFLOW || boundary[BND_BOTTOM] == WALL ) {
+	  for(int i=0; i<=nx+1; i++) {
+		  b[i][0] = b[i][1];
+	  }
+  }
+  if( boundary[BND_TOP] == OUTFLOW || boundary[BND_TOP] == WALL ) {
+  	  for(int i=0; i<=nx+1; i++) {
+  		  b[i][ny+1] = b[i][ny];
+  	  }
   }
 
   // synchronize after an external update of the bathymetry
