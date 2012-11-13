@@ -346,21 +346,12 @@ void SWE_Block::setBoundaryType( const BoundaryEdge i_edge,
   boundary[i_edge] = i_boundaryType;
   neighbour[i_edge] = i_inflow;
 
-  // TODO unrolling seams to help vectorization, but only for the first 2 loops ...
-
   // set bathymetry values in the ghost layer, if necessary
-  float* tmp = b.elemVector();
   if( boundary[BND_LEFT] == OUTFLOW || boundary[BND_LEFT] == WALL ) {
-//#pragma unroll(4)
-	  for(int j=0; j<=ny+1; j++) {
-		  b[0][j] = b[1][j];
-	  }
+	  memcpy(b[0], b[1], sizeof(float)*(ny+2));
   }
   if( boundary[BND_RIGHT] == OUTFLOW || boundary[BND_RIGHT] == WALL ) {
-//#pragma unroll(4)
-	  for(int j=0; j<=ny+1; j++) {
-		  b[nx+1][j] = b[nx][j];
-	  }
+	  memcpy(b[nx+1], b[nx], sizeof(float)*(ny+2));
   }
   if( boundary[BND_BOTTOM] == OUTFLOW || boundary[BND_BOTTOM] == WALL ) {
 	  for(int i=0; i<=nx+1; i++) {
