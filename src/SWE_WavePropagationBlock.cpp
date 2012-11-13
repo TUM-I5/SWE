@@ -206,6 +206,8 @@ void SWE_WavePropagationBlock::updateUnknowns(float dt) {
   #pragma omp parallel for
   #endif
   for(int i = 1; i < nx+1; i++) {
+	  // Tell the compiler that he can safely ignore all dependencies in this loop
+	  #pragma ivdep
       for(int j = 1; j < ny+1; j++) {
         h[i][j] -=   dt/dx * (hNetUpdatesRight[i-1][j-1] + hNetUpdatesLeft[i][j-1])
                    + dt/dy * (hNetUpdatesAbove[i-1][j-1] + hNetUpdatesBelow[i-1][j]);
@@ -218,10 +220,14 @@ void SWE_WavePropagationBlock::updateUnknowns(float dt) {
 
         //TODO: dryTol
         if(h[i][j] < 0) {
+#ifndef NDEBUG
+          // Only print this warning when debug is enabled.
+          // Otherwise we cannot vectorize this loop
           if(h[i][j] < -0.1) {
             std::cerr << "Warning, negative height: (i,j)=(" << i << "," << j << ")=" << h[i][j] << std::endl;
             std::cerr << "         b: " << b[i][j] << std::endl;
           }
+#endif
           //zero (small) negative depths
           h[i][j] = hu[i][j] = hv[i][j] = 0.;
         }

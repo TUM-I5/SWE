@@ -184,7 +184,7 @@ elif env['compileMode'] == 'release':
     env.Append(CCFLAGS=['-O2'])
     
 # Other compiler flags (for all compilers)
-env.Append(CCFLAGS=['-fstrict-aliasing'])
+env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias'])
 
 # Vectorization?
 if env['compiler'] == 'intel' and env['showVectorization']:
