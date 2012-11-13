@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader, Kaveh Rahnema
+ * @author Sebastian Rettenberger
  *
  * @section LICENSE
  *
@@ -28,6 +29,7 @@
 #ifndef __HELP_HH
 #define __HELP_HH
 
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -95,7 +97,7 @@ public:
 	{
 		elem = new float[rows*cols];
 		for (int i = 0; i < rows*cols; i++)
-			elem[i];
+			elem[i] = 0;
 	}
 
 	~Float2D()
