@@ -53,9 +53,7 @@ public:
 
 	void open(const std::string &i_filename)
 	{
-		_refCount++;
-
-		if (_refCount > 1)
+		if (_refCount > 0)
 			return;
 
 		int l_asagiOpen = _grid->open(i_filename.c_str());
@@ -66,6 +64,8 @@ public:
 	        std::cout << "Error code: " << l_asagiOpen << std::endl;
 	        assert(false);
 		}
+
+		_refCount++;
 	}
 
 	void close()

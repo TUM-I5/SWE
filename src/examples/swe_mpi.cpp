@@ -466,6 +466,11 @@ int main( int argc, char** argv ) {
   /**
    * Finalize.
    */
+#ifdef ASAGI
+  // Free ASAGI resources
+  l_scenario.deleteGrids();
+#endif
+
   // write the statistics message
   tools::Logger::logger.printStatisticsMessage();
 
