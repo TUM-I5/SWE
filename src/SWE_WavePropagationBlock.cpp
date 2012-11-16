@@ -34,11 +34,6 @@
 #include <omp.h>
 #endif
 
-#ifndef PHYSICAL_VECTOR_SIZE
-#define PHYSICAL_VECTOR_SIZE 128
-#endif
-#include <cstdlib>
-
 #if  WAVE_PROPAGATION_SOLVER==4
 /** The number of floats that fit in one vector register */
 #define VECTOR_LENGTH (PHYSICAL_VECTOR_SIZE/8/sizeof(float))
