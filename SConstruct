@@ -215,6 +215,7 @@ if env['compiler'] == 'intel' and env['showVectorization']:
 # Platform
 if env['compiler'] == 'intel' and env['platform'] == 'mic':
   env.Append(CCFLAGS=['-mmic'])
+  env.Append(LINKFLAGS=['-mmic'])
 
 # set the precompiler variables for the solver
 if env['solver'] == 'fwave':
