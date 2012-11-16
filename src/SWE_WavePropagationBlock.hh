@@ -46,6 +46,8 @@
 #include "solvers/AugRie.hpp"
 #elif WAVE_PROPAGATION_SOLVER==3
 #include "solvers/AugRieGeoClaw.hpp"
+#elif WAVE_PROPAGATION_SOLVER==4
+#include "solvers/FWaveVec.hpp"
 #else
 #include "solvers/Hybrid.hpp"
 #endif
@@ -72,6 +74,9 @@ class SWE_WavePropagationBlock: public SWE_Block {
 #elif WAVE_PROPAGATION_SOLVER==3
     //! Approximate Augmented Riemann solver
     solver::AugRieGeoClaw<double> wavePropagationSolver;
+#elif WAVE_PROPAGATION_SOLVER==4
+    //! Vectorized FWave solver
+    solver::FWaveVec<float> wavePropagationSolver;
 #else
     //! Hybrid solver (f-wave + augmented)
     solver::Hybrid<float> wavePropagationSolver;

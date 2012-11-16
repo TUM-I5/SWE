@@ -91,10 +91,16 @@ vars.AddVariables(
   PathVariable( 'asagiInputDir', 'location of netcdf input files', '', PathVariable.PathAccept ),
 
   EnumVariable( 'solver', 'Riemann solver', 'augrie',
-                allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid')
+                allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid', 'fwavevec')
               ),
                   
+  BoolVariable( 'vectorize', 'add pragmas to help vectorization (release only)', True ),
+                  
   BoolVariable( 'showVectorization', 'show loop vectorization (Intel compiler only)', False ),
+
+  EnumVariable( 'platform', 'compile for a specific platform (Intel compiler only', 'default',
+                allowed_values=('default', 'mic' )
+              ),
 
   BoolVariable( 'xmlRuntime', 'use a xml-file for runtime parameters', False )
 )
@@ -187,8 +193,14 @@ elif env['compileMode'] == 'release':
 env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias'])
 
 # Vectorization?
+if env['compileMode'] == 'release' and env['vectorize']:
+  env.Append(CPPDEFINES=['VECTORIZE'])
 if env['compiler'] == 'intel' and env['showVectorization']:
-  env.Append(CCFLAGS=['-vec-report3'])
+  env.Append(CCFLAGS=['-vec-report2'])
+  
+# Platform
+if env['compiler'] == 'intel' and env['platform'] == 'mic':
+  env.Append(CCFLAGS=['-mmic'])
 
 # set the precompiler variables for the solver
 if env['solver'] == 'fwave':
@@ -197,6 +209,8 @@ elif env['solver'] == 'augrie':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=2'])
 elif env['solver'] == 'hybrid':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=0'])
+elif env['solver'] == 'fwavevec':
+  env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=4'])
 
 # set the precompiler flags for serial version
 if env['parallelization'] in ['none', 'cuda']:

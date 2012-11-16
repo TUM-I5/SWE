@@ -34,6 +34,18 @@
 #include <omp.h>
 #endif
 
+#ifndef PHYSICAL_VECTOR_SIZE
+#define PHYSICAL_VECTOR_SIZE 128
+#endif
+#include <cstdlib>
+
+#if  WAVE_PROPAGATION_SOLVER==4
+/** The number of floats that fit in one vector register */
+#define VECTOR_LENGTH (PHYSICAL_VECTOR_SIZE/8/sizeof(float))
+#else
+#define VECTOR_LENGTH 1
+#endif
+
 /**
  * Constructor of a SWE_WavePropagationBlock.
  *
@@ -103,10 +115,13 @@ SWE_WavePropagationBlock::SWE_WavePropagationBlock():
  * Compute net updates for the block.
  * The member variable #maxTimestep will be updated with the 
  * maximum allowed time step size
+ *
+ * @todo vectorization only works correct if PHYSICAL_VECTOR_SIZE is
+ *  according to the hardware
  */
 void SWE_WavePropagationBlock::computeNumericalFluxes() {
   //maximum (linearized) wave speed within one iteration
-  float maxWaveSpeed = (float) 0.;
+  float maxWaveSpeed[VECTOR_LENGTH] = {(float) 0.};
 
   //compute the net-updates for the vertical edges
   #ifdef LOOP_OPENMP
@@ -116,16 +131,21 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
   solver::Hybrid<float> wavePropagationSolver;
   #pragma omp for
   #endif
+  float maxEdgeSpeed[VECTOR_LENGTH];
   for(int i = 1; i < nx+2; i++) {
+#if  WAVE_PROPAGATION_SOLVER==4
+#ifdef VECTORIZE
+	#pragma simd vectorlength(VECTOR_LENGTH)
+#endif
+#endif
     for(int j = 1; j < ny+1; j++) {
-      float maxEdgeSpeed;
       #if WAVE_PROPAGATION_SOLVER!=3
       wavePropagationSolver.computeNetUpdates( h[i-1][j], h[i][j],
                                                hu[i-1][j], hu[i][j],
                                                b[i-1][j], b[i][j],
                                                hNetUpdatesLeft[i-1][j-1], hNetUpdatesRight[i-1][j-1],
                                                huNetUpdatesLeft[i-1][j-1], huNetUpdatesRight[i-1][j-1],
-                                               maxEdgeSpeed );
+                                               maxEdgeSpeed[(j-1)%VECTOR_LENGTH] );
      #else
      //TODO: implement again.
      assert(false);
@@ -136,7 +156,7 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
       l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
       #else
       //update the maximum wave speed
-      maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
+      maxWaveSpeed[(j-1)%VECTOR_LENGTH] = std::max(maxWaveSpeed[(j-1)%VECTOR_LENGTH], maxEdgeSpeed[(j-1)%VECTOR_LENGTH]);
       #endif
     }
   }
@@ -146,15 +166,19 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
   #pragma omp for
   #endif
   for(int i = 1; i < nx+1; i++) {
+#if  WAVE_PROPAGATION_SOLVER==4
+#ifdef VECTORIZE
+	#pragma simd vectorlength(VECTOR_LENGTH)
+#endif
+#endif
     for(int j = 1; j < ny+2; j++) {
-      float maxEdgeSpeed;
       #if WAVE_PROPAGATION_SOLVER!=3
       wavePropagationSolver.computeNetUpdates( h[i][j-1], h[i][j],
                                                hv[i][j-1], hv[i][j],
                                                b[i][j-1], b[i][j],
                                                hNetUpdatesBelow[i-1][j-1], hNetUpdatesAbove[i-1][j-1],
                                                hvNetUpdatesBelow[i-1][j-1], hvNetUpdatesAbove[i-1][j-1],
-                                               maxEdgeSpeed );
+                                               maxEdgeSpeed[(j-1)%VECTOR_LENGTH] );
       #else
       //TODO: implement again.
       assert(false);
@@ -165,7 +189,7 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
       l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
       #else
       //update the maximum wave speed
-      maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
+      maxWaveSpeed[(j-1)%VECTOR_LENGTH] = std::max(maxWaveSpeed[(j-1)%VECTOR_LENGTH], maxEdgeSpeed[(j-1)%VECTOR_LENGTH]);
       #endif
     }
   }
@@ -177,12 +201,19 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
   } // end of parallel for block
   #endif
 
-  if(maxWaveSpeed > 0.00001) { //TODO zeroTol
+#if  WAVE_PROPAGATION_SOLVER==4
+  // Get global maximum
+  for (int i = 1; i < VECTOR_LENGTH; i++)
+	  if (maxWaveSpeed[i] > maxWaveSpeed[0])
+		  maxWaveSpeed[0] = maxWaveSpeed[i];
+#endif
+
+  if(maxWaveSpeed[0] > 0.00001) { //TODO zeroTol
     //compute the time step width
     //CFL-Codition
     //(max. wave speed) * dt / dx < .5
     // => dt = .5 * dx/(max wave speed)
-    maxTimestep = std::min( dx/maxWaveSpeed, dy/maxWaveSpeed );
+    maxTimestep = std::min( dx/maxWaveSpeed[0], dy/maxWaveSpeed[0] );
 
 //    #if WAVE_PROPAGATION_SOLVER!=3
     maxTimestep *= (float) .4; //CFL-number = .5
@@ -206,8 +237,10 @@ void SWE_WavePropagationBlock::updateUnknowns(float dt) {
   #pragma omp parallel for
   #endif
   for(int i = 1; i < nx+1; i++) {
+#ifdef VECTORIZE
 	  // Tell the compiler that he can safely ignore all dependencies in this loop
 	  #pragma ivdep
+#endif
       for(int j = 1; j < ny+1; j++) {
         h[i][j] -=   dt/dx * (hNetUpdatesRight[i-1][j-1] + hNetUpdatesLeft[i][j-1])
                    + dt/dy * (hNetUpdatesAbove[i-1][j-1] + hNetUpdatesBelow[i-1][j]);
