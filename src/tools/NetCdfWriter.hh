@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -28,9 +29,10 @@
 #ifndef NETCDFWRITER_HH_
 #define NETCDFWRITER_HH_
 
+#include <cstring>
 #include <string>
 #include <vector>
-#include <netcdfcpp.h>
+#include <netcdf.h>
 #include "help.hh"
 
 namespace io {
@@ -38,25 +40,31 @@ namespace io {
 }
 
 class io::NetCdfWriter {
-  //private:
+private:
     //! dimensions of the grid in x- and y-direction.
     const int nX, nY;
 
     //! current time step of the netCDF-file
-    int timeStep;
+    size_t timeStep;
 
     //! file name of the netCDF-file
     const std::string fileName;
 
+    /** netCDF file id*/
+    int dataFile;
+
+    /** Variable ids */
+    int timeVar, hVar, huVar, hvVar, bVar;
+
     // writer time dependent variables.
     void writeVarTimeDependent( const Float2D &i_matrix,
                                 const int i_boundarySize[4],
-                                NcVar* o_ncVariable);
+                                int i_ncVariable);
 
     // writes time independent variables.
     void writeVarTimeIndependent( const Float2D &i_matrix,
                                   const int i_boundarySize[4],
-                                  NcVar* o_ncVariable);
+                                  int i_ncVariable);
 
 
   public:
@@ -78,9 +86,19 @@ class io::NetCdfWriter {
                         const int i_boundarySize[4],
                         const float &i_time);
 
-    // writes the time independent bathymetry (static displacement) to the netCDF-file.
+    /**
+     * Write (static) bathymetry data to a netCDF-file (-> constructor) with respect to the boundary sizes.
+     *
+     * @param i_b bathymetry data.
+     * @param i_boundarySize size of the boundaries.
+     *
+     * @see writeUnknowns
+     */
     void writeBathymetry( const Float2D &i_b,
-                          const int i_boundarySize[4] );
+                          const int i_boundarySize[4] )
+    {
+    	writeVarTimeIndependent(i_b, i_boundarySize, bVar);
+    }
 
     // writes one dimensional unknowns to the netCDF-file (not used in SWE).
     void writeUnknownsOneDimensional( const std::vector<double> &i_h,
@@ -93,6 +111,15 @@ class io::NetCdfWriter {
     void writeBathymetryOneDimensional( const std::vector<double> &i_b,
                                         const int &i_leftBoundarySize,
                                         const int &i_rightBoundarySize );
+
+  private:
+    /**
+     * This is a small wrapper for `nc_put_att_text` which automatically sets the length.
+     */
+    void ncPutAttText(int varid, const char* name, const char *value)
+    {
+    	nc_put_att_text(dataFile, varid, name, strlen(value), value);
+    }
 
 };
 

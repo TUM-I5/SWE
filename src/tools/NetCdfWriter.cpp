@@ -3,6 +3,7 @@
  * This file is part of SWE.
  *
  * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
  *
@@ -30,7 +31,6 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
-#include <netcdfcpp.h>
 
 /**
  * Constructor of a netCDF-writer.
@@ -49,6 +49,7 @@ io::NetCdfWriter::NetCdfWriter( const std::string &i_filename,
  * Destructor of a netCDF-writer.
  */
 io::NetCdfWriter::~NetCdfWriter() {
+	nc_close(dataFile);
 }
 
 /**
@@ -66,73 +67,71 @@ void io::NetCdfWriter::createNetCdfFile( const float &i_dX,
                                          const float &i_originX,
                                          const float &i_originY ) {//,
                                          //const bool  &i_dynamicBathymetry) { //!TODO
-  //create a netCDF-file, an existing file will be replaced
-  NcFile l_dataFile = NcFile(fileName.c_str(), NcFile::Replace);
+	int status;
+
+	//create a netCDF-file, an existing file will be replaced
+	status = nc_create(fileName.c_str(), NC_NETCDF4, &dataFile);
 
   //check if the netCDF-file creation constructor succeeded.
-  if (!l_dataFile.is_valid()) {
-    return;
-  }
+	if (status != NC_NOERR) {
+		assert(false);
+		return;
+	}
 
 #ifdef PRINT_NETCDFWRITER_INFORMATION
-  std::cout << "   *** io::NetCdfWriter::createNetCdfFile" << std::endl;
-  std::cout << "     created/replaced: " << fileName << std::endl;
-  std::cout << "     dimensions(nx, ny): " << nX << ", " << nY << std::endl;
-  std::cout << "     cell width(dx,dy): " << i_dX << ", " << i_dY << std::endl;
-  std::cout << "     origin(x,y): " << i_originX << ", " << i_originY << std::endl;
+	std::cout << "   *** io::NetCdfWriter::createNetCdfFile" << std::endl;
+	std::cout << "     created/replaced: " << fileName << std::endl;
+	std::cout << "     dimensions(nx, ny): " << nX << ", " << nY << std::endl;
+	std::cout << "     cell width(dx,dy): " << i_dX << ", " << i_dY << std::endl;
+	std::cout << "     origin(x,y): " << i_originX << ", " << i_originY << std::endl;
 #endif
 
-  //dimensions
-  NcDim* l_timeDim = l_dataFile.add_dim("time", NC_UNLIMITED);
-  NcDim* l_xDim = l_dataFile.add_dim("x", nX);
-  NcDim* l_yDim = l_dataFile.add_dim("y", nY);
+	//dimensions
+	int l_timeDim, l_xDim, l_yDim;
+	nc_def_dim(dataFile, "time", NC_UNLIMITED, &l_timeDim);
+	nc_def_dim(dataFile, "x", nX, &l_xDim);
+	nc_def_dim(dataFile, "y", nY, &l_yDim);
 
-  //variables (TODO: add rest of CF-1.5)
-  NcVar* l_ncVariable;
+	//variables (TODO: add rest of CF-1.5)
+	int l_xVar, l_yVar;
 
-  l_ncVariable = l_dataFile.add_var("time", ncFloat, l_timeDim);
-  l_ncVariable->add_att("long_name", "Time");
-  l_ncVariable->add_att("units", "seconds since simulation start"); // the word "since" is important for the paraview reader
+	nc_def_var(dataFile, "time", NC_FLOAT, 1, &l_timeDim, &timeVar);
+	ncPutAttText(timeVar, "long_name", "Time");
+	ncPutAttText(timeVar, "units", "seconds since simulation start"); // the word "since" is important for the paraview reader
 
-  l_dataFile.add_var("x", ncFloat, l_xDim);
-  l_dataFile.add_var("y", ncFloat, l_yDim);
+	nc_def_var(dataFile, "x", NC_FLOAT, 1, &l_xDim, &l_xVar);
+	nc_def_var(dataFile, "y", NC_FLOAT, 1, &l_yDim, &l_yVar);
 
-  //variables, fastest changing index is on the right (C syntax), will be mirrored by the library
-  l_dataFile.add_var("h",  ncFloat, l_timeDim, l_xDim, l_yDim);
-  l_dataFile.add_var("hu", ncFloat, l_timeDim, l_xDim, l_yDim);
-  l_dataFile.add_var("hv", ncFloat, l_timeDim, l_xDim, l_yDim);
-  l_dataFile.add_var("b",  ncFloat, l_xDim, l_yDim);
+	//variables, fastest changing index is on the right (C syntax), will be mirrored by the library
+	int dims[] = {l_timeDim, l_yDim, l_xDim};
+	nc_def_var(dataFile, "h",  NC_FLOAT, 3, dims, &hVar);
+	nc_def_var(dataFile, "hu", NC_FLOAT, 3, dims, &huVar);
+	nc_def_var(dataFile, "hv", NC_FLOAT, 3, dims, &hvVar);
+	nc_def_var(dataFile, "b",  NC_FLOAT, 2, &dims[1], &bVar);
 
-  //set attributes to match CF-1.5 convention
-  l_dataFile.add_att("Conventions", "CF-1.5");
-  l_dataFile.add_att("title", "Computed tsunami solution");
-  l_dataFile.add_att("history", "SWE");
-  l_dataFile.add_att("institution", "Technische Universitaet Muenchen, Department of Informatics, Chair of Scientific Computing");
-  l_dataFile.add_att("source", "Bathymetry and displacement data.");
-  l_dataFile.add_att("references", "http://www5.in.tum.de/SWE");
-  l_dataFile.add_att("comment", "SWE is free software and licensed under the GNU General Public License. Remark: In general this does not hold for the used input data.");
+	//set attributes to match CF-1.5 convention
+	ncPutAttText(NC_GLOBAL, "Conventions", "CF-1.5");
+	ncPutAttText(NC_GLOBAL, "title", "Computed tsunami solution");
+	ncPutAttText(NC_GLOBAL, "history", "SWE");
+	ncPutAttText(NC_GLOBAL, "institution", "Technische Universitaet Muenchen, Department of Informatics, Chair of Scientific Computing");
+	ncPutAttText(NC_GLOBAL, "source", "Bathymetry and displacement data.");
+	ncPutAttText(NC_GLOBAL, "references", "http://www5.in.tum.de/SWE");
+	ncPutAttText(NC_GLOBAL, "comment", "SWE is free software and licensed under the GNU General Public License. Remark: In general this does not hold for the used input data.");
 
+	//setup grid size
+	float gridPosition = i_originX + (float).5 * i_dX;
+	for(size_t i = 0; i < nX; i++) {
+		nc_put_var1_float(dataFile, l_xVar, &i, &gridPosition);
 
-  //setup grid size
-  float gridPosition = i_originX + (float).5 * i_dX;
-  for(int i = 0; i < nX; i++) {
-    l_ncVariable = l_dataFile.get_var("x");
-    l_ncVariable->set_cur(i);
-    l_ncVariable->put(&gridPosition, 1);
+		gridPosition += i_dX;
+	}
 
-    gridPosition += i_dX;
-  }
+	gridPosition = i_originY + (float).5 * i_dY;
+	for(size_t j = 0; j < nY; j++) {
+		nc_put_var1_float(dataFile, l_yVar, &j, &gridPosition);
 
-  gridPosition = i_originY + (float).5 * i_dY;
-  for(int j = 0; j < nY; j++) {
-    l_ncVariable = l_dataFile.get_var("y");
-    l_ncVariable->set_cur(j);
-    l_ncVariable->put(&gridPosition, 1);
-
-    gridPosition += i_dY;
-  }
-
-  //l_dataFile closed automatically (out of scope)
+    	gridPosition += i_dY;
+	}
 }
 
 /**
@@ -145,17 +144,20 @@ void io::NetCdfWriter::createNetCdfFile( const float &i_dX,
  *
  * @param i_matrix array which contains time dependent data.
  * @param i_boundarySize size of the boundaries.
- * @param o_ncVariable time dependent netCDF-variable to which the output is written to.
+ * @param i_ncVariable time dependent netCDF-variable to which the output is written to.
  */
 void io::NetCdfWriter::writeVarTimeDependent( const Float2D &i_matrix,
                                               const int i_boundarySize[4],
-                                              NcVar* o_ncVariable ) {
-  //write col wise, necessary to get rid of the boundary
-  //storage in Float2D is col wise
-  //read carefully, the dimensions are confusing
-  for(int col = 0; col < nX; col++) {
-    o_ncVariable->set_cur(timeStep, col, 0); //select col (dim "x")
-    o_ncVariable->put(&i_matrix[col+i_boundarySize[0]][i_boundarySize[2]], 1, 1, nY); //write col
+                                              int i_ncVariable ) {
+	//write col wise, necessary to get rid of the boundary
+	//storage in Float2D is col wise
+	//read carefully, the dimensions are confusing
+	size_t start[] = {timeStep, 0, 0};
+	size_t count[] = {1, nY, 1};
+	for(int col = 0; col < nX; col++) {
+		start[2] = col; //select col (dim "x")
+		nc_put_vara_float(dataFile, i_ncVariable, start, count,
+				&i_matrix[col+i_boundarySize[0]][i_boundarySize[2]]); //write col
   }
 }
 
@@ -169,17 +171,20 @@ void io::NetCdfWriter::writeVarTimeDependent( const Float2D &i_matrix,
  *
  * @param i_matrix array which contains time independent data.
  * @param i_boundarySize size of the boundaries.
- * @param o_ncVariable time independent netCDF-variable to which the output is written to.
+ * @param i_ncVariable time independent netCDF-variable to which the output is written to.
  */
 void io::NetCdfWriter::writeVarTimeIndependent( const Float2D &i_matrix,
                                                 const int i_boundarySize[4],
-                                                NcVar* o_ncVariable ) {
-  //write col wise, necessary to get rid of the boundary
-  //storage in Float2D is col wise
-  //read carefully, the dimensions are confusing
-  for(int col = 0; col < nX; col++) {
-    o_ncVariable->set_cur(col, 0); //select col (dim "x")
-    o_ncVariable->put(&i_matrix[col+i_boundarySize[0]][i_boundarySize[2]], 1, nY); //write col
+                                                int i_ncVariable ) {
+	//write col wise, necessary to get rid of the boundary
+	//storage in Float2D is col wise
+	//read carefully, the dimensions are confusing
+	size_t start[] = {0, 0};
+	size_t count[] = {nY, 1};
+	for(int col = 0; col < nX; col++) {
+		start[1] = col; //select col (dim "x")
+		nc_put_vara_float(dataFile, i_ncVariable, start, count,
+				&i_matrix[col+i_boundarySize[0]][i_boundarySize[2]]); //write col
   }
 }
 
@@ -202,57 +207,20 @@ void io::NetCdfWriter::writeUnknowns( const Float2D &i_h,
                                       const Float2D &i_hv,
                                       const int i_boundarySize[4],
                                       const float &i_time) {
-  //open dataFile
-  NcFile l_dataFile = NcFile(fileName.c_str(), NcFile::Write);
+	//write i_time
+	nc_put_var1_float(dataFile, timeVar, &timeStep, &i_time);
 
-  //check if the netCDF file open constructor succeeded.
-  if (!l_dataFile.is_valid()) {
-    std::cerr << "could not open " << fileName << std::endl;
-    assert(false);
-  }
-  else {
-    //set time
-    timeStep = l_dataFile.get_dim("time")->size();
-  }
+	//write water height
+	writeVarTimeDependent(i_h, i_boundarySize, hVar);
 
-  //write i_time
-  NcVar* l_ncVariable = l_dataFile.get_var("time");
-  l_ncVariable->set_cur(timeStep);
-  l_ncVariable->put(&i_time, 1);
+	//write momentum in x-direction
+	writeVarTimeDependent(i_hu, i_boundarySize, huVar);
 
-  //write water height
-  l_ncVariable = l_dataFile.get_var("h");
-  writeVarTimeDependent(i_h, i_boundarySize, l_ncVariable);
+	//write momentum in y-direction
+	writeVarTimeDependent(i_hv, i_boundarySize, hvVar);
 
-  //write momentum in x-direction
-  l_ncVariable = l_dataFile.get_var("hu");
-  writeVarTimeDependent(i_hu, i_boundarySize, l_ncVariable);
-
-  //write momentum in y-direction
-  l_ncVariable = l_dataFile.get_var("hv");
-  writeVarTimeDependent(i_hv, i_boundarySize, l_ncVariable);
-}
-
-
-/**
- * Write (static) bathymetry data to a netCDF-file (-> constructor) with respect to the boundary sizes.
- *
- * @param i_b bathymetry data.
- * @param i_boundarySize size of the boundaries.
- */
-//dynamic possible -> writeUnknowns
-void io::NetCdfWriter::writeBathymetry( const Float2D &i_b,
-                                        const int i_boundarySize[4] ) {
-  //open dataFile
-  NcFile l_dataFile = NcFile(fileName.c_str(), NcFile::Write);
-
-  //check if the netCDF file open constructor succeeded.
-  if (!l_dataFile.is_valid()) {
-    std::cerr << "could not open " << fileName << std::endl;
-    assert(false);
-  }
-  NcVar* l_ncVariable = l_dataFile.get_var("b");
-  writeVarTimeIndependent(i_b, i_boundarySize, l_ncVariable);
+	// Increment timeStep for next call
+	timeStep++;
 }
 
 /**

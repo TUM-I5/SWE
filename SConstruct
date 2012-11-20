@@ -283,7 +283,7 @@ if 'libSDLDir' in env:
 # set the precompiler flags and includes for netCDF
 if env['writeNetCDF'] == True:
   env.Append(CPPDEFINES=['WRITENETCDF'])
-  env.Append(LIBS=['netcdf','netcdf_c++'])
+  env.Append(LIBS=['netcdf'])
   # set netCDF location
   if 'netCDFDir' in env:
     env.Append(CPPPATH=[env['netCDFDir']+'/include'])
