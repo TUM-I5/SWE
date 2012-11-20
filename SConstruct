@@ -287,6 +287,7 @@ if env['writeNetCDF'] == True:
   # set netCDF location
   if 'netCDFDir' in env:
     env.Append(CPPPATH=[env['netCDFDir']+'/include'])
+    env.Append(LIBPATH=[os.path.join(env['netCDFDir'], 'lib')])
     env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
 
 # set the precompiler flags, includes and libraries for ASAGI
