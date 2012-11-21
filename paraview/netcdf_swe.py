@@ -39,11 +39,10 @@ Calculator1 = Calculator()
 
 #a1_b_PiecewiseFunction = CreatePiecewiseFunction( Points=[0.0, 0.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0] )
 
-a2DRenderView1 = GetRenderView()
-a2DRenderView1.CameraPosition = [500.0, 500.0, 2724.048059039453]
-a2DRenderView1.CameraFocalPoint = [500.0, 500.0, 0.0]
-a2DRenderView1.CameraClippingRange = [2696.8075784490584, 2764.9087799250456]
-a2DRenderView1.CameraParallelScale = 705.0355174539663
+#a2DRenderView1.CameraPosition = [500.0, 500.0, 2724.048059039453]
+#a2DRenderView1.CameraFocalPoint = [500.0, 500.0, 0.0]
+#a2DRenderView1.CameraClippingRange = [2696.8075784490584, 2764.9087799250456]
+#a2DRenderView1.CameraParallelScale = 705.0355174539663
 
 #DataRepresentation1.LookupTable = a1_b_PVLookupTable
 
@@ -65,4 +64,5 @@ a1_Result_PVLookupTable = GetLookupTableForArray( "Result", 1, RGBPoints=[-1.0, 
 DataRepresentation2.ColorArrayName = 'Result'
 DataRepresentation2.LookupTable = a1_Result_PVLookupTable
 
+GetRenderView.ResetCamera()
 Render()
