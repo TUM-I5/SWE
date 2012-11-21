@@ -111,9 +111,6 @@ SWE_WavePropagationBlock::SWE_WavePropagationBlock():
  * Compute net updates for the block.
  * The member variable #maxTimestep will be updated with the 
  * maximum allowed time step size
- *
- * @todo vectorization only works correct if PHYSICAL_VECTOR_SIZE is
- *  according to the hardware
  */
 void SWE_WavePropagationBlock::computeNumericalFluxes() {
   //maximum (linearized) wave speed within one iteration
