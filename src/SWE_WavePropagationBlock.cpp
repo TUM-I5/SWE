@@ -127,7 +127,6 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
   solver::Hybrid<float> wavePropagationSolver;
   #pragma omp for
   #endif
-  float maxEdgeSpeed[VECTOR_LENGTH];
   for(int i = 1; i < nx+2; i++) {
 #if  WAVE_PROPAGATION_SOLVER==4
 #ifdef VECTORIZE
@@ -135,13 +134,14 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
 #endif
 #endif
     for(int j = 1; j < ny+1; j++) {
+      float maxEdgeSpeed;
       #if WAVE_PROPAGATION_SOLVER!=3
       wavePropagationSolver.computeNetUpdates( h[i-1][j], h[i][j],
                                                hu[i-1][j], hu[i][j],
                                                b[i-1][j], b[i][j],
                                                hNetUpdatesLeft[i-1][j-1], hNetUpdatesRight[i-1][j-1],
                                                huNetUpdatesLeft[i-1][j-1], huNetUpdatesRight[i-1][j-1],
-                                               maxEdgeSpeed[(j-1)%VECTOR_LENGTH] );
+                                               maxEdgeSpeed );
      #else
      //TODO: implement again.
      assert(false);
@@ -152,7 +152,7 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
       l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
       #else
       //update the maximum wave speed
-      maxWaveSpeed[(j-1)%VECTOR_LENGTH] = std::max(maxWaveSpeed[(j-1)%VECTOR_LENGTH], maxEdgeSpeed[(j-1)%VECTOR_LENGTH]);
+      maxWaveSpeed[(j-1)%VECTOR_LENGTH] = std::max(maxWaveSpeed[(j-1)%VECTOR_LENGTH], maxEdgeSpeed);
       #endif
     }
   }
@@ -168,13 +168,14 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
 #endif
 #endif
     for(int j = 1; j < ny+2; j++) {
+      float maxEdgeSpeed;
       #if WAVE_PROPAGATION_SOLVER!=3
       wavePropagationSolver.computeNetUpdates( h[i][j-1], h[i][j],
                                                hv[i][j-1], hv[i][j],
                                                b[i][j-1], b[i][j],
                                                hNetUpdatesBelow[i-1][j-1], hNetUpdatesAbove[i-1][j-1],
                                                hvNetUpdatesBelow[i-1][j-1], hvNetUpdatesAbove[i-1][j-1],
-                                               maxEdgeSpeed[(j-1)%VECTOR_LENGTH] );
+                                               maxEdgeSpeed );
       #else
       //TODO: implement again.
       assert(false);
@@ -185,7 +186,7 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
       l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
       #else
       //update the maximum wave speed
-      maxWaveSpeed[(j-1)%VECTOR_LENGTH] = std::max(maxWaveSpeed[(j-1)%VECTOR_LENGTH], maxEdgeSpeed[(j-1)%VECTOR_LENGTH]);
+      maxWaveSpeed[(j-1)%VECTOR_LENGTH] = std::max(maxWaveSpeed[(j-1)%VECTOR_LENGTH], maxEdgeSpeed);
       #endif
     }
   }
