@@ -33,40 +33,27 @@
 #include <cassert>
 
 /**
- * Constructor of a netCDF-writer.
- *
- * @param i_filename file of the netCDF-file to which the data will be written to.
- * @param i_nX number of cells in the horizontal direction.
- * @param i_nY number of cells in the vertical direction.
- */
-io::NetCdfWriter::NetCdfWriter( const std::string &i_filename,
-                                const int &i_nX,
-                                const int &i_nY ):
-  nX(i_nX), nY(i_nY), timeStep(0), fileName(i_filename) {
-}
-
-/**
- * Destructor of a netCDF-writer.
- */
-io::NetCdfWriter::~NetCdfWriter() {
-	nc_close(dataFile);
-}
-
-/**
- * Create a netCdf-file (-> constructor)
+ * Create a netCdf-file
  * Any existing file will be replaced.
  *
+ * @param i_baseName base name of the netCDF-file to which the data will be written to.
+ * @param i_nX number of cells in the horizontal direction.
+ * @param i_nY number of cells in the vertical direction.
  * @param i_dX cell size in x-direction.
  * @param i_dY cell size in y-direction.
  * @param i_originX
  * @param i_originY
  * @param i_dynamicBathymetry
  */
-void io::NetCdfWriter::createNetCdfFile( const float &i_dX,
-                                         const float &i_dY,
-                                         const float &i_originX,
-                                         const float &i_originY ) {//,
-                                         //const bool  &i_dynamicBathymetry) { //!TODO
+io::NetCdfWriter::NetCdfWriter( const std::string &i_baseName,
+		const Float2D &i_b,
+		const BoundarySize &i_boundarySize,
+		int i_nX, int i_nY,
+		float i_dX, float i_dY,
+		float i_originX, float i_originY) :
+		//const bool  &i_dynamicBathymetry) : //!TODO
+  io::Writer(i_baseName + ".nc", i_b, i_boundarySize, i_nX, i_nY)
+{
 	int status;
 
 	//create a netCDF-file, an existing file will be replaced
@@ -135,6 +122,13 @@ void io::NetCdfWriter::createNetCdfFile( const float &i_dX,
 }
 
 /**
+ * Destructor of a netCDF-writer.
+ */
+io::NetCdfWriter::~NetCdfWriter() {
+	nc_close(dataFile);
+}
+
+/**
  * Writes time dependent data to a netCDF-file (-> constructor) with respect to the boundary sizes.
  *
  * boundarySize[0] == left
@@ -147,7 +141,6 @@ void io::NetCdfWriter::createNetCdfFile( const float &i_dX,
  * @param i_ncVariable time dependent netCDF-variable to which the output is written to.
  */
 void io::NetCdfWriter::writeVarTimeDependent( const Float2D &i_matrix,
-                                              const int i_boundarySize[4],
                                               int i_ncVariable ) {
 	//write col wise, necessary to get rid of the boundary
 	//storage in Float2D is col wise
@@ -157,7 +150,7 @@ void io::NetCdfWriter::writeVarTimeDependent( const Float2D &i_matrix,
 	for(int col = 0; col < nX; col++) {
 		start[2] = col; //select col (dim "x")
 		nc_put_vara_float(dataFile, i_ncVariable, start, count,
-				&i_matrix[col+i_boundarySize[0]][i_boundarySize[2]]); //write col
+				&i_matrix[col+boundarySize[0]][boundarySize[2]]); //write col
   }
 }
 
@@ -174,7 +167,6 @@ void io::NetCdfWriter::writeVarTimeDependent( const Float2D &i_matrix,
  * @param i_ncVariable time independent netCDF-variable to which the output is written to.
  */
 void io::NetCdfWriter::writeVarTimeIndependent( const Float2D &i_matrix,
-                                                const int i_boundarySize[4],
                                                 int i_ncVariable ) {
 	//write col wise, necessary to get rid of the boundary
 	//storage in Float2D is col wise
@@ -184,7 +176,7 @@ void io::NetCdfWriter::writeVarTimeIndependent( const Float2D &i_matrix,
 	for(int col = 0; col < nX; col++) {
 		start[1] = col; //select col (dim "x")
 		nc_put_vara_float(dataFile, i_ncVariable, start, count,
-				&i_matrix[col+i_boundarySize[0]][i_boundarySize[2]]); //write col
+				&i_matrix[col+boundarySize[0]][boundarySize[2]]); //write col
   }
 }
 
@@ -202,79 +194,26 @@ void io::NetCdfWriter::writeVarTimeIndependent( const Float2D &i_matrix,
  * @param i_boundarySize size of the boundaries.
  * @param i_time simulation time of the time step.
  */
-void io::NetCdfWriter::writeUnknowns( const Float2D &i_h,
+void io::NetCdfWriter::writeTimeStep( const Float2D &i_h,
                                       const Float2D &i_hu,
                                       const Float2D &i_hv,
-                                      const int i_boundarySize[4],
-                                      const float &i_time) {
+                                      float i_time) {
+	if (timeStep == 0)
+		// Write bathymetry
+		writeVarTimeIndependent(b, bVar);
+
 	//write i_time
 	nc_put_var1_float(dataFile, timeVar, &timeStep, &i_time);
 
 	//write water height
-	writeVarTimeDependent(i_h, i_boundarySize, hVar);
+	writeVarTimeDependent(i_h, hVar);
 
 	//write momentum in x-direction
-	writeVarTimeDependent(i_hu, i_boundarySize, huVar);
+	writeVarTimeDependent(i_hu, huVar);
 
 	//write momentum in y-direction
-	writeVarTimeDependent(i_hv, i_boundarySize, hvVar);
+	writeVarTimeDependent(i_hv, hvVar);
 
 	// Increment timeStep for next call
 	timeStep++;
-}
-
-/**
- * Writes one dimensional unknowns to a netCDF-file (-> constructor) with respect to the boundary sizes.
- *
- * @param i_h water heights.
- * @param i_hu momentums in x-direction.
- * @param i_leftBoundarySize size of the left boundary.
- * @param i_rightBoundarySize size of the right boundary.
- * @param i_time simulation time of the time step.
- */
-void io::NetCdfWriter::writeUnknownsOneDimensional( const std::vector<double> &i_h,
-                                                    const std::vector<double> &i_hu,
-                                                    const int &i_leftBoundarySize,
-                                                    const int &i_rightBoundarySize,
-                                                    const double &i_time ) {
-  Float2D l_hTwoDimensional( i_h.size(), 1);
-  Float2D l_huTwoDimensional( i_hu.size(), 1);
-  Float2D l_hvTwoDimensional( i_hu.size(), 1);
-
-  for(unsigned int i = 0; i < i_h.size(); i++) {
-    l_hTwoDimensional[i][0] = i_h[i];
-    l_huTwoDimensional[i][0] = i_hu[i];
-    l_hvTwoDimensional[i][0] = 0.;
-  }
-
-  int l_boundarySizeTwoDimensional[4];
-  l_boundarySizeTwoDimensional[0] = i_leftBoundarySize;
-  l_boundarySizeTwoDimensional[1] = i_rightBoundarySize;
-  l_boundarySizeTwoDimensional[2] = l_boundarySizeTwoDimensional[3] = 0;
-
-  writeUnknowns(l_hTwoDimensional, l_huTwoDimensional, l_hvTwoDimensional, l_boundarySizeTwoDimensional, i_time);
-}
-
-/**
- * Writes one dimensional (static) bathymetry data to a netCDF-File (-> constructor) with respect to the boundary sizes.
- *
- * @param i_b bathymetry values.
- * @param i_leftBoundarySize size of the left boundary.
- * @param i_rightBoundarySize size of the right boundary.
- */
-void io::NetCdfWriter::writeBathymetryOneDimensional( const std::vector<double> &i_b,
-                                                      const int &i_leftBoundarySize,
-                                                      const int &i_rightBoundarySize) {
-  Float2D l_bTwoDimensional( i_b.size(), 1);
-
-  for(unsigned int i = 0; i < i_b.size(); i++) {
-    l_bTwoDimensional[i][0] = i_b[i];
-  }
-
-  int l_boundarySizeTwoDimensional[4];
-  l_boundarySizeTwoDimensional[0] = i_leftBoundarySize;
-  l_boundarySizeTwoDimensional[1] = i_rightBoundarySize;
-  l_boundarySizeTwoDimensional[2] = l_boundarySizeTwoDimensional[3] = 0;
-
-  writeBathymetry(l_bTwoDimensional, l_boundarySizeTwoDimensional);
 }

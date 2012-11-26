@@ -44,7 +44,9 @@
 #endif
 
 #ifdef WRITENETCDF
-#include "../tools/NetCdfWriter.hh"
+#include "writer/NetCdfWriter.hh"
+#else
+#include "writer/VtkWriter.hh"
 #endif
 
 #ifdef ASAGI
@@ -368,27 +370,32 @@ int main( int argc, char** argv ) {
 
   // write the output at time zero
   tools::Logger::logger.printOutputTime(0);
-  #ifdef WRITENETCDF
-  //boundary size of the ghost layers
-  int l_boundarySize[4];
-  l_boundarySize[0] = l_boundarySize[1] = l_boundarySize[2] = l_boundarySize[3] = 1;
 
+  std::string l_fileName = generateBaseFileName(l_baseName,l_blockPositionX,l_blockPositionY);
+  //boundary size of the ghost layers
+  io::BoundarySize l_boundarySize = {1};
+#ifdef WRITENETCDF
   //construct a NetCdfWriter
-  std::string l_fileName = generateFileName(l_baseName,l_blockPositionX,l_blockPositionY);
-  io::NetCdfWriter l_netCdfWriter( l_fileName, l_nXLocal, l_nYLocal );
-  //create the netCDF-file
-  l_netCdfWriter.createNetCdfFile( l_dX, l_dY,
-                                   l_originX, l_originY );
-  l_netCdfWriter.writeBathymetry( l_wavePropgationBlock.getBathymetry(),
-                                  l_boundarySize );
-  l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
-                                l_wavePropgationBlock.getDischarge_hu(),
-                                l_wavePropgationBlock.getDischarge_hv(),
-                                l_boundarySize, (float) 0.);
+  io::NetCdfWriter l_writer( l_fileName,
+		  l_wavePropgationBlock.getBathymetry(),
+		  l_boundarySize,
+		  l_nXLocal, l_nYLocal,
+		  l_dX, l_dY,
+          l_originX, l_originY );
 #else
-  l_wavePropgationBlock.writeVTKFileXML( generateFileName(l_baseName,0,l_blockPositionX,l_blockPositionY),
-                                         l_nXLocal*l_blockPositionX, l_nYLocal*l_blockPositionY);
+  // Construct a VtkWriter
+  io::VtkWriter l_writer( l_fileName,
+		  l_wavePropgationBlock.getBathymetry(),
+		  l_boundarySize,
+		  l_nXLocal, l_nYLocal,
+		  l_dX, l_dY,
+		  l_blockPositionX*l_nXLocal, l_blockPositionY*l_nYLocal );
 #endif
+  // Write zero time step
+  l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
+                          l_wavePropgationBlock.getDischarge_hu(),
+                          l_wavePropgationBlock.getDischarge_hv(),
+                          (float) 0.);
 
 
   /**
@@ -453,15 +460,10 @@ int main( int argc, char** argv ) {
     tools::Logger::logger.printOutputTime(l_t);
 
     // write output
-    #ifdef WRITENETCDF
-    l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
-                                  l_wavePropgationBlock.getDischarge_hu(),
-                                  l_wavePropgationBlock.getDischarge_hv(),
-                                  l_boundarySize, l_t);
-    #else
-    l_wavePropgationBlock.writeVTKFileXML( generateFileName(l_baseName,c,l_blockPositionX,l_blockPositionY),
-                                          l_blockPositionX*l_nXLocal, l_blockPositionY*l_nYLocal);
-    #endif
+    l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
+                            l_wavePropgationBlock.getDischarge_hu(),
+                            l_wavePropgationBlock.getDischarge_hv(),
+                            l_t);
   }
 
   /**

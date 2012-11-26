@@ -218,6 +218,9 @@ if env['compiler'] == 'intel' and env['platform'] == 'mic':
   env.Append(LINKFLAGS=['-mmic'])
   # Add Intel specific libraries
   env.Append(LIBS=['svml', 'imf', 'intlc'])
+  
+# Add source directory to include path (important for subdirectories)
+env.Append(CPPPATH=['.'])
 
 # set the precompiler variables for the solver
 if env['solver'] == 'fwave':

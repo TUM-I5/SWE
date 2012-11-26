@@ -762,6 +762,8 @@ void SWE_Block::synchCopyLayerBeforeRead() {}
  * Write a VTK file (using XML format) for visualisation using ParaView
  * -> writes unknowns h, u, v, and b of a single SWE_Block
  *    as a RECTILINEAR grid for ParaView
+ *
+ * @deprecated use io::VtkWriter
  */
 void SWE_Block::writeVTKFileXML(string FileName, int offsetX, int offsetY) {
 
@@ -823,6 +825,8 @@ void SWE_Block::writeVTKFileXML(string FileName, int offsetX, int offsetY) {
  * Write a VTK file for visualisation using ParaView
  * -> writes h, u, and v unknowns of a single SWE_Block
  *    as a RECTILINEAR grid for ParaView
+ *
+ * @deprecated use io::VtkWriter
  */
 void SWE_Block::writeVTKFile(string FileName) {
 
@@ -876,6 +880,8 @@ void SWE_Block::writeVTKFile(string FileName) {
  * -> writes h, u, and v unknowns of a single SWE_Block
  *    as a STRUCTURED grid for ParaView
  *    (allows 3D effect for water surface)
+ *
+ * @deprecated
  */
 void SWE_Block::writeVTKFile3D(string FileName) {
 

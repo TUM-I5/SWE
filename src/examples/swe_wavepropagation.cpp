@@ -41,7 +41,9 @@
 #endif
 
 #ifdef WRITENETCDF
-#include "../tools/NetCdfWriter.hh"
+#include "writer/NetCdfWriter.hh"
+#else
+#include "writer/VtkWriter.hh"
 #endif
 
 #ifdef ASAGI
@@ -126,8 +128,8 @@ int main( int argc, char** argv ) {
   simulationArea[2] = -2450000;
   simulationArea[3] = 1450000;
 
-  SWE_AsagiScenario l_scenario( "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
-                                "/work/breuera/workspace/geo_information/output/tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
+  SWE_AsagiScenario l_scenario( ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
+                                ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
                                 (float) 28800., simulationArea);
   #else
   // create a simple artificial scenario
@@ -179,24 +181,31 @@ int main( int argc, char** argv ) {
 
   // write the output at time zero
   s_sweLogger.printOutputTime((float) 0.);
-  #ifdef WRITENETCDF
-  //boundary size of the ghost layers
-  int l_boundarySize[4];
-  l_boundarySize[0] = l_boundarySize[1] = l_boundarySize[2] = l_boundarySize[3] = 1;
 
+  std::string l_fileName = generateBaseFileName(l_baseName,0,0);
+  //boundary size of the ghost layers
+  io::BoundarySize l_boundarySize = {1};
+#ifdef WRITENETCDF
   //construct a NetCdfWriter
-  std::string l_fileName = l_baseName;
-  io::NetCdfWriter l_netCdfWriter( l_fileName, l_nX, l_nY );
-  //create the netCDF-file
-  l_netCdfWriter.createNetCdfFile(l_dX, l_dY, l_originX, l_originY);
-  l_netCdfWriter.writeBathymetry(l_wavePropgationBlock.getBathymetry(), l_boundarySize);
-  l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
-                                l_wavePropgationBlock.getDischarge_hu(),
-                                l_wavePropgationBlock.getDischarge_hv(),
-                                l_boundarySize, (float) 0.);
-  #else
-  l_wavePropgationBlock.writeVTKFileXML(generateFileName(l_baseName,0,0,0), l_nX, l_nY);
-  #endif
+  io::NetCdfWriter l_writer( l_fileName,
+		  l_wavePropgationBlock.getBathymetry(),
+		  l_boundarySize,
+		  l_nX, l_nY,
+		  l_dX, l_dY,
+		  l_originX, l_originY);
+#else
+  // consturct a VtkWriter
+  io::VtkWriter l_writer( l_fileName,
+		  l_wavePropgationBlock.getBathymetry(),
+		  l_boundarySize,
+		  l_nX, l_nY,
+		  l_dX, l_dY );
+#endif
+  // Write zero time step
+  l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
+                          l_wavePropgationBlock.getDischarge_hu(),
+                          l_wavePropgationBlock.getDischarge_hv(),
+                          (float) 0.);
 
 
   /**
@@ -247,14 +256,10 @@ int main( int argc, char** argv ) {
     s_sweLogger.printOutputTime(l_t);
 
     // write output
-#ifdef WRITENETCDF
-    l_netCdfWriter.writeUnknowns( l_wavePropgationBlock.getWaterHeight(),
-                                  l_wavePropgationBlock.getDischarge_hu(),
-                                  l_wavePropgationBlock.getDischarge_hv(),
-                                  l_boundarySize, l_t);
-#else
-    l_wavePropgationBlock.writeVTKFileXML(generateFileName(l_baseName,c,0,0), l_nX, l_nY);
-#endif
+    l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
+                            l_wavePropgationBlock.getDischarge_hu(),
+                            l_wavePropgationBlock.getDischarge_hv(),
+                            l_t);
   }
 
   /**

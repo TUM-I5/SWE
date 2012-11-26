@@ -144,6 +144,8 @@ public:
  * generate output filenames for the single-SWE_Block version
  * (for serial and OpenMP-parallelised versions that use only a 
  *  single SWE_Block - one output file is generated per checkpoint)
+ *
+ *  @deprecated
  */
 inline std::string generateFileName(std::string baseName, int timeStep) {
 
@@ -160,6 +162,8 @@ inline std::string generateFileName(std::string baseName, int timeStep) {
  * @param i_blockPositionY position of the SWE_Block in y-direction.
  * @param i_fileExtension file extension of the output file.
  * @return
+ *
+ * @deprecated
  */
 inline std::string generateFileName( std::string i_baseName,
                                      int i_blockPositionX, int i_blockPositionY,
@@ -176,6 +180,8 @@ inline std::string generateFileName( std::string i_baseName,
  * (for serial and parallel (OpenMP and MPI) versions that use 
  *  multiple SWE_Blocks - for each block, one output file is 
  *  generated per checkpoint)
+ *
+ *  @deprecated
  */
 inline std::string generateFileName(std::string baseName, int timeStep, int block_X, int block_Y, std::string i_fileExtension=".vts") {
 
@@ -183,6 +189,24 @@ inline std::string generateFileName(std::string baseName, int timeStep, int bloc
 	FileName << baseName <<"_"<< block_X<<"_"<<block_Y<<"_"<<timeStep<<i_fileExtension;
 	return FileName.str();
 };
+
+/**
+ * Generates an output file name for a multiple SWE_Block version based on the ordering of the blocks.
+ *
+ * @param i_baseName base name of the output.
+ * @param i_blockPositionX position of the SWE_Block in x-direction.
+ * @param i_blockPositionY position of the SWE_Block in y-direction.
+ *
+ * @return the output filename <b>without</b> timestep information and file extension
+ */
+inline
+std::string generateBaseFileName(std::string &i_baseName, int i_blockPositionX , int i_blockPositionY)
+{
+	  std::ostringstream l_fileName;
+
+	  l_fileName << i_baseName << "_" << i_blockPositionX << i_blockPositionY;
+	  return l_fileName.str();
+}
 
 /**
  * generate output filename for the ParaView-Container-File
