@@ -207,10 +207,8 @@ class SWE_Block {
      */
     virtual void updateUnknowns(float dt) = 0;
     
-    // methods to write a ParaView output file for visualisation: 
-    void writeVTKFile(string filename);
+    // methods to write a ParaView output file for visualisation:
     void writeVTKFile3D(string filename);
-    void writeVTKFileXML(string FileName, int offsetX, int offsetY);
 
   // ---------- static methods ----------
   

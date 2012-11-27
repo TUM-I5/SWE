@@ -759,129 +759,13 @@ void SWE_Block::synchCopyLayerBeforeRead() {}
 //==================================================================
 
 /**
- * Write a VTK file (using XML format) for visualisation using ParaView
- * -> writes unknowns h, u, v, and b of a single SWE_Block
- *    as a RECTILINEAR grid for ParaView
- *
- * @deprecated use io::VtkWriter
- */
-void SWE_Block::writeVTKFileXML(string FileName, int offsetX, int offsetY) {
-
-   synchBeforeRead();
-
-   // VTK HEADER
-   Vtk_file.open(FileName.c_str());
-   Vtk_file <<"<?xml version=\"1.0\"?>"<<endl;
-   Vtk_file << "<VTKFile type=\"StructuredGrid\">"<<endl;
-   Vtk_file << "<StructuredGrid WholeExtent=\""
-            <<offsetX<<" "<<offsetX+nx<<" "<<offsetY<<" "<<offsetY+ny<<" 0"<<" 0\">"<<endl;
-   Vtk_file << "<Piece Extent=\""<<offsetX<<" "<<offsetX+nx<<" "
-                                 <<offsetY<<" "<<offsetY+ny<<" 0"<<" 0\">"<<endl;
-   Vtk_file << "<Points>"<<endl;
-   Vtk_file <<"<DataArray NumberOfComponents=\"3\" type=\"Float64\" format=\"ascii\">"<<endl;
-
-   //GITTER PUNKTE
-   for (int j=0; j<ny+1;j++)
-      for (int i=0;i<nx+1;i++)
-	  Vtk_file << (offsetX+i)*dx <<" "<< (offsetY+j)*dy <<" 0"<<endl;
-   Vtk_file <<"</DataArray>"<<endl;
-   Vtk_file << "</Points>"<<endl;
-   Vtk_file <<endl;
-   Vtk_file << "<CellData>"<<endl;
-
-   // Water surface height (h+b)
-   Vtk_file << "<DataArray Name=\"H\" type=\"Float64\" format=\"ascii\">"<<endl;
-   for (int j=1; j<ny+1;j++)
-      for (int i=1;i<nx+1;i++)
-	 Vtk_file << h[i][j]+b[i][j] << endl;
-   Vtk_file << "</DataArray>"<<endl;
-   // Velocities
-   Vtk_file << "<DataArray Name=\"U\" type=\"Float64\" format=\"ascii\">"<<endl;
-   for (int j=1; j<ny+1;j++)
-      for (int i=1;i<nx+1;i++)
-	 Vtk_file << ((h[i][j]>0) ? hu[i][j]/h[i][j] : 0.0 ) <<endl;
-   Vtk_file << "</DataArray>"<<endl;
-   Vtk_file << "<DataArray Name=\"V\" type=\"Float64\" format=\"ascii\">"<<endl;
-   for (int j=1; j<ny+1;j++)
-      for (int i=1;i<nx+1;i++)
-	 Vtk_file << ((h[i][j]>0) ? hv[i][j]/h[i][j] : 0.0 ) <<endl;
-   Vtk_file << "</DataArray>"<<endl;
-   // Bathymetry
-   Vtk_file << "<DataArray Name=\"B\" type=\"Float64\" format=\"ascii\">"<<endl;
-   for (int j=1; j<ny+1;j++)	
-      for (int i=1;i<nx+1;i++)
-	 Vtk_file << b[i][j]<<endl;
-   Vtk_file << "</DataArray>"<<endl;
-   Vtk_file << "</CellData>"<<endl;
-   Vtk_file << "</Piece>"<<endl;
-   Vtk_file << "</StructuredGrid>"<<endl;
-   Vtk_file << "</VTKFile>"<<endl;
-   Vtk_file.close();
-
-}
-
-
-/**
- * Write a VTK file for visualisation using ParaView
- * -> writes h, u, and v unknowns of a single SWE_Block
- *    as a RECTILINEAR grid for ParaView
- *
- * @deprecated use io::VtkWriter
- */
-void SWE_Block::writeVTKFile(string FileName) {
-
-	synchBeforeRead();
-	
-        // VTK HEADER
-	Vtk_file.open(FileName.c_str());
-	Vtk_file <<"# vtk DataFile Version 2.0"<<endl;
-	Vtk_file << "HPC Tutorials: Michael Bader, Kaveh Rahnema, Oliver Meister"<<endl;
-	Vtk_file << "ASCII"<<endl;
-	Vtk_file << "DATASET RECTILINEAR_GRID"<<endl;
-	Vtk_file << "DIMENSIONS "<< nx+1<<" "<<ny+1<<" "<<"1"<<endl;
-	Vtk_file <<"X_COORDINATES "<< nx+1 <<" double"<<endl;
-	//GITTER PUNKTE
-	for (int i=0;i<nx+1;i++)
-				Vtk_file << i*dx<<endl;
-	Vtk_file <<"Y_COORDINATES "<< ny+1 <<" double"<<endl;
-	//GITTER PUNKTE
-	for (int i=0;i<ny+1;i++)
-				Vtk_file << i*dy<<endl;
-	Vtk_file <<"Z_COORDINATES 1 double"<<endl;
-	Vtk_file <<"0"<<endl;
-	Vtk_file << "CELL_DATA "<<ny*nx<<endl;
-	Vtk_file << "SCALARS H double 1"<<endl;
-	Vtk_file << "LOOKUP_TABLE default"<<endl;
-	//DOFS
-	for (int j=1; j<ny+1;j++)
-		for (int i=1;i<nx+1;i++)
-			Vtk_file <<(h[i][j]+b[i][j])<<endl;
-	Vtk_file << "SCALARS U double 1"<<endl;
-	Vtk_file << "LOOKUP_TABLE default"<<endl;
-	for (int j=1; j<ny+1;j++)	
-		for (int i=1;i<nx+1;i++)
-			Vtk_file << ((h[i][j]>0) ? hu[i][j]/h[i][j] : 0.0 ) <<endl;
-	Vtk_file << "SCALARS V double 1"<<endl;
-	Vtk_file << "LOOKUP_TABLE default"<<endl;
-	for (int j=1; j<ny+1;j++)	
-		for (int i=1;i<nx+1;i++)
-			Vtk_file << ((h[i][j]>0) ? hv[i][j]/h[i][j] : 0.0 ) <<endl;
-	Vtk_file << "SCALARS B double 1"<<endl;
-	Vtk_file << "LOOKUP_TABLE default"<<endl;
-	for (int j=1; j<ny+1;j++)	
-		for (int i=1;i<nx+1;i++)
-			Vtk_file <<b[i][j]<<endl;
-	Vtk_file.close();
-
-}
-
-/**
  * Write a VTK file for visualisation using ParaView
  * -> writes h, u, and v unknowns of a single SWE_Block
  *    as a STRUCTURED grid for ParaView
  *    (allows 3D effect for water surface)
  *
- * @deprecated
+ * @deprecated this functionality should be implemented in io::VktWriter
+ *  (or io::Vtk3DWriter)
  */
 void SWE_Block::writeVTKFile3D(string FileName) {
 
