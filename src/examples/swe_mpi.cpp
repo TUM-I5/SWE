@@ -61,6 +61,7 @@
 
 
 #include "../tools/Logger.hpp"
+#include "tools/ProgressBar.hh"
 
 /**
  * Compute the number of block rows from the total number of processes.
@@ -368,8 +369,12 @@ int main( int argc, char** argv ) {
                   l_topNeighborRank,    l_topInflow,    l_topOutflow,
                   l_mpiRow );
 
+  // Init fancy progressbar
+  tools::ProgressBar progressBar(l_endSimulation, l_mpiRank);
+
   // write the output at time zero
   tools::Logger::logger.printOutputTime(0);
+  progressBar.update(0.);
 
   std::string l_fileName = generateBaseFileName(l_baseName,l_blockPositionX,l_blockPositionY);
   //boundary size of the ghost layers
@@ -396,17 +401,17 @@ int main( int argc, char** argv ) {
                           l_wavePropgationBlock.getDischarge_hu(),
                           l_wavePropgationBlock.getDischarge_hv(),
                           (float) 0.);
-
-
   /**
    * Simulation.
    */
   // print the start message and reset the wall clock time
+  progressBar.clear();
   tools::Logger::logger.printStartMessage();
   tools::Logger::logger.initWallClockTime(time(NULL));
 
   //! simulation time.
   float l_t = 0.0;
+  progressBar.update(l_t);
 
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
@@ -449,7 +454,9 @@ int main( int argc, char** argv ) {
       l_t += l_maxTimeStepWidthGlobal;
 
       // print the current simulation time
+      progressBar.clear();
       tools::Logger::logger.printSimulationTime(l_t);
+      progressBar.update(l_t);
     }
 
     // update and reset the cpu time in the logger
@@ -457,7 +464,9 @@ int main( int argc, char** argv ) {
     tools::Logger::logger.resetCpuClockToCurrentTime();
 
     // print current simulation time
+    progressBar.clear();
     tools::Logger::logger.printOutputTime(l_t);
+    progressBar.update(l_t);
 
     // write output
     l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
@@ -473,6 +482,8 @@ int main( int argc, char** argv ) {
   // Free ASAGI resources
   l_scenario.deleteGrids();
 #endif
+
+  progressBar.clear();
 
   // write the statistics message
   tools::Logger::logger.printStatisticsMessage();

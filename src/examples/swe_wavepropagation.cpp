@@ -61,6 +61,7 @@
 #include "../tools/Logger.hpp"
 static tools::Logger s_sweLogger;
 #endif
+#include "tools/ProgressBar.hh"
 
 /**
  * Main program for the simulation on a single SWE_WavePropagationBlock.
@@ -178,9 +179,12 @@ int main( int argc, char** argv ) {
      l_checkPoints[cp] = cp*(l_endSimulation/l_numberOfCheckPoints);
   }
 
+  // Init fancy progressbar
+  tools::ProgressBar progressBar(l_endSimulation);
 
   // write the output at time zero
   s_sweLogger.printOutputTime((float) 0.);
+  progressBar.update(0.);
 
   std::string l_fileName = generateBaseFileName(l_baseName,0,0);
   //boundary size of the ghost layers
@@ -212,11 +216,13 @@ int main( int argc, char** argv ) {
    * Simulation.
    */
   // print the start message and reset the wall clock time
+  progressBar.clear();
   s_sweLogger.printStartMessage();
   s_sweLogger.initWallClockTime(time(NULL));
 
   //! simulation time.
   float l_t = 0.0;
+  progressBar.update(l_t);
 
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
@@ -246,14 +252,18 @@ int main( int argc, char** argv ) {
       l_t += l_maxTimeStepWidth;
 
       // print the current simulation time
+      progressBar.clear();
       s_sweLogger.printSimulationTime(l_t);
+      progressBar.update(l_t);
     }
 
     // update the cpu time in the logger
     s_sweLogger.updateCpuTime();
 
     // print current simulation time of the output
+    progressBar.clear();
     s_sweLogger.printOutputTime(l_t);
+    progressBar.update(l_t);
 
     // write output
     l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
@@ -266,6 +276,7 @@ int main( int argc, char** argv ) {
    * Finalize.
    */
   // write the statistics message
+  progressBar.clear();
   s_sweLogger.printStatisticsMessage();
 
   // print the cpu time

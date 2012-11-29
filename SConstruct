@@ -232,10 +232,6 @@ elif env['solver'] == 'hybrid':
 elif env['solver'] == 'fwavevec':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=4', 'PHYSICAL_VECTOR_SIZE='+str(env['physicalVectorSize'])])
 
-# set the precompiler flags for serial version
-if env['parallelization'] in ['none', 'cuda']:
-  env.Append(CPPDEFINES=['NOMPI'])
-
 # set the precompiler flags for CUDA
 if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
   env.Append(CPPDEFINES=['CUDA'])
