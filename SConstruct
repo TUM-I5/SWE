@@ -113,8 +113,6 @@ vars.AddVariables(
   EnumVariable( 'platform', 'compile for a specific platform (Intel compiler only', 'default',
                 allowed_values=('default', 'mic' )
               ),
-                  
-  ('physicalVectorSize', 'size of vector registers is bits', 128, isInt, toInt),
 
   BoolVariable( 'xmlRuntime', 'use a xml-file for runtime parameters', False )
 )
@@ -230,7 +228,7 @@ elif env['solver'] == 'augrie':
 elif env['solver'] == 'hybrid':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=0'])
 elif env['solver'] == 'fwavevec':
-  env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=4', 'PHYSICAL_VECTOR_SIZE='+str(env['physicalVectorSize'])])
+  env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=4'])
 
 # set the precompiler flags for CUDA
 if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
