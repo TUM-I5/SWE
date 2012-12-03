@@ -34,8 +34,7 @@
 */
 Visualization::Visualization(int windowWidth, int windowHeight, const char* window_title, 
 							 int _grid_xsize, int _grid_ysize)
-	: windowHeight(windowHeight),
-	  indicesOffset(0L),
+	: indicesOffset(0L),
 	  indicesCount(0L)
 {
 	// Initialize member variables
@@ -52,6 +51,8 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 	initGLDefaults();
 	initCUDA();
 #ifdef USESDLTTF
+	this->windowHeight = windowHeight;
+
 	text = new Text();
 	text->addText("Keys:");
 #ifdef ASAGI
