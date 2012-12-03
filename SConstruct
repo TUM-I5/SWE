@@ -46,18 +46,6 @@ print ''
 
 import os
 
-def isInt(key, value, env):
-    """Makes sure value is an integer"""
-    try:
-        int(value)
-    except ValueError:
-        return False
-    
-    return True
-
-def toInt(value):
-    return int(value)
-
 #
 # set possible variables
 #
