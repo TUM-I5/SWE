@@ -56,11 +56,7 @@
 #include "../tools/CXMLConfig.hpp"
 #endif
 
-#ifndef STATICLOGGER
-#define STATICLOGGER
 #include "../tools/Logger.hpp"
-static tools::Logger s_sweLogger;
-#endif
 #include "tools/ProgressBar.hh"
 
 /**
@@ -183,7 +179,7 @@ int main( int argc, char** argv ) {
   tools::ProgressBar progressBar(l_endSimulation);
 
   // write the output at time zero
-  s_sweLogger.printOutputTime((float) 0.);
+  tools::Logger::logger.printOutputTime((float) 0.);
   progressBar.update(0.);
 
   std::string l_fileName = generateBaseFileName(l_baseName,0,0);
@@ -217,17 +213,19 @@ int main( int argc, char** argv ) {
    */
   // print the start message and reset the wall clock time
   progressBar.clear();
-  s_sweLogger.printStartMessage();
-  s_sweLogger.initWallClockTime(time(NULL));
+  tools::Logger::logger.printStartMessage();
+  tools::Logger::logger.initWallClockTime(time(NULL));
 
   //! simulation time.
   float l_t = 0.0;
   progressBar.update(l_t);
 
+  unsigned int l_iterations;
+
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
     // reset the cpu clock
-    s_sweLogger.resetCpuClockToCurrentTime();
+    tools::Logger::logger.resetCpuClockToCurrentTime();
 
     // do time steps until next checkpoint is reached
     while( l_t < l_checkPoints[c] ) {
@@ -250,19 +248,20 @@ int main( int argc, char** argv ) {
 
       // update simulation time with time step width.
       l_t += l_maxTimeStepWidth;
+      l_iterations++;
 
       // print the current simulation time
       progressBar.clear();
-      s_sweLogger.printSimulationTime(l_t);
+      tools::Logger::logger.printSimulationTime(l_t);
       progressBar.update(l_t);
     }
 
     // update the cpu time in the logger
-    s_sweLogger.updateCpuTime();
+    tools::Logger::logger.updateCpuTime();
 
     // print current simulation time of the output
     progressBar.clear();
-    s_sweLogger.printOutputTime(l_t);
+    tools::Logger::logger.printOutputTime(l_t);
     progressBar.update(l_t);
 
     // write output
@@ -277,13 +276,16 @@ int main( int argc, char** argv ) {
    */
   // write the statistics message
   progressBar.clear();
-  s_sweLogger.printStatisticsMessage();
+  tools::Logger::logger.printStatisticsMessage();
 
   // print the cpu time
-  s_sweLogger.printCpuTime();
+  tools::Logger::logger.printCpuTime();
 
   // print the wall clock time (includes plotting)
-  s_sweLogger.printWallClockTime(time(NULL));
+  tools::Logger::logger.printWallClockTime(time(NULL));
+
+  // printer iteration counter
+  tools::Logger::logger.printIterationsDone(l_iterations);
 
   return 0;
 }

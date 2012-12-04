@@ -413,6 +413,8 @@ int main( int argc, char** argv ) {
   float l_t = 0.0;
   progressBar.update(l_t);
 
+  unsigned int l_iterations;
+
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
     //reset CPU-Communication clock
@@ -452,6 +454,7 @@ int main( int argc, char** argv ) {
 
       // update simulation time with time step width.
       l_t += l_maxTimeStepWidthGlobal;
+      l_iterations++;
 
       // print the current simulation time
       progressBar.clear();
@@ -493,6 +496,9 @@ int main( int argc, char** argv ) {
 
   // print the wall clock time (includes plotting)
   tools::Logger::logger.printWallClockTime(time(NULL));
+
+  // printer iteration counter
+  tools::Logger::logger.printIterationsDone(l_iterations);
 
   // print the finish message
   tools::Logger::logger.printFinishMessage();

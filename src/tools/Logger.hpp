@@ -508,6 +508,20 @@ class tools::Logger {
                 << cpuCommTime << " seconds"<< std::endl;
     }
 
+    /**
+     * Print number of iterations done
+     *
+     * @param i_iterations Number of iterations done
+     * @param i_interationMessage Iterations done message
+     */
+    void printIterationsDone(unsigned int i_iterations, std::string i_iterationMessage = "iterations done")
+    {
+    	if (processRank == 0) {
+    		timeCout() << indentation << i_iterations
+    			<< ' ' << i_iterationMessage << std::endl;
+    	}
+    }
+
   public:
     /** The logger all classes shoud use */
     static Logger logger;
