@@ -80,6 +80,9 @@ public:
 #else
 		m_terminalSize = 0;
 #endif
+		if (m_terminalSize > 300)
+			// Probably an error due to MPI
+			m_terminalSize = MIN_TERM_SIZE;
 	}
 
 	/**
@@ -213,7 +216,7 @@ private:
 		m_rotatingBar = (m_rotatingBar + 1) % 4;
 	}
 
-	static const int MIN_TERM_SIZE = 20;
+	static const int MIN_TERM_SIZE = 80;
 	static const int TIME_SIZE = 8;
 };
 
