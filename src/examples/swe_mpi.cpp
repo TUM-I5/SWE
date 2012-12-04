@@ -417,11 +417,12 @@ int main( int argc, char** argv ) {
 
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
-    //reset CPU-Communication clock
-	  tools::Logger::logger.resetCpuCommunicationClockToCurrentTime();
 
     // do time steps until next checkpoint is reached
     while( l_t < l_checkPoints[c] ) {
+      //reset CPU-Communication clock
+      tools::Logger::logger.resetCpuCommunicationClockToCurrentTime();
+
       // exchange ghost and copy layers
       exchangeLeftRightGhostLayers( l_leftNeighborRank,  l_leftInflow,  l_leftOutflow,
                       l_rightNeighborRank, l_rightInflow, l_rightOutflow,
@@ -431,7 +432,8 @@ int main( int argc, char** argv ) {
                       l_topNeighborRank,    l_topInflow,    l_topOutflow,
                       l_mpiRow );
 
-      // reset the cpu clock
+      // update communication time and reset the cpu clock
+      tools::Logger::logger.updateCpuCommunicationTime();
       tools::Logger::logger.resetCpuClockToCurrentTime();
 
       // set values in ghost cells
@@ -443,14 +445,25 @@ int main( int argc, char** argv ) {
       //! maximum allowed time step width within a block.
       float l_maxTimeStepWidth = l_wavePropgationBlock.getMaxTimestep();
 
+      // update the cpu time in the logger and reset communication time
+      tools::Logger::logger.updateCpuTime();
+      tools::Logger::logger.resetCpuCommunicationClockToCurrentTime();
+
       //! maximum allowed time steps of all blocks
       float l_maxTimeStepWidthGlobal;
 
       // determine smallest time step of all blocks
       MPI_Allreduce(&l_maxTimeStepWidth, &l_maxTimeStepWidthGlobal, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
 
+      // update the communication time and reset the cpu time
+      tools::Logger::logger.updateCpuCommunicationTime();
+      tools::Logger::logger.resetCpuClockToCurrentTime();
+
       // update the cell values
       l_wavePropgationBlock.updateUnknowns(l_maxTimeStepWidthGlobal);
+
+      // update the cpu time in the logger
+      tools::Logger::logger.updateCpuTime();
 
       // update simulation time with time step width.
       l_t += l_maxTimeStepWidthGlobal;
@@ -461,10 +474,6 @@ int main( int argc, char** argv ) {
       tools::Logger::logger.printSimulationTime(l_t);
       progressBar.update(l_t);
     }
-
-    // update and reset the cpu time in the logger
-    tools::Logger::logger.updateCpuTime();
-    tools::Logger::logger.resetCpuClockToCurrentTime();
 
     // print current simulation time
     progressBar.clear();

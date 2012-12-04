@@ -224,14 +224,15 @@ int main( int argc, char** argv ) {
 
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
-    // reset the cpu clock
-    tools::Logger::logger.resetCpuClockToCurrentTime();
 
     // do time steps until next checkpoint is reached
     while( l_t < l_checkPoints[c] ) {
       // set values in ghost cells:
       l_wavePropgationBlock.setGhostLayer();
       
+      // reset the cpu clock
+      tools::Logger::logger.resetCpuClockToCurrentTime();
+
       // approximate the maximum time step
       // TODO: This calculation should be replaced by the usage of the wave speeds occuring during the flux computation
       // Remark: The code is executed on the CPU, therefore a "valid result" depends on the CPU-GPU-synchronization.
@@ -246,6 +247,9 @@ int main( int argc, char** argv ) {
       // update the cell values
       l_wavePropgationBlock.updateUnknowns(l_maxTimeStepWidth);
 
+      // update the cpu time in the logger
+      tools::Logger::logger.updateCpuTime();
+
       // update simulation time with time step width.
       l_t += l_maxTimeStepWidth;
       l_iterations++;
@@ -255,9 +259,6 @@ int main( int argc, char** argv ) {
       tools::Logger::logger.printSimulationTime(l_t);
       progressBar.update(l_t);
     }
-
-    // update the cpu time in the logger
-    tools::Logger::logger.updateCpuTime();
 
     // print current simulation time of the output
     progressBar.clear();
