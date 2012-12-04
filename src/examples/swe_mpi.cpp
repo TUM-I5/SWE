@@ -432,8 +432,7 @@ int main( int argc, char** argv ) {
                       l_topNeighborRank,    l_topInflow,    l_topOutflow,
                       l_mpiRow );
 
-      // update communication time and reset the cpu clock
-      tools::Logger::logger.updateCpuCommunicationTime();
+      // reset the cpu clock
       tools::Logger::logger.resetCpuClockToCurrentTime();
 
       // set values in ghost cells
@@ -445,9 +444,8 @@ int main( int argc, char** argv ) {
       //! maximum allowed time step width within a block.
       float l_maxTimeStepWidth = l_wavePropgationBlock.getMaxTimestep();
 
-      // update the cpu time in the logger and reset communication time
+      // update the cpu time in the logger
       tools::Logger::logger.updateCpuTime();
-      tools::Logger::logger.resetCpuCommunicationClockToCurrentTime();
 
       //! maximum allowed time steps of all blocks
       float l_maxTimeStepWidthGlobal;
@@ -455,15 +453,15 @@ int main( int argc, char** argv ) {
       // determine smallest time step of all blocks
       MPI_Allreduce(&l_maxTimeStepWidth, &l_maxTimeStepWidthGlobal, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
 
-      // update the communication time and reset the cpu time
-      tools::Logger::logger.updateCpuCommunicationTime();
+      // reset the cpu time
       tools::Logger::logger.resetCpuClockToCurrentTime();
 
       // update the cell values
       l_wavePropgationBlock.updateUnknowns(l_maxTimeStepWidthGlobal);
 
-      // update the cpu time in the logger
+      // update the cpu and CPU-communication time in the logger
       tools::Logger::logger.updateCpuTime();
+      tools::Logger::logger.updateCpuCommunicationTime();
 
       // update simulation time with time step width.
       l_t += l_maxTimeStepWidthGlobal;
@@ -502,6 +500,9 @@ int main( int argc, char** argv ) {
 
   // print the cpu time
   tools::Logger::logger.printCpuTime("CPU time");
+
+  // print CPU + Communication time
+  tools::Logger::logger.printCpuCommunicationTime();
 
   // print the wall clock time (includes plotting)
   tools::Logger::logger.printWallClockTime(time(NULL));
