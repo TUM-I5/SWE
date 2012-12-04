@@ -220,7 +220,7 @@ int main( int argc, char** argv ) {
   float l_t = 0.0;
   progressBar.update(l_t);
 
-  unsigned int l_iterations;
+  unsigned int l_iterations = 0;
 
   // loop over checkpoints
   for(int c=1; c<=l_numberOfCheckPoints; c++) {
