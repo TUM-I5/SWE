@@ -19,8 +19,8 @@
 // You should have received a copy of the GNU General Public License
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
-#include <SDL.h>
-#include <SDL_opengl.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_opengl.h>
 #include <iostream>
 #include <fstream>
 

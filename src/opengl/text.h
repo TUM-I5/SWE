@@ -23,8 +23,8 @@
 #include <cmath>
 #include <string>
 #include <vector>
-#include <SDL_ttf.h>
-#include <SDL_opengl.h>
+#include <SDL/SDL_ttf.h>
+#include <SDL/SDL_opengl.h>
 
 class Text
 {

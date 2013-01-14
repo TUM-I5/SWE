@@ -19,7 +19,7 @@
 // =====================================================================
 
 // Project files
-#include "SDL.h"
+#include <SDL/SDL.h>
 #include "../opengl/simulation.h"
 #include "../opengl/visualization.h"
 #include "../opengl/controller.h"
