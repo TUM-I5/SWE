@@ -195,6 +195,7 @@ env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias'])
 # Vectorization?
 if env['compileMode'] == 'release' and env['vectorize']:
   env.Append(CPPDEFINES=['VECTORIZE'])
+  env.Append(CCFLAGS=['-xHost'])
 if env['compiler'] == 'intel' and env['showVectorization']:
   env.Append(CCFLAGS=['-vec-report2'])
   
