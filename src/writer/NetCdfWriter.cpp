@@ -43,6 +43,7 @@
  * @param i_dY cell size in y-direction.
  * @param i_originX
  * @param i_originY
+ * @param i_flush If > 0, flush data to disk every i_flush write operation
  * @param i_dynamicBathymetry
  */
 io::NetCdfWriter::NetCdfWriter( const std::string &i_baseName,
@@ -50,9 +51,11 @@ io::NetCdfWriter::NetCdfWriter( const std::string &i_baseName,
 		const BoundarySize &i_boundarySize,
 		int i_nX, int i_nY,
 		float i_dX, float i_dY,
-		float i_originX, float i_originY) :
+		float i_originX, float i_originY,
+		unsigned int i_flush) :
 		//const bool  &i_dynamicBathymetry) : //!TODO
-  io::Writer(i_baseName + ".nc", i_b, i_boundarySize, i_nX, i_nY)
+  io::Writer(i_baseName + ".nc", i_b, i_boundarySize, i_nX, i_nY),
+  flush(i_flush)
 {
 	int status;
 
@@ -216,4 +219,7 @@ void io::NetCdfWriter::writeTimeStep( const Float2D &i_h,
 
 	// Increment timeStep for next call
 	timeStep++;
+
+	if (flush > 0 && timeStep % flush == 0)
+		nc_sync(dataFile);
 }

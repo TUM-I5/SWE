@@ -48,6 +48,9 @@ private:
     /** Variable ids */
     int timeVar, hVar, huVar, hvVar, bVar;
 
+    /** Flush after every x write operation? */
+    unsigned int flush;
+
     // writer time dependent variables.
     void writeVarTimeDependent( const Float2D &i_matrix,
                                 int i_ncVariable);
@@ -63,7 +66,8 @@ private:
                  const BoundarySize &i_boundarySize,
                  int i_nX, int i_nY,
                  float i_dX, float i_dY,
-                 float i_originX = 0., float i_originY = 0.);
+                 float i_originX = 0., float i_originY = 0.,
+                 unsigned int i_flush = 0);
     virtual ~NetCdfWriter();
 
     // writes the unknowns at a given time step to the netCDF-file.
