@@ -273,6 +273,9 @@ if 'libSDLDir' in env:
 if env['writeNetCDF'] == True:
   env.Append(CPPDEFINES=['WRITENETCDF'])
   env.Append(LIBS=['netcdf'])
+  # define MPI_INCLUDED, if writeNetCDF is used together with MPI
+  if env['parallelization'] != 'none' and env['parallelization'] != 'cuda':
+    env.Append(CPPDEFINES=['MPI_INCLUDED'])
   # set netCDF location
   if 'netCDFDir' in env:
     env.Append(CPPPATH=[env['netCDFDir']+'/include'])
