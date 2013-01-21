@@ -343,29 +343,42 @@ void SWE_Block::setOutflowBoundaries() {
 void SWE_Block::setBoundaryType( const BoundaryEdge i_edge,
                                  const BoundaryType i_boundaryType,
                                  const SWE_Block1D* i_inflow) {
-  boundary[i_edge] = i_boundaryType;
-  neighbour[i_edge] = i_inflow;
+	boundary[i_edge] = i_boundaryType;
+	neighbour[i_edge] = i_inflow;
 
-  // set bathymetry values in the ghost layer, if necessary
-  if( boundary[BND_LEFT] == OUTFLOW || boundary[BND_LEFT] == WALL ) {
-	  memcpy(b[0], b[1], sizeof(float)*(ny+2));
-  }
-  if( boundary[BND_RIGHT] == OUTFLOW || boundary[BND_RIGHT] == WALL ) {
-	  memcpy(b[nx+1], b[nx], sizeof(float)*(ny+2));
-  }
-  if( boundary[BND_BOTTOM] == OUTFLOW || boundary[BND_BOTTOM] == WALL ) {
-	  for(int i=0; i<=nx+1; i++) {
-		  b[i][0] = b[i][1];
-	  }
-  }
-  if( boundary[BND_TOP] == OUTFLOW || boundary[BND_TOP] == WALL ) {
-  	  for(int i=0; i<=nx+1; i++) {
-  		  b[i][ny+1] = b[i][ny];
-  	  }
-  }
+	if (i_boundaryType == OUTFLOW || i_boundaryType == WALL)
+		// One of the boundary was changed to OUTFLOW or WALL
+		// -> Update the bathymetry for this boundary
+		setBoundaryBathymetry();
+}
 
-  // synchronize after an external update of the bathymetry
-  synchBathymetryAfterWrite();
+/**
+ * Sets the bathymetry on OUTFLOW or WALL boundaries.
+ * Should be called very time a boundary is changed to a OUTFLOW or
+ * WALL boundary <b>or</b> the bathymetry changes.
+ */
+void SWE_Block::setBoundaryBathymetry()
+{
+	// set bathymetry values in the ghost layer, if necessary
+	if( boundary[BND_LEFT] == OUTFLOW || boundary[BND_LEFT] == WALL ) {
+		memcpy(b[0], b[1], sizeof(float)*(ny+2));
+	}
+	if( boundary[BND_RIGHT] == OUTFLOW || boundary[BND_RIGHT] == WALL ) {
+		memcpy(b[nx+1], b[nx], sizeof(float)*(ny+2));
+	}
+	if( boundary[BND_BOTTOM] == OUTFLOW || boundary[BND_BOTTOM] == WALL ) {
+		for(int i=0; i<=nx+1; i++) {
+			b[i][0] = b[i][1];
+		}
+	}
+	if( boundary[BND_TOP] == OUTFLOW || boundary[BND_TOP] == WALL ) {
+		for(int i=0; i<=nx+1; i++) {
+			b[i][ny+1] = b[i][ny];
+		}
+	}
+
+	// synchronize after an external update of the bathymetry
+	synchBathymetryAfterWrite();
 }
 
 // /**

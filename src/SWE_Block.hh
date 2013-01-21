@@ -232,6 +232,9 @@ class SWE_Block {
     SWE_Block();
     virtual ~SWE_Block();
 
+    // Sets the bathymetry on outflow and wall boundaries
+    void setBoundaryBathymetry();
+
     // synchronisation Methods
     virtual void synchAfterWrite();
     virtual void synchWaterHeightAfterWrite();
