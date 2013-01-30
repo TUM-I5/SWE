@@ -1,9 +1,9 @@
-#! /usr/bin/python
+#!/usr/bin/python
 
 # @file
 # This file is part of SWE.
 #
-# @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+# @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
 #
 # @section LICENSE
 #
@@ -23,18 +23,17 @@
 #
 # @section DESCRIPTION
 #
-# Example build parameters a "gnu, mpi_with_cuda, asagi" setting.
+# Example build parameters for OpenGL visualizations
 #
 
-#build options
-parallelization='mpi_with_cuda'
-computeCapability='sm_21'
+# Build options
+parallelization='cuda'
 solver='fwave'
-asagi='yes'
-writeNetCDF='yes'
+openGL='yes'
 
-# libraries (machine dependent)
-cudaToolkitDir='/work/breuera/software/cuda'
-cudaSDKDir='/work/breuera/workspace/NVIDIA_GPU_Computing_SDK'
-asagiDir='/work/breuera/software/asagi_nompi'
-netCDFDir='/home_local/breuera/software/netcdf/netcdf-4.1.3/'
+# Hardware settings
+computeCapability='sm_21'
+
+# Library paths (only required of not installed in default path)
+#libSDLDir=''
+#cudaToolkitDir=''

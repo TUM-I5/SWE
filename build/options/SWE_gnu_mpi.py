@@ -1,9 +1,9 @@
-#! /usr/bin/python
+#!/usr/bin/python
 
 # @file
 # This file is part of SWE.
 #
-# @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+# @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
 #
 # @section LICENSE
 #
@@ -23,17 +23,14 @@
 #
 # @section DESCRIPTION
 #
-# Example build parameters for the NPS GPU-cluster (nompi-Version).
+# Example build parameters using MPI; writes netCDF files
 #
 
-#build options
-parallelization='cuda'
-computeCapability='sm_20'
+# Build options
+parallelization='mpi'
 solver='fwave'
-asagi='yes'
+#solver='augrie'
 writeNetCDF='yes'
 
-# libraries (machine dependent)
-cudaSDKDir='/'
-asagiDir='/tmp/software_SWE/software/asagi/nompi'
-netCDFDir='/tmp/software_SWE/software/netcdf'
+# Library paths (only required of not installed in default path)
+#netCDFDir=''

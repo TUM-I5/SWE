@@ -1,9 +1,9 @@
-#! /usr/bin/python
+#!/usr/bin/python
 
 # @file
 # This file is part of SWE.
 #
-# @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+# @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
 #
 # @section LICENSE
 #
@@ -23,16 +23,15 @@
 #
 # @section DESCRIPTION
 #
-# Example build parameters a "gnu, cuda, opengl" setting.
+# Example build parameters using CUDA
 #
 
-#build options
+# Build options
 parallelization='cuda'
-computeCapability='sm_21'
 solver='fwave'
-openGL='yes'
 
-# libraries (machine dependent)
-libSDLDir = '/work/breuera/software/libsdl/SDL-1.2.14'
-cudaToolkitDir='/work/breuera/software/cuda'
-cudaSDKDir='/work/breuera/workspace/NVIDIA_GPU_Computing_SDK'
+# Hardware settings
+computeCapability='sm_21'
+
+# Library paths (only required of not installed in default path)
+#cudaToolkitDir=''

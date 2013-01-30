@@ -1,9 +1,9 @@
-#! /usr/bin/python
+#!/usr/bin/python
 
 # @file
 # This file is part of SWE.
 #
-# @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+# @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
 #
 # @section LICENSE
 #
@@ -23,17 +23,19 @@
 #
 # @section DESCRIPTION
 #
-# Example build parameters a "gnu, cuda, asagi" setting.
+# Example build parameters with MPI and ASAGI; writes netCDF files
 #
 
-#build options
-parallelization='cuda'
-computeCapability='sm_21'
+# Build options
+parallelization='mpi'
 solver='fwave'
+#solver='augrie'
 asagi='yes'
+writeNetCDF='yes'
 
-# libraries (machine dependent)
-cudaToolkitDir='/work/breuera/software/cuda'
-cudaSDKDir='/work/breuera/workspace/NVIDIA_GPU_Computing_SDK'
-asagiDir='/work/breuera/software/asagi_nompi'
-netCDFDir='/home_local/breuera/software/netcdf/netcdf-4.1.3'
+# Directory containing ASAGI input files (needs to be set)
+asagiInputDir=''
+
+# Library paths (only required of not installed in default path)
+#asagiDir=''
+#netcdfDir=''
