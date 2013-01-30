@@ -20,6 +20,6 @@
  * along with SWE.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SWE_AsagiScenario.hpp"
+#include "SWE_AsagiScenario.hh"
 
 std::map<std::string, SWE_AsagiGrid> SWE_AsagiScenario::grids;

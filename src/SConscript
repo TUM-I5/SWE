@@ -27,26 +27,28 @@
 # Definition of the source files.
 #
 
+import sys
+
 Import('env')
 
 # Code without CUDA
 if env['parallelization'] not in ['cuda', 'mpi_with_cuda']:
   if env['solver'] != 'rusanov':
-    sourceFiles = ['SWE_WavePropagationBlock.cpp']
+    sourceFiles = ['blocks/SWE_WavePropagationBlock.cpp']
   else:
-    sourceFiles = ['SWE_RusanovBlock.cpp']
+    sourceFiles = ['blocks/rusanov/SWE_RusanovBlock.cpp']
 
 # Code with CUDA
 else:
-  sourceFiles = [ 'SWE_BlockCUDA.cu',
-                  'SWE_BlockCUDA_kernels.cu']
+  sourceFiles = [ 'blocks/cuda/SWE_BlockCUDA.cu',
+                  'blocks/cuda/SWE_BlockCUDA_kernels.cu']
   if env['solver'] == 'rusanov':
-    sourceFiles.append( [ 'SWE_RusanovBlockCUDA.cu',
-                          'SWE_RusanovBlockCUDA_kernels.cu']
+    sourceFiles.append( [ 'blocks/rusanov/SWE_RusanovBlockCUDA.cu',
+                          'blocks/rusanov/SWE_RusanovBlockCUDA_kernels.cu']
                       )
   elif env['solver'] == 'fwave':
-    sourceFiles.append( [ 'SWE_WavePropagationBlockCuda.cu',
-                          'SWE_WavePropagationBlockCuda_kernels.cu']
+    sourceFiles.append( [ 'blocks/cuda/SWE_WavePropagationBlockCuda.cu',
+                          'blocks/cuda/SWE_WavePropagationBlockCuda_kernels.cu']
                       )
   if env['openGL'] == True:
     sourceFiles.append( ['opengl/simulation.cu'] )
@@ -56,12 +58,10 @@ for i in sourceFiles:
   env.src_files.append(env.Object(i))
 
 # SWE_Block and Logger is used in every implementation
-sourceFiles = ['SWE_Block.cpp', 'tools/Logger.cpp']
+sourceFiles = ['blocks/SWE_Block.cpp', 'tools/Logger.cpp']
 
 # OpenGL CPU-files
 if env['openGL'] == True:
-  sourceFiles.append( ['scenarios/SWE_VtkScenario.cpp'] )
-  sourceFiles.append( ['scenarios/SWE_VtkScenarioVisInfo.cpp'] )
   sourceFiles.append( ['opengl/camera.cpp'] )
   sourceFiles.append( ['opengl/controller.cpp'] )
   sourceFiles.append( ['opengl/shader.cpp'] )
@@ -88,16 +88,16 @@ if env['xmlRuntime'] == True:
 if env['parallelization'] in ['none', 'cuda']:
   if env['solver'] != 'rusanov':
     if env['openGL'] == False:
-      sourceFiles.append( ['examples/swe_wavepropagation.cpp'] )
+      sourceFiles.append( ['examples/swe_simple.cpp'] )
     else:
       sourceFiles.append( ['examples/swe_opengl.cpp'] )
   else:
-   print '** The selected configuration is not implemented.'
+   print >> sys.stderr, '** The selected configuration is not implemented.'
    Exit(1)
 elif env['parallelization'] in ['mpi_with_cuda', 'mpi']:
     sourceFiles.append( ['examples/swe_mpi.cpp'] )
 else:
-  print '** The selected configuration is not implemented.'
+  print >> sys.stderr, '** The selected configuration is not implemented.'
   Exit(1)
 
 # CPU compilation for sure

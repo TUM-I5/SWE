@@ -31,7 +31,7 @@
 
 #include <cmath>
 
-#include "SWE_Scenario.h"
+#include "SWE_Scenario.hh"
 
 /**
  * Scenario "Radial Dam Break":

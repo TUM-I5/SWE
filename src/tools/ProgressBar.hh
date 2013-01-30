@@ -63,8 +63,8 @@ public:
 	ProgressBar(float totalWork = 1., int rank = 0)
 		: m_rank(rank),
 		  m_totalWork(totalWork),
-		  m_rotatingBar(0),
-		  m_startTime(time(0))
+		  m_startTime(time(0)),
+		  m_rotatingBar(0)
 	{
 		if (rank != 0)
 			return;
@@ -111,7 +111,7 @@ public:
 			return;
 
 		std::cout << '\r';
-		for (int i = 0; i < m_terminalSize; i++)
+		for (unsigned int i = 0; i < m_terminalSize; i++)
 			std::cout << ' ';
 		std::cout << '\r';
 	}
@@ -183,7 +183,7 @@ private:
 		return 1+3+7;
 	}
 
-	void printProgressBar(float done, int size)
+	void printProgressBar(float done, unsigned int size)
 	{
 		if (size < 3)
 			return;
@@ -193,7 +193,7 @@ private:
 
 		std::cout << '[';
 
-		for (int i = 0; i < per; i++)
+		for (unsigned int i = 0; i < per; i++)
 			std::cout << '=';
 
 		if (per < size) {
@@ -201,7 +201,7 @@ private:
 			per++;
 		}
 
-		for (int i = per; i < size; i++)
+		for (unsigned int i = per; i < size; i++)
 			std::cout << ' ';
 
 		std::cout << ']';
@@ -216,7 +216,7 @@ private:
 		m_rotatingBar = (m_rotatingBar + 1) % 4;
 	}
 
-	static const int MIN_TERM_SIZE = 80;
+	static const unsigned int MIN_TERM_SIZE = 80;
 	static const int TIME_SIZE = 8;
 };
 

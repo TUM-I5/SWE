@@ -27,10 +27,11 @@
 #include "simulation.h"
 #include "shader.h"
 #include "vbo.h"
-#include "../scenarios/SWE_VisInfo.hh"
 #ifdef USESDLTTF
 #include "text.h"
 #endif // USESDLTTF
+
+#include "scenarios/SWE_VisInfo.hh"
 
 void checkCUDAError(const char *msg);
 typedef enum RenderMode {
@@ -40,7 +41,7 @@ typedef enum RenderMode {
 class Visualization {
 public:
 	// Constructor and Destructor
-	Visualization(int windowWidth, int windowHeight, const char* window_title, int _grid_xsize, int _grid_ysize);
+	Visualization(int windowWidth, int windowHeight, const char* window_title);
 	~Visualization();
 
 	void init(Simulation &sim, SWE_VisInfo *visInfo = 0L);
@@ -63,19 +64,19 @@ public:
 	int resizeWindow(int newWidth, int newHeight);
 
 	static bool isExtensionSupported(const char* szTargetExtension );
-private:	
+private:
 	// Init helper functions
-	void initSDL(int windowWidth, int windowHeight);
-	void initGLWindow(int width, int height);
+	void initSDL();
 	void initGLDefaults();
 	void initCUDA();
+
+	void setProjection();
 
 	void updateBathymetryVBO(Simulation &sim);
 
 	// Drawing functions
 	void DrawWaterSurface();
 	void DrawBathymetry();
-	void DrawBottom();
 	int grid_xsize;
 	int grid_ysize;
 
@@ -123,8 +124,10 @@ private:
 #ifdef USESDLTTF
 	// Text helper class
 	Text* text;
-	int windowHeight;
 #endif // USESDLTTF
+
+	int windowWidth;
+	int windowHeight;
 
 	// Helper function
 	int coord(int x, int y, int width = -1);

@@ -19,7 +19,7 @@
 // =====================================================================
 
 #include "visualization.h"
-#include "../tools/Logger.hpp"
+#include "tools/Logger.hh"
 
 #include <limits>
 
@@ -32,27 +32,24 @@
 	@param: _grid_y_size	number of nodes of the grid (in y-direction)
 
 */
-Visualization::Visualization(int windowWidth, int windowHeight, const char* window_title, 
-							 int _grid_xsize, int _grid_ysize)
+Visualization::Visualization(int windowWidth, int windowHeight, const char* window_title)
 	: indicesOffset(0L),
-	  indicesCount(0L)
+	  indicesCount(0L),
+	  camera(0L),
+	  windowWidth(windowWidth),
+	  windowHeight(windowHeight)
 {
 	// Initialize member variables
-	grid_xsize = _grid_xsize;
-	grid_ysize = _grid_ysize;
 	renderMode = SHADED;
 
 	cuda_vbo_watersurface = 0L;
 	cuda_vbo_normals = 0L;
 
 	// Initialize rendering
-	initSDL(windowWidth, windowHeight);
-	initGLWindow(windowWidth, windowHeight);
+	initSDL();
 	initGLDefaults();
 	initCUDA();
 #ifdef USESDLTTF
-	this->windowHeight = windowHeight;
-
 	text = new Text();
 	text->addText("Keys:");
 #ifdef ASAGI
@@ -72,7 +69,7 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 #endif // USESDLTTF
 	
 	// Load camera and shaders
-	camera = new Camera(_grid_xsize*1.5f, window_title);
+	camera = new Camera(window_title);
 	waterShader = new Shader("vertex.glsl", "fragment.glsl");
 	if (waterShader->shadersLoaded()) {
 		tools::Logger::logger.printString("Water shaders successfully loaded!");
@@ -88,8 +85,6 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 	vboWaterSurface.init();
 	vboNormals.init();
 	vboBathColor.init();
-
-	createIndicesVBO(grid_xsize, grid_ysize);
 }
 
 /** 
@@ -114,9 +109,25 @@ Visualization::~Visualization() {
 
 	@param sim				instance of the simulation class
 */
-void Visualization::init(Simulation &sim, SWE_VisInfo *visInfo) {
+void Visualization::init(Simulation &sim, SWE_VisInfo *visInfo)
+{
+	// Update the grid size
+	grid_xsize = sim.getNx()+1;
+	grid_ysize = sim.getNy()+1;
+
+	// Set the camera distance depending on the grid size
+	camera->viewDistance(1.5*grid_xsize);
+
+	// Update the GL projection matrix
+	setProjection();
+
+	// Create indices buffer
+	createIndicesVBO(grid_xsize, grid_ysize);
+
+	// Set bathymetry
 	updateBathymetryVBO(sim);
 
+	// Create buffers for water
 	createVertexVBO(vboWaterSurface, cuda_vbo_watersurface, cudaGraphicsMapFlagsNone);
 	createVertexVBO(vboNormals,	cuda_vbo_normals, cudaGraphicsMapFlagsWriteDiscard);
 
@@ -144,7 +155,6 @@ void Visualization::cleanUp() {
 	vboNormals.finialize();
 	vboBathColor.finialize();
 }
-
 
 
 /**
@@ -229,11 +239,8 @@ void Visualization::DrawWaterSurface()
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
 		if (glPrimitiveRestartIndexNV) {
-//			glEnableClientState(GL_PRIMITIVE_RESTART_NV);
 			glDrawElements(GL_TRIANGLE_STRIP, 2*grid_xsize*(grid_ysize-1)+grid_ysize-1,
 					GL_UNSIGNED_INT, 0L);
-
-//			glDisableClientState(GL_PRIMITIVE_RESTART_NV);
 		} else
 			glDrawElements(GL_TRIANGLES, 6*(grid_xsize-1)*(grid_ysize-1), GL_UNSIGNED_INT, NULL);
 
@@ -282,11 +289,8 @@ void Visualization::DrawBathymetry() {
 		glTranslatef(-(grid_xsize-1)/2.0f, bOffset, -(grid_ysize-1)/2.0f);
 
 		if (glPrimitiveRestartIndexNV) {
-//			glEnableClientState(GL_PRIMITIVE_RESTART_NV);
 			glDrawElements(GL_TRIANGLE_STRIP, 2*grid_xsize*(grid_ysize-1)+grid_ysize-1,
 					GL_UNSIGNED_INT, 0L);
-
-//			glDisableClientState(GL_PRIMITIVE_RESTART_NV);
 		} else
 			glDrawElements(GL_TRIANGLES, 6*(grid_xsize-1)*(grid_ysize-1), GL_UNSIGNED_INT, NULL);
 	glPopMatrix();
@@ -297,25 +301,6 @@ void Visualization::DrawBathymetry() {
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisable(GL_LIGHTING);
 }
-
-/**
-    Draws the bottom plane in our scene
-
-*/
-void Visualization::DrawBottom()
-{
-	glBegin(GL_QUADS);	
-		// Draw A Quad
-		glNormal3f(0.0f,1.0f,0.0f);
-		glColor3f(0.3f,0.3f,0.3f);
-		glVertex3f( (grid_xsize - 1)/2.0f,0.0f, (grid_ysize - 1)/2.0f);					// Top Right Of The Quad (Bottom)
-		glVertex3f(-(grid_xsize - 1)/2.0f,0.0f, (grid_ysize - 1)/2.0f);					// Top Left Of The Quad (Bottom)
-		glVertex3f(-(grid_xsize - 1)/2.0f,0.0f,-(grid_ysize - 1)/2.0f);					// Bottom Left Of The Quad (Bottom)
-		glVertex3f( (grid_xsize - 1)/2.0f,0.0f,-(grid_ysize - 1)/2.0f);					// Bottom Right Of The Quad (Bottom)
-	glEnd();				
-}
-
-
 
 /**
 	Returns a pointer to the cuda memory object holding the
@@ -377,7 +362,7 @@ bool Visualization::isExtensionSupported(const char* szTargetExtension )
 	@param  windowHeight	height in pixels
 
 */	
-void Visualization::initSDL(int windowWidth, int windowHeight) {
+void Visualization::initSDL() {
 	// Initialize SDL system
 	if ( SDL_Init(SDL_INIT_VIDEO) < 0 ) {
 		fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
@@ -393,37 +378,33 @@ void Visualization::initSDL(int windowWidth, int windowHeight) {
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 0);
 
 	// Initialize window with OpenGL support
-	if ( SDL_SetVideoMode(windowWidth, windowHeight, 0, SDL_OPENGL | SDL_RESIZABLE | SDL_ANYFORMAT) == NULL ) {
+	if ( SDL_SetVideoMode( windowWidth, windowHeight, 0,
+		SDL_OPENGL | SDL_RESIZABLE | SDL_ANYFORMAT ) == NULL )
+	{
 		fprintf(stderr, "Unable to create OpenGL screen: %s\n", SDL_GetError());
 		SDL_Quit();
 		exit(2);
 	}
-	
 }
 
-/**
-    Initializes OpenGL projection and viewport settings
-
-    @param	width		width in pixels of the window to create
-	@param  height		height in pixels
-
-*/	
-void Visualization::initGLWindow(int width, int height) {	
+void Visualization::setProjection()
+{
 	GLfloat ratio;
 
 	// Protect against a divide by zero
-	if ( height == 0 )
-		height = 1;
+	if ( windowHeight == 0 )
+		windowHeight = 1;
 
-	ratio = ( GLfloat )width / ( GLfloat )height;
+	ratio = ( GLfloat )windowWidth / ( GLfloat )windowHeight;
+
 	// Setup our viewport.
-	glViewport( 0, 0, ( GLint )width, ( GLint )height );
+	glViewport( 0, 0, ( GLint )windowWidth, ( GLint )windowHeight );
 
     // change to the projection matrix and set our viewing volume.
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity( );
 	float Zoom = 0.00005f;
-	glFrustum(-Zoom * width, Zoom * width, -Zoom * height, Zoom * height, 0.1f, 10.0f*grid_ysize);
+	glFrustum(-Zoom * windowWidth, Zoom * windowWidth, -Zoom * windowHeight, Zoom * windowHeight, 0.1f, 20.0f*grid_ysize);
 
     // Switch back to the modelview
     glMatrixMode( GL_MODELVIEW );
@@ -436,11 +417,10 @@ void Visualization::initGLWindow(int width, int height) {
 	@param  newHeight		height in pixels
 
 */
-int Visualization::resizeWindow(int newWidth, int newHeight) {
-#ifdef USESDLTTF
-	// We need this, to set the text correctly
+int Visualization::resizeWindow(int newWidth, int newHeight)
+{
+	windowWidth = newWidth;
 	windowHeight = newHeight;
-#endif // USESDLTTF
 
 	if ( SDL_SetVideoMode( newWidth, newHeight, 0,
 		SDL_OPENGL | SDL_RESIZABLE | SDL_ANYFORMAT ) == NULL )
@@ -449,7 +429,8 @@ int Visualization::resizeWindow(int newWidth, int newHeight) {
 		return 1;
 	}
 
-	initGLWindow ( newWidth, newHeight );
+	setProjection();
+
 	return 0;
 }
 
@@ -532,7 +513,7 @@ void Visualization::updateBathymetryVBO(Simulation &sim) {
 	
 	delete[] vBathy;
 
-	const Float2D &bathymetry = sim.splash->getBathymetry();
+	const Float2D &bathymetry = sim.getBathymetry();
 	GLfloat* color = new GLfloat[grid_xsize*grid_ysize*3];
 	for (int i = 0; i < grid_xsize; i++) {
 		for (int j = 0; j < grid_ysize; j++) {
@@ -637,6 +618,9 @@ void Visualization::initCUDA() {
 	int driver, runtime;
 	cudaDeviceProp  prop;
     int dev;
+
+	// Init cuda device
+	SWE_BlockCUDA::init();
 
 	// Display CUDA Versions
 	cudaDriverGetVersion(&driver);

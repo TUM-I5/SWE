@@ -29,12 +29,11 @@
 #ifndef __SWE_BLOCK_HH
 #define __SWE_BLOCK_HH
 
-#include <iostream>
-#include <stdio.h>
-#include <fstream>
-
 #include "tools/help.hh"
-#include "scenarios/SWE_Scenario.h"
+#include "scenarios/SWE_Scenario.hh"
+
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -206,22 +205,12 @@ class SWE_Block {
      * @param dt	size of the time step
      */
     virtual void updateUnknowns(float dt) = 0;
-    
-    // methods to write a ParaView output file for visualisation:
-    void writeVTKFile3D(string filename);
 
-  // ---------- static methods ----------
-  
-    /// initialise static size and mesh widths of the Cartesian grid blocks
-    static void initGridData(int _nx, int _ny, float _dx, float _dy) {
-      nx = _nx; ny = _ny; dx = _dx; dy = _dy; 
-    };
-
-  // access methods to grid sizes
+    // access methods to grid sizes
     /// returns #nx, i.e. the grid size in x-direction 
-    static int getNx() { return nx;};
+    int getNx() { return nx; }
     /// returns #ny, i.e. the grid size in y-direction 
-    static int getNy() { return ny;};	
+    int getNy() { return ny; }
 
   // Konstanten:
     /// static variable that holds the gravity constant (g = 9.81 m/s^2):
@@ -229,13 +218,14 @@ class SWE_Block {
 	
   protected:
     // Constructor und Destructor
-    SWE_Block();
+    SWE_Block(int l_nx, int l_ny,
+    		float l_dx, float l_dy);
     virtual ~SWE_Block();
 
     // Sets the bathymetry on outflow and wall boundaries
     void setBoundaryBathymetry();
 
-    // synchronisation Methods
+    // synchronization Methods
     virtual void synchAfterWrite();
     virtual void synchWaterHeightAfterWrite();
     virtual void synchDischargeAfterWrite();
@@ -250,6 +240,13 @@ class SWE_Block {
     
     /// set boundary conditions in ghost layers (set boundary conditions)
     virtual void setBoundaryConditions();
+
+    // grid size: number of cells (incl. ghost layer in x and y direction:
+    int nx;	///< size of Cartesian arrays in x-direction
+    int ny;	///< size of Cartesian arrays in y-direction
+    // mesh size dx and dy:
+    float dx;	///<  mesh size of the Cartesian grid in x-direction
+    float dy;	///<  mesh size of the Cartesian grid in y-direction
 
     // define arrays for unknowns: 
     // h (water level) and u,v (velocity in x and y direction)
@@ -274,30 +271,7 @@ class SWE_Block {
     // offset of current block
     float offsetX;	///< x-coordinate of the origin (left-bottom corner) of the Cartesian grid
     float offsetY;	///< y-coordinate of the origin (left-bottom corner) of the Cartesian grid
-
-  // class variables
-  // -> have to be identical for all grid blocks
-  
-    // grid size: number of cells (incl. ghost layer in x and y direction:
-    static int nx;	///< size of Cartesian arrays in x-direction
-    static int ny;	///< size of Cartesian arrays in y-direction
-    // mesh size dx and dy:
-    static float dx;	///<  mesh size of the Cartesian grid in x-direction
-    static float dy;	///<  mesh size of the Cartesian grid in y-direction
-
-    //--- for visualisation
-    /// name of output file (for visualisation)
-    ofstream Vtk_file;
-
-    // overload operator<< such that data can be written via cout <<
-    // -> needs to be declared as friend to be allowed to access private data
-    friend ostream& operator<< (ostream& os, const SWE_Block& swe);
-    friend void writeVTKContainerFile(string FileName, string basename, int cp);
-  
 };
-
-/// write unknowns of SWE_Block to output stream
-ostream& operator<< (ostream& os, const SWE_Block& swe);
 
 /**
  * SWE_Block1D is a simple struct that can represent a single line or row of 

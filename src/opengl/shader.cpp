@@ -20,7 +20,7 @@
 
 #include "shader.h"
 
-#include "../tools/Logger.hpp"
+#include "tools/Logger.hh"
 
 /**
     Constructor.

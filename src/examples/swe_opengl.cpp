@@ -19,16 +19,13 @@
 // =====================================================================
 
 // Project files
+#include "opengl/simulation.h"
+#include "opengl/visualization.h"
+#include "opengl/controller.h"
+
+#include "tools/Logger.hh"
+
 #include <SDL/SDL.h>
-#include "../opengl/simulation.h"
-#include "../opengl/visualization.h"
-#include "../opengl/controller.h"
-#include "../scenarios/SWE_Scenario.h"
-#include "../scenarios/SWE_simple_scenarios.h"
-#include "../scenarios/SWE_VtkScenarioVisInfo.h"
-#include "../SWE_BlockCUDA.hh"
-// #include "../SWE_RusanovBlockCUDA.hh"
-#include "../SWE_WavePropagationBlockCuda.hh"
 
 // For SDL compatibility
 #undef main
@@ -36,10 +33,7 @@
 // Display settings
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
-// Number of nodes (not cells) of grid
-#define GRID_XSIZE 561
-#define GRID_YSIZE 561
-#define WINDOW_TITLE "Shallow Water Equations v1.2"
+#define WINDOW_TITLE "Shallow Water Equations v1.3"
 
 /**
 	Main routine.
@@ -68,50 +62,16 @@
 int main(int argc, char *argv[])
 {  
 	int done = 0;
-	int gridx = GRID_XSIZE;
-	int gridy = GRID_YSIZE;
-	int nx = gridx-1;
-	int ny = gridy-1;
 
-	printf("Starting up...\n");
+	tools::Logger::logger.printStartMessage();
 
 	// Initialize visualization
-	Visualization visualization(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE, gridx, gridy);
+	Visualization visualization(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
 	printf("Initialized OpenGL window...\n\n");
-
-	// Initialize scenario:
-	SWE_Scenario* scene = NULL;
-	SWE_BlockCUDA* splash = NULL;
-	
-	// If input file specified, then read from VTK file:
-	if (argc > 1) {
-	   SWE_VtkScenarioVisInfo* newScene = SWE_VtkScenarioVisInfo::readVtkFile(argv[1]);
-	   // NOTE: Simulation uses a fixed resolution (independent of VTK file)
-           scene = newScene;
-           printf("Scenario read from input file %s\n\n", argv[1]);
-	};
-	
-	if (scene == NULL) { 
-	   // ... if VTK file not specified (or was not read successfully)
-	   // use splashing pool scenario ...
-	   SWE_SplashingPoolScenario* newScene = new SWE_SplashingPoolScenario();
-	   scene = newScene;
-	};
-	
-	// define grid size and initial time step
-	float dx = (scene->getBoundaryPos(BND_RIGHT) - scene->getBoundaryPos(BND_LEFT) )/nx;
-	float dy = (scene->getBoundaryPos(BND_TOP) - scene->getBoundaryPos(BND_BOTTOM) )/ny;
-
-	SWE_Block::initGridData(nx,ny,dx,dy);
-
-    // splash = new SWE_RusanovBlockCUDA();
-    splash = new SWE_WavePropagationBlockCuda();
-	// define boundary type at all four domain boundaries:
-	splash->setWallBoundaries(); // walls at all boundaries
 
 	// Initialize simulation
 	printf("Init simulation\n\n");
-	Simulation sim(nx,ny,dx,dy, scene, splash);
+	Simulation sim;
 	printf("Init visualisation\n\n");
 	visualization.init(sim);
 

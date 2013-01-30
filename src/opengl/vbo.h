@@ -27,7 +27,8 @@
 #ifndef VBO_H
 #define VBO_H
 
-#include "../tools/Logger.hpp"
+#include "tools/Logger.hh"
+
 #include <SDL/SDL_opengl.h>
 
 class VBO

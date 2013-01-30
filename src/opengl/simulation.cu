@@ -18,46 +18,51 @@
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
 #include "simulation.h"
+
+#include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
+
 #include <cstring>
-#include "../SWE_BlockCUDA.hh"
 
 // Taken form FWaveCuda.h
 // TODO: Put it in a common header file
 const float dryTol = 100.;
 
+#define DEFAULT_NX 560
+#define DEFAULT_NY 560
+
 /**
     Constructor. 
 	Initializes SWE_BlockCUDA and creates a new instance of it.
 
-    @param nx			number of grid cells in x-direction
-	@param ny			number of grid cells in y-direction
-	@param dx			size of one cell in x-direction
-	@param dy			size of one cell in y-direction
-	@param scene		instance of SWE_Scenario describing the boundaries
-
 */
-Simulation::Simulation (int nx, int ny, float dx, float dy, 
-			SWE_Scenario* scene, SWE_BlockCUDA* _splash)
-: maxDim( (nx > ny) ? nx : ny ),
-  maxCellSize( (dx > dy) ? dx : dy ),
-  splash(_splash),
-  fileNumber(0)
+Simulation::Simulation ()
+	: block(0L), scenario(0L),
+	  nx(DEFAULT_NX), ny(DEFAULT_NY)
 {
-	loadNewScenario(scene);
+	loadNewScenario(&defaultScenario);
 }
 
 /** 
 	Destructor.
 */
 Simulation::~Simulation () {
+	delete block;
 }
 
-void Simulation::loadNewScenario(SWE_Scenario* scene) {
-	myScenario = scene;
-	curTime = 0.0f;
-	isFirstStep = 1;
-	useFileInput = false;
-	initBoundaries(myScenario);
+void Simulation::loadNewScenario(SWE_Scenario* scene)
+{
+	// Load new scene
+	scenario = scene;
+
+	restart();
+}
+
+void Simulation::resize(float factor)
+{
+	this->nx *= factor;
+	this->ny *= factor;
+
+	restart();
 }
 
 /**
@@ -102,34 +107,34 @@ void Simulation::runCuda(struct cudaGraphicsResource **vbo_resource, struct cuda
 	checkCUDAError("Fehler bei Normalen-VBO\n");
 }
 
-/**
-    Init new boundaries defined by the scene
-
-    @param scene			instance of SWE_Scenario
-*/
-void Simulation::initBoundaries(SWE_Scenario* scene) {
-std::cout << "Init Scenario\n" << flush;
-
-	float l_originX, l_originY;
-
-	// get the origin from the scenario
-	l_originX = scene->getBoundaryPos(BND_LEFT);
-	l_originY = scene->getBoundaryPos(BND_BOTTOM);
-
-	splash->initScenario(l_originX, l_originY, *scene);
-
-	splash->setGhostLayer();
-}
-
 
 /**
     Restarts the simulation. Restores the initial bondaries.
 
 */
-void Simulation::restart() {
+void Simulation::restart()
+{
 	curTime = 0.0f;
 	isFirstStep = 1;
-	initBoundaries(myScenario);
+
+	// define grid size
+	float dx = (scenario->getBoundaryPos(BND_RIGHT) - scenario->getBoundaryPos(BND_LEFT) )/nx;
+	float dy = (scenario->getBoundaryPos(BND_TOP) - scenario->getBoundaryPos(BND_BOTTOM) )/ny;
+
+	// Create the wavepropagation block
+	delete block;
+	block = new SWE_WavePropagationBlockCuda(nx, ny, dx, dy);
+
+	// Initialize the scenario
+	float l_originX, l_originY;
+
+	// get the origin from the scenario
+	l_originX = scenario->getBoundaryPos(BND_LEFT);
+	l_originY = scenario->getBoundaryPos(BND_BOTTOM);
+
+	block->initScenario(l_originX, l_originY, *scenario);
+
+	block->setGhostLayer();
 }
 
 
@@ -139,7 +144,7 @@ void Simulation::restart() {
     @param bath				float array in which computed values will be stored
 */
 void Simulation::setBathBuffer(float* bath) {
-        const Float2D& b = splash->getBathymetry();
+        const Float2D& b = block->getBathymetry();
         int nx = b.getRows()-2;
         int ny = b.getCols()-2;
         
@@ -196,25 +201,6 @@ void Simulation::setBathBuffer(float* bath) {
 }
 
 /**
-    Used for debugging purposes only. Write the current simulation and 
-	visualization buffer to a file.
-*/
-void Simulation::writeDebugOutput(float3* destBuffer) {
-	splash->writeVTKFile3D(generateFileName("debugoutput",0));
-	if (destBuffer != NULL) {
-		debugVisBuffer(destBuffer);
-	}
-}
-/**
-    Save the current simulation state to a vtk file
-*/
-void Simulation::saveToFile() {
-	splash->writeVTKFile3D(generateFileName("simdata", fileNumber));
-	std::cout << "Saved data to: " << generateFileName("simdata", fileNumber) << std::endl;
-	fileNumber++;
-}
-
-/**
     Advance single step in simulation on graphics card 
 	and copy results to visualization buffer
 
@@ -224,10 +210,10 @@ void Simulation::calculateWaterSurface(float3* destBuffer) {
 	if (isFirstStep == 1) {
 		isFirstStep = 0;
 	} else {
-		splash->setGhostLayer();
-		splash->computeNumericalFluxes();
-		float dt = splash->getMaxTimestep();
-		splash->updateUnknowns(dt);
+		block->setGhostLayer();
+		block->computeNumericalFluxes();
+		float dt = block->getMaxTimestep();
+		block->updateUnknowns(dt);
 		curTime += dt;
 	}
 	// splash->updateVisBuffer(destBuffer, wAverage, wScale, wOffset);
@@ -243,8 +229,8 @@ void Simulation::calculateWaterSurface(float3* destBuffer) {
 */	
 void Simulation::getScalingApproximation(float &bScale, float &bOffset, float &wScale)
 {
-	const Float2D &h = splash->getWaterHeight();
-	const Float2D &b = splash->getBathymetry();
+	const Float2D &h = block->getWaterHeight();
+	const Float2D &b = block->getBathymetry();
 
 	// Minimum values
 	float minB, minH;
@@ -381,10 +367,10 @@ void kernelCalcVisBuffer(float3* visBuffer, const float* hd, const float* bd,
 */
 void Simulation::updateVisBuffer(float3* _visBuffer) {
 	
-        const float* hd = splash->getCUDA_waterHeight();
-        const float* bd = splash->getCUDA_bathymetry();
-        int nx = splash->getNx();
-        int ny = splash->getNy();
+        const float* hd = block->getCUDA_waterHeight();
+        const float* bd = block->getCUDA_bathymetry();
+        int nx = block->getNx();
+        int ny = block->getNy();
 //         // Fill ghost layer corner cells
 // 	kernelHdBufferEdges<<<1,1>>>(hd, nx, ny);
 	// Interpolate cell centered h-values
@@ -398,8 +384,8 @@ void Simulation::updateVisBuffer(float3* _visBuffer) {
 	
 */
 void Simulation::debugVisBuffer(float3* _visBuffer) {
-        int nx = splash->getNx();
-        int ny = splash->getNy();
+        int nx = block->getNx();
+        int ny = block->getNy();
 	float* dbgBuf = new float[(nx+1)*(ny+1)*3];
 	int size = (nx+1)*(ny+1)*sizeof(float3);
 	cudaMemcpy(dbgBuf,_visBuffer, size, cudaMemcpyDeviceToHost);
@@ -462,8 +448,8 @@ void kernelCalcNormals(float3* visBuffer, float3* normalBuffer, int nx, int ny)
 */
 void Simulation::calculateNormals(float3* vertexBuffer, float3* destBuffer) {
 // 	splash->calculateNormals(vertexBuffer, destBuffer);
-	int nx = splash->getNx();
-	int ny = splash->getNy();
+	int nx = block->getNx();
+	int ny = block->getNy();
 	dim3 dimBlock(TILE_SIZE,TILE_SIZE);
 	dim3 dimGrid((nx+TILE_SIZE)/TILE_SIZE,(ny+TILE_SIZE)/TILE_SIZE);
 	kernelCalcNormals<<<dimGrid,dimBlock>>>(vertexBuffer, destBuffer, nx, ny);

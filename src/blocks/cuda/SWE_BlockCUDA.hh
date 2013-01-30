@@ -29,12 +29,14 @@
 #ifndef __SWE_BLOCKCUDA_HH
 #define __SWE_BLOCKCUDA_HH
 
-#include <iostream>
-#include <stdio.h>
-#include <fstream>
-#include <cuda_runtime.h>
+#include "blocks/SWE_Block.hh"
+
 #include "tools/help.hh"
-#include "SWE_Block.hh"
+
+#include <iostream>
+#include <fstream>
+
+#include <cuda_runtime.h>
 
 using namespace std;
 
@@ -54,7 +56,8 @@ class SWE_BlockCUDA : public SWE_Block {
 
   public:
     // Constructor und Destructor
-    SWE_BlockCUDA(const int i_cudaDevice = 0);
+    SWE_BlockCUDA(int l_nx, int l_ny,
+    		float l_dx, float l_dy);
     virtual ~SWE_BlockCUDA();
     
   // object methods
@@ -78,9 +81,6 @@ class SWE_BlockCUDA : public SWE_Block {
      *  @return	pointer to the array #hb (bathymetry) in device memory 
      */
     const float* getCUDA_bathymetry() { return bd; };
-
-    // print information about the CUDA device
-    void printDeviceInformation() const;
 
   protected:
      
@@ -125,13 +125,18 @@ class SWE_BlockCUDA : public SWE_Block {
     float* maxhd;
     float* maxvd;
 
-    // overload operator<< such that data can be written via cout <<
-    // -> needs to be declared as friend to be allowed to access private data
-    friend ostream& operator<< (ostream& os, const SWE_BlockCUDA& swe);
+  public:
+    // print information about the CUDA device
+    static void printDeviceInformation();
 
+    /**
+     *  Initializes the cuda device
+     *  Has to be called once at the beginning.
+     */
+    static void init(int i_cudaDevice = 0);
+    /** Cleans up the cuda device */
+    static void finalize();
 };
-
-ostream& operator<< (ostream& os, const SWE_BlockCUDA& swe);
 
 /**
     Return index of hd[i][j] in linearised array

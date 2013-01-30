@@ -37,7 +37,7 @@ private:
 	std::vector<int> height;
 
 	/** Index of the next text, that should be rendered */
-	int nextText;
+	unsigned int nextText;
 
 public:
 	Text()

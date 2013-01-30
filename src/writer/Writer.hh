@@ -64,17 +64,17 @@ protected:
 	//! file name of the data file
 	const std::string fileName;
 
+    //! (Reference) to bathymetry data
+    const Float2D &b;
+
 	//! Boundary layer size
 	const BoundarySize boundarySize;
 
     //! dimensions of the grid in x- and y-direction.
-    const int nX, nY;
+    const unsigned int nX, nY;
 
     //! current time step
     size_t timeStep;
-
-    //! (Reference) to bathymetry data
-    const Float2D &b;
 
 public:
     /**

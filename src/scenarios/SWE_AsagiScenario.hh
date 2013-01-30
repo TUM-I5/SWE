@@ -35,7 +35,7 @@
 #include <iostream>
 #include <map>
 #include <asagi.h>
-#include "SWE_Scenario.h"
+#include "SWE_Scenario.hh"
 
 class SWE_AsagiGrid
 {
@@ -133,10 +133,10 @@ class SWE_AsagiScenario: public SWE_Scenario {
                        const float i_duration,
                        const float i_simulationArea[4],
                        const bool i_dynamicDisplacement = false ):
-                       dynamicDisplacement(i_dynamicDisplacement),
-                       duration(i_duration),
                        bathymetryGrid(grids[i_bathymetryFile]),
-                       displacementGrid(grids[i_displacementFile])
+                       displacementGrid(grids[i_displacementFile]),
+                       dynamicDisplacement(i_dynamicDisplacement),
+                       duration(i_duration)
   {
 
        // open bathymetry grid

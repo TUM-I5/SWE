@@ -22,9 +22,9 @@
 #include <math.h>
 #include <cuda_runtime.h>
 
-#include "../SWE_BlockCUDA.hh"
-#include "../scenarios/SWE_Scenario.h"
-#include "../scenarios/SWE_VisInfo.hh"
+#include "blocks/cuda/SWE_BlockCUDA.hh"
+#include "scenarios/SWE_simple_scenarios.hh"
+#include "scenarios/SWE_VisInfo.hh"
 
 void checkCUDAError(const char *msg);
 
@@ -32,53 +32,50 @@ class Simulation {
 
   public:
     // Constructor + Destructor 
-    Simulation (int nx, int ny, float dx, float dy, 
-                SWE_Scenario* scene, SWE_BlockCUDA* init_splash);
+    Simulation ();
     ~Simulation();
 
     // Restart simulation
     void restart();
     // Load new scenario after initialization
     void loadNewScenario(SWE_Scenario* scene);
-    // Save simulation state to file
-    void saveToFile();
+    // Set a different resolution
+    void resize(float factor);
     // Return the bathymetry data
     void setBathBuffer(float* output);
     // Simulate single timestep on graphics card
     void runCuda(struct cudaGraphicsResource **vbo_resource, struct cudaGraphicsResource **vbo_normals);
 
-    // Debugging
-    void writeDebugOutput(float3* destBuffer = NULL);
+    int getNx() { return nx; }
+    int getNy() { return ny; }
 
-  protected:
-  public:
+    const Float2D& getBathymetry() { return block->getBathymetry(); }
+
+    void getScalingApproximation(float &bScale, float &bOffset, float &wScale);
+
+  private:
+    // Default scenario (used when no other scenario is specified)
+    SWE_SplashingPoolScenario defaultScenario;
 
     // Instance of SWE_BlockCUDA 
-    SWE_BlockCUDA* splash;
+    SWE_BlockCUDA* block;
     // Current scenario
-    SWE_Scenario* myScenario;
+    SWE_Scenario* scenario;
+
+    // Cells in x dimension
+    int nx;
+    // Cells in y dimension
+    int ny;
 
     // Current simulation time
     float curTime;
     // Is this our first simulation step?
     int isFirstStep;
-    // Maximum of cell sizes
-    float maxCellSize;
-    // Initialize boundaries defined by the scene
-    void initBoundaries(SWE_Scenario* scene);
-    // Initialize boundaries defined by an input file
 
-    int fileNumber;
-    // Use file input as boundary data
-    bool useFileInput;
-    // Holds maximum dimension
-    int maxDim;
     // Compute new water surface
     void calculateWaterSurface(float3* destBuffer);
     // Compute normals of the water surface for shading
     void calculateNormals(float3* vertexBuffer, float3* destBuffer);
-
-    void getScalingApproximation(float &bScale, float &bOffset, float &wScale);
 
     void updateVisBuffer(float3* _visBuffer);
     void debugVisBuffer(float3* _visBuffer);

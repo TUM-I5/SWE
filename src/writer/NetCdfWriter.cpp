@@ -150,7 +150,7 @@ void io::NetCdfWriter::writeVarTimeDependent( const Float2D &i_matrix,
 	//read carefully, the dimensions are confusing
 	size_t start[] = {timeStep, 0, 0};
 	size_t count[] = {1, nY, 1};
-	for(int col = 0; col < nX; col++) {
+	for(unsigned int col = 0; col < nX; col++) {
 		start[2] = col; //select col (dim "x")
 		nc_put_vara_float(dataFile, i_ncVariable, start, count,
 				&i_matrix[col+boundarySize[0]][boundarySize[2]]); //write col
@@ -176,7 +176,7 @@ void io::NetCdfWriter::writeVarTimeIndependent( const Float2D &i_matrix,
 	//read carefully, the dimensions are confusing
 	size_t start[] = {0, 0};
 	size_t count[] = {nY, 1};
-	for(int col = 0; col < nX; col++) {
+	for(unsigned int col = 0; col < nX; col++) {
 		start[1] = col; //select col (dim "x")
 		nc_put_vara_float(dataFile, i_ncVariable, start, count,
 				&i_matrix[col+boundarySize[0]][boundarySize[2]]); //write col

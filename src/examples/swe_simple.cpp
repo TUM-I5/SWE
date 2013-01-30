@@ -30,14 +30,11 @@
 #include <cstdlib>
 #include <string>
 #include <iostream>
-#include "../tools/help.hh"
-
-#include "../SWE_Block.hh"
 
 #ifndef CUDA
-#include "../SWE_WavePropagationBlock.hh"
+#include "blocks/SWE_WavePropagationBlock.hh"
 #else
-#include "../SWE_WavePropagationBlockCuda.hh"
+#include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
 #endif
 
 #ifdef WRITENETCDF
@@ -47,16 +44,17 @@
 #endif
 
 #ifdef ASAGI
-#include "../scenarios/SWE_AsagiScenario.hpp"
+#include "scenarios/SWE_AsagiScenario.hh"
 #else
-#include "../scenarios/SWE_simple_scenarios.h"
+#include "scenarios/SWE_simple_scenarios.hh"
 #endif
 
 #ifdef READXML
-#include "../tools/CXMLConfig.hpp"
+#include "tools/CXMLConfig.hpp"
 #endif
 
-#include "../tools/Logger.hpp"
+#include "tools/help.hh"
+#include "tools/Logger.hh"
 #include "tools/ProgressBar.hh"
 
 /**
@@ -143,8 +141,12 @@ int main( int argc, char** argv ) {
   l_dX = (l_scenario.getBoundaryPos(BND_RIGHT) - l_scenario.getBoundaryPos(BND_LEFT) )/l_nX;
   l_dY = (l_scenario.getBoundaryPos(BND_TOP) - l_scenario.getBoundaryPos(BND_BOTTOM) )/l_nY;
 
-  // initialize the grid data and the corresponding static variables
-  SWE_Block::initGridData(l_nX,l_nY,l_dX,l_dY);
+  // create a single wave propagation block
+  #ifndef CUDA
+  SWE_WavePropagationBlock l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
+  #else
+  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
+  #endif
 
   //! origin of the simulation domain in x- and y-direction
   float l_originX, l_originY;
@@ -153,14 +155,7 @@ int main( int argc, char** argv ) {
   l_originX = l_scenario.getBoundaryPos(BND_LEFT);
   l_originY = l_scenario.getBoundaryPos(BND_BOTTOM);
 
-  // create a single wave propagation block
-  #ifndef CUDA
-  SWE_WavePropagationBlock l_wavePropgationBlock;
-  #else
-  SWE_WavePropagationBlockCuda l_wavePropgationBlock;
-  #endif
-
-  // initialize the wave propgation block
+  // initialize the wave propagation block
   l_wavePropgationBlock.initScenario(l_originX, l_originY, l_scenario);
 
 
@@ -184,7 +179,7 @@ int main( int argc, char** argv ) {
 
   std::string l_fileName = generateBaseFileName(l_baseName,0,0);
   //boundary size of the ghost layers
-  io::BoundarySize l_boundarySize = {1};
+  io::BoundarySize l_boundarySize = {{1, 1, 1, 1}};
 #ifdef WRITENETCDF
   //construct a NetCdfWriter
   io::NetCdfWriter l_writer( l_fileName,

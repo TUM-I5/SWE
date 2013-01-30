@@ -26,8 +26,7 @@
 	@param window_title		title of the current window
 
 */
-Camera::Camera(float _view_distance, const char* window_title)
-	: view_distance(_view_distance)
+Camera::Camera(const char* window_title)
 {
 	// Initialize member variables
 
@@ -52,20 +51,21 @@ void Camera::setCamera() {
 	glLoadIdentity();
 	
 	// Set camera position, center of scene and up vector 
-	gluLookAt(cameraX*zoomfactor, cameraY*zoomfactor, cameraZ*zoomfactor, 
-		0,0,0,   // center of scene
+	float factor = zoomfactor * view_distance;
+	gluLookAt(cameraX*factor, cameraY*factor, cameraZ*factor,
+		0, 0, 0,  // center of scene
 		0, 1, 0); // up vector
 	
 	// Translate and rotate our object
 	glTranslated(objectX, objectY, objectZ);
-	this->rotateObject();
+	rotateObject();
 	glScalef(1.0f, 1.0f, -1.0f);
 	
 	// Position the light source
 	// Note: Coordinates are multiplied by current modelview-matrix
 	// by OpenGL
-	GLfloat LightPosition[]=	{ 1.0f, 1.0f, 0.0f, 0.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION,LightPosition);	
+	GLfloat LightPosition[] = { 1.0f, 1.0f, 0.0f, 0.0f };
+	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
 }
 
 void Camera::reset()
@@ -78,11 +78,19 @@ void Camera::reset()
 	objectZ = 0.0f;
 	angleX = 0.0f;
 	angleY = 0.0f;
-	zoomfactor = 0.85f*view_distance;
+	zoomfactor = 0.85f;
 	frames = 0;
 	lastTime = 0;
 	oldMouseX = 0;
 	oldMouseY = 0;
+}
+
+/**
+ * Set the view distance
+ */
+void Camera::viewDistance( float viewDistance )
+{
+	view_distance = viewDistance;
 }
 
 /**
@@ -115,7 +123,7 @@ void Camera::orient( float angle_dX, float angle_dY )
 */
 void Camera::zoomIn( float scaleFactor ) 
 {
-	if (zoomfactor > 3.0f) {
+	if (zoomfactor*view_distance > 3.0f) {
 		zoomfactor /= scaleFactor; 
 	}	  
 }

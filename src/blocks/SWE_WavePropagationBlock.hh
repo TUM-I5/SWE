@@ -29,12 +29,13 @@
 #ifndef SWEWAVEPROPAGATIONBLOCK_HH_
 #define SWEWAVEPROPAGATIONBLOCK_HH_
 
-#include <string>
-#include "tools/help.hh"
-#include "SWE_Block.hh"
+#include "blocks/SWE_Block.hh"
 #ifdef DYNAMIC_DISPLACEMENTS
 #include "scenarios/Asagi.hpp"
 #endif
+#include "tools/help.hh"
+
+#include <string>
 
 //which wave propagation solver should be used
 //  0: Hybrid
@@ -120,7 +121,8 @@ class SWE_WavePropagationBlock: public SWE_Block {
 
   public:
     //constructor of a SWE_WavePropagationBlock.
-    SWE_WavePropagationBlock();
+    SWE_WavePropagationBlock(int l_nx, int l_ny,
+    					float l_dx, float l_dy);
 
     //executes a single timestep.
     virtual void simulateTimestep(float dt);
@@ -139,31 +141,12 @@ class SWE_WavePropagationBlock: public SWE_Block {
     bool updateBathymetryWithDynamicDisplacement(scenarios::Asagi &i_asagiScenario, float time);
 #endif
 
-    //get hybrid statistics
-#if WAVE_PROPAGATION_SOLVER==0
-#ifndef NDEBUG
-#ifndef LOOP_OPENMP
-    void getSolverStats( long &o_counterFWave, long &o_counterAugRie );
-#endif
-#endif
-#endif
-
     /**
      * Destructor of a SWE_WavePropagationBlock.
      *
      * In the case of a hybrid solver (NDEBUG not defined) information about the used solvers will be printed.
      */
-    virtual ~SWE_WavePropagationBlock() {
-#if WAVE_PROPAGATION_SOLVER==0
-#ifndef SUPPRESS_SOLVER_DEBUG_OUTPUT
-#ifndef NDEBUG
-#ifndef LOOP_OPENMP
-      wavePropagationSolver.printStats();
-#endif
-#endif
-#endif
-#endif
-    }
+    virtual ~SWE_WavePropagationBlock() {}
 };
 
 #endif /* SWEWAVEPROPAGATIONBLOCK_HH_ */

@@ -26,17 +26,15 @@
  * TODO
  */
 
-#include <cassert>
-#include <cmath>
-#include "tools/help.hh"
 #include "SWE_BlockCUDA.hh"
 #include "SWE_BlockCUDA_kernels.hh"
 
-#ifndef STATICLOGGER
-#define STATICLOGGER
-#include "tools/Logger.hpp"
-static tools::Logger s_sweLogger;
-#endif
+#include "tools/help.hh"
+#include "tools/Logger.hh"
+
+#include <cassert>
+#include <cstdlib>
+#include <cmath>
 
 //const int TILE_SIZE=16;
 //const int TILE_SIZE=8;
@@ -83,25 +81,13 @@ void tryCUDA(cudaError_t err, const char *msg)
  * bathymetry source terms are defined for cells with indices [1,..,nx]*[1,..,ny]
  *
  *
- * @param _offsetX offset in x-direction.
- * @param _offsetY offset in y-direction.
  * @param i_cudaDevice ID of the CUDA-device, which should be used.
  */
-SWE_BlockCUDA::SWE_BlockCUDA(const int i_cudaDevice )
+SWE_BlockCUDA::SWE_BlockCUDA(
+		int l_nx, int l_ny,
+		float l_dx, float l_dy)
+	: SWE_Block(l_nx, l_ny, l_dx, l_dy)
 {
-  s_sweLogger.setProcessRank(i_cudaDevice);
-
-  cudaSetDevice(i_cudaDevice);
-
-  // check for a valid CUDA device id
-  #ifndef NDEBUG
-  int l_deviceCount;
-  cudaGetDeviceCount(&l_deviceCount);
-  assert( (i_cudaDevice >= 0) && (i_cudaDevice < l_deviceCount) );
-  #endif
-
-  printDeviceInformation();
-
   if (nx % TILE_SIZE != 0) {
     cout << "WARNING: nx not a multiple of TILE_SIZE  -> will lead to crashes!" 
          << endl << flush;
@@ -155,7 +141,6 @@ SWE_BlockCUDA::~SWE_BlockCUDA() {
   
   cudaFree(bottomLayerDevice);
   cudaFree(topLayerDevice);
-  
 }
 
 //==================================================================
@@ -452,8 +437,9 @@ SWE_Block1D* SWE_BlockCUDA::grabGhostLayer(BoundaryEdge edge){
 /**
  * Print some available information about the CUDA devices.
  */
-void SWE_BlockCUDA::printDeviceInformation() const {
-  s_sweLogger.printString("Printing device information");
+void SWE_BlockCUDA::printDeviceInformation()
+{
+	tools::Logger::logger.printString("Printing device information");
 
   //! id of the CUDA device.
   int l_deviceId;
@@ -474,10 +460,10 @@ void SWE_BlockCUDA::printDeviceInformation() const {
 
   // print information about the current device
 
-  s_sweLogger.cout() << "Current CUDA device (relative to host): " << l_deviceId
+  tools::Logger::logger.cout() << "Current CUDA device (relative to host): " << l_deviceId
                      << " ( " << l_deviceCount << " in total)" << std::endl;
 
-  s_sweLogger.cout() << "CUDA device properties: "
+  tools::Logger::logger.cout() << "CUDA device properties: "
                      << l_deviceProperty.name << " (name), "
                      << l_driverVersion << "/" << l_runtimeVersion << " (driver/runtime version), "
                      << l_deviceProperty.major << "." << l_deviceProperty.minor << " (compute capability)"
@@ -669,68 +655,28 @@ void SWE_BlockCUDA::synchBathymetryBeforeRead() {
      checkCUDAError("memory of b not transferred");
 }
 
+void SWE_BlockCUDA::init(int i_cudaDevice)
+{
+	  tools::Logger::logger.setProcessRank(i_cudaDevice);
 
+	  cudaSetDevice(i_cudaDevice);
 
-//==================================================================
+	  // check for a valid CUDA device id
+	  #ifndef NDEBUG
+	  int l_deviceCount;
+	  cudaGetDeviceCount(&l_deviceCount);
+	  assert( (i_cudaDevice >= 0) && (i_cudaDevice < l_deviceCount) );
+	  #endif
 
-/**
- * overload operator<< such that data can be written via cout <<
- * -> needs to be declared as friend to be allowed to access private data
- */
-ostream& operator<<(ostream& os, const SWE_BlockCUDA& swe) {
+	  printDeviceInformation();
 
-  os << "Grid dimensions: " << swe.nx << "x" << swe.ny << endl;
-
-  cout << "Water height:" << endl;
-  for(int j=swe.ny+1; j>=0; j--) {
-    for(int i=0; i<=swe.nx+1; i++) {
-      os << swe.h[i][j] << "  ";
-    };
-    os << endl;
-  };
-
-  cout << "Momentum in x-direction:" << endl;
-  for(int j=swe.ny+1; j>=0; j--) {
-    for(int i=0; i<=swe.nx+1; i++) {
-      os << swe.hu[i][j] << "  ";
-    };
-    os << endl;
-  };
-
-  cout << "Momentum in y-direction:" << endl;
-  for(int j=swe.ny+1; j>=0; j--) {
-    for(int i=0; i<=swe.nx+1; i++) {
-      os << swe.hv[i][j] << "  ";
-    };
-    os << endl;
-  };
-
-#ifdef DBG
-  cout << "Ghost/Copy Layer bottom:" << endl;
-     for(int i=0; i<=swe.nx+1; i++) {
-       os << swe.bottomGhostLayer->h[i]  << "  "; 
-       os << swe.bottomGhostLayer->hu[i] << "  ";
-       os << swe.bottomGhostLayer->hv[i] << "  ";
-       os << swe.bottomCopyLayer->h[i]  << "  ";  
-       os << swe.bottomCopyLayer->hu[i] << "  "; 
-       os << swe.bottomCopyLayer->hv[i] << "  "; 
-       cout << endl;
-     };
-  
-  cout << "Ghost/Copy Layer top:" << endl;
-     for(int i=0; i<=swe.nx+1; i++) {
-       os << swe.topGhostLayer->h[i]  << "  "; 
-       os << swe.topGhostLayer->hu[i] << "  ";
-       os << swe.topGhostLayer->hv[i] << "  ";
-       os << swe.topCopyLayer->h[i]  << "  ";  
-       os << swe.topCopyLayer->hu[i] << "  "; 
-       os << swe.topCopyLayer->hv[i] << "  "; 
-       cout << endl;
-     };
-#endif
-  
-  os << flush;
-
-  return os;
+	  // Make sure the cuda device is reset at exit
+	  atexit( SWE_BlockCUDA::finalize );
 }
 
+void SWE_BlockCUDA::finalize()
+{
+	// reset the cuda device
+	tools::Logger::logger.printString("Resetting the CUDA devices");
+	cudaDeviceReset();
+}

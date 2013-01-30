@@ -65,7 +65,9 @@ class SWE_WavePropagationBlockCuda: public SWE_BlockCUDA {
 
   public:
     // constructor of SWE_WavePropagationBlockCuda
-    SWE_WavePropagationBlockCuda( const int i_cudaDevice = 0 );
+    SWE_WavePropagationBlockCuda(
+    		int l_nx, int l_ny,
+    		float l_dx, float l_dy);
 
     // destructor of SWE_WavePropagationBlockCuda
     ~SWE_WavePropagationBlockCuda();

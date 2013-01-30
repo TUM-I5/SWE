@@ -31,7 +31,7 @@
 print '****************************************'
 print '** Welcome to the build script of SWE **'
 print '****************************************'
-print 'SWE Copyright (C) 2012'
+print 'SWE Copyright (C) 2012-2013'
 print ''
 print '  Technische Universitaet Muenchen'
 print '  Department of Informatics'
@@ -45,6 +45,7 @@ print 'Details can be found in the file \'gpl.txt\'.'
 print ''
 
 import os
+import sys
 
 #
 # set possible variables
@@ -98,7 +99,7 @@ vars.AddVariables(
                   
   BoolVariable( 'showVectorization', 'show loop vectorization (Intel compiler only)', False ),
 
-  EnumVariable( 'platform', 'compile for a specific platform (Intel compiler only', 'default',
+  EnumVariable( 'platform', 'compile for a specific platform (Intel compiler only)', 'default',
                 allowed_values=('default', 'mic' )
               ),
 
@@ -107,10 +108,7 @@ vars.AddVariables(
 
 # external variables
 vars.AddVariables(
-  PathVariable( 'compilerPath', 'location of the C++ compiler', None, PathVariable.PathIsFile ),
-  PathVariable( 'linkerPath', 'location of the C++ linker', None, PathVariable.PathIsFile ),
   PathVariable( 'cudaToolkitDir', 'location of the CUDA toolkit', None ),
-  PathVariable( 'cudaSDKDir', 'location of the CUDA SDK', None),
   PathVariable( 'libSDLDir', 'location of libSDL', None),
   PathVariable( 'netCDFDir', 'location of netCDF', None),
   PathVariable( 'asagiDir', 'location of ASAGI', None),
@@ -133,31 +131,34 @@ if 'buildVariablesFile' in unknownVariables:
 
 # exit in the case of unknown variables
 if unknownVariables:
-  print "*** The following build variables are unknown:", unknownVariables.keys()
+  print >> sys.stderr, "*** The following build variables are unknown:", unknownVariables.keys()
   Exit(1)
 
 
 # valid solver for CUDA?
 if env['parallelization'] in ['cuda', 'mpi_with_cuda'] and env['solver'] != 'rusanov' and env['solver'] != 'fwave':
-  print '** The "'+env['solver']+'" solver is not supported in CUDA.'
-  Exit(1)
+  print >> sys.stderr, '** The "'+env['solver']+'" solver is not supported in CUDA.'
+  Exit(3)
 
 # CUDA parallelization for openGL
 if env['parallelization'] != 'cuda' and env['openGL'] == True:
-  print '** The parallelization "'+env['parallelization']+'" does not support OpenGL visualization (CUDA only).'
-  Exit(1)
+  print >> sys.stderr, '** The parallelization "'+env['parallelization']+'" does not support OpenGL visualization (CUDA only).'
+  Exit(3)
 
 #
 # precompiler, compiler and linker flags
 #
 
-# Set Intel compiler if selected
-# If compiler is set to gnu, we use the default compiler
-if env['parallelization'] in ['mpi', 'mpi_with_cuda']:
-  # TODO when compilerPath/linkerPath is set, this is overwritten 
-  env['CXX'] = 'mpiCC'
+# Select the compiler (MPI and/or Intel, GNU is default)
+if env['parallelization'] in ['mpi', 'mpi_with_cuda']: 
+  env['CXX'] = env['LINKERFORPROGRAMS'] = env.Detect(['mpiCC', 'mpicxx'])
+  if not env['CXX']:
+      print >> sys.stderr, '** MPI compiler not found, please update PATH environment variable'
+      Exit(1)
+  
   if env['compiler'] == 'intel':
-    # Environment variables to switch compiler for different MPI libraries
+    # We need to the the mpiCC wrapper which compiler it should use
+    # Here are several environment variables that do the job for different MPI libraries
     envVars = ['OMPI_CXX', 'MPICH_CXX']
     for var in envVars:
       env['ENV'][var] = 'icpc'
@@ -227,35 +228,29 @@ if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
   # set the directories for the CudaTool
   if 'cudaToolkitDir' in env:
     env['CUDA_TOOLKIT_PATH'] = env['cudaToolkitDir']
-    env.Append(RPATH=[os.path.join(env['cudaToolkitDir'], 'lib64')])
 
   env.Tool('CudaTool', toolpath = ['.'])
   
   # set precompiler flag for nvcc
-  env.Append(NVCCFLAGS=' -DCUDA')
+  env.Append(NVCCFLAGS=['-DCUDA'])
 
   # set the compute capability of the cuda compiler (needs to be set after the CudaTool
-  env.Append(NVCCFLAGS=' --gpu-architecture=')
-  env.Append(NVCCFLAGS=env['computeCapability'])
+  env.Append(NVCCFLAGS=['--gpu-architecture='+env['computeCapability']])
+  
+  # Append the source directory to the include path
+  env.Append(NVCCFLAGS=['-Isrc'])
   
   # compile explicitly with 64-bit on Mac OS X
   if env['PLATFORM'] == 'darwin':
     env.Append(NVCCFLAGS=' -m64')
 
-# set the precompiler flags for MPI (CUDA)
-if env['parallelization'] in ['mpi_with_cuda']:
-  env.Append(NVCCFLAGS=' -DUSEMPI')
+# set the nvcc precompiler flags for MPI (CUDA)
+if env['parallelization'] == 'mpi_with_cuda':
+  env.Append(NVCCFLAGS=['-DUSEMPI'])
 
 # set the precompiler flags for MPI (C++)
 if env['parallelization'] in ['mpi_with_cuda', 'mpi']:
   env.Append(CPPDEFINES=['USEMPI'])
-  if 'compilerPath' in env:
-    env['CXX'] = env['compilerPath']
-  else:
-    env['CXX'] = 'mpiCC'
-  if 'linkerPath' in env:
-    env['LINKERFORPROGRAMS'] = env['linkerPath']
-  env['LINKERFORPROGRAMS'] = 'mpiCC'
 
 if env['openGL'] == True:
   env.Append(LIBS=['SDL', 'GL', 'GLU'])
@@ -266,8 +261,9 @@ if env['openGL'] == True:
 
 # set the compiler flags for libSDL
 if 'libSDLDir' in env:
-  env.Append(CPPPATH=[env['libSDLDir']+'/include/SDL'])
+  env.Append(CPPPATH=[env['libSDLDir']+'/include'])
   env.Append(LIBPATH=[env['libSDLDir']+'/lib'])
+  env.Append(RPATH=[env['libSDLDir']+'/lib'])
 
 # set the precompiler flags and includes for netCDF
 if env['writeNetCDF'] == True:
@@ -325,7 +321,7 @@ program_name += '_'+env['compileMode']
 # parallelization
 program_name += '_'+env['parallelization']
 
-# parallelization
+# solver
 program_name += '_'+env['solver']
 
 # build directory

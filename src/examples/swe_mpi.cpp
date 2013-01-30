@@ -3,7 +3,7 @@
  * This file is part of SWE.
  *
  * @author Michael Bader (bader AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Univ.-Prof._Dr._Michael_Bader)
- *         Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
+ * @author Alexander Breuer (breuera AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Dipl.-Math._Alexander_Breuer)
  * @author Sebastian Rettenberger (rettenbs AT in.tum.de, http://www5.in.tum.de/wiki/index.php/Sebastian_Rettenberger,_M.Sc.)
  *
  * @section LICENSE
@@ -33,14 +33,10 @@
 #include <cstdlib>
 #include <string>
 
-#include "../tools/help.hh"
-
-#include "../SWE_Block.hh"
-
 #ifndef CUDA
-#include "../SWE_WavePropagationBlock.hh"
+#include "blocks/SWE_WavePropagationBlock.hh"
 #else
-#include "../SWE_WavePropagationBlockCuda.hh"
+#include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
 #endif
 
 #ifdef WRITENETCDF
@@ -50,17 +46,17 @@
 #endif
 
 #ifdef ASAGI
-#include "../scenarios/SWE_AsagiScenario.hpp"
+#include "scenarios/SWE_AsagiScenario.hh"
 #else
-#include "../scenarios/SWE_simple_scenarios.h"
+#include "scenarios/SWE_simple_scenarios.hh"
 #endif
 
 #ifdef READXML
-#include "../tools/CXMLConfig.hpp"
+#include "tools/CXMLConfig.hpp"
 #endif
 
-
-#include "../tools/Logger.hpp"
+#include "tools/help.hh"
+#include "tools/Logger.hh"
 #include "tools/ProgressBar.hh"
 
 /**
@@ -166,7 +162,7 @@ int main( int argc, char** argv ) {
 
   CXMLConfig l_xmlConfig;
   l_xmlConfig.loadConfig(l_xmlFile.c_str());
-  #endif
+  #endif // READXML
 
   //! number of SWE_Blocks in x- and y-direction.
   int l_blocksX, l_blocksY;
@@ -235,9 +231,6 @@ int main( int argc, char** argv ) {
   tools::Logger::logger.printCellSize(l_dX, l_dY);
   tools::Logger::logger.printNumberOfCellsPerProcess(l_nXLocal, l_nYLocal);
 
-  // initialize the grid data and the corresponding static variables
-  SWE_Block::initGridData(l_nXLocal,l_nYLocal,l_dX,l_dY);
-
   //! origin of the simulation domain in x- and y-direction
   float l_originX, l_originY;
 
@@ -247,7 +240,7 @@ int main( int argc, char** argv ) {
 
   // create a single wave propagation block
   #ifndef CUDA
-  SWE_WavePropagationBlock l_wavePropgationBlock;
+  SWE_WavePropagationBlock l_wavePropgationBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
   #else
   //! number of CUDA devices per node TODO: hardcoded
   int l_cudaDevicesPerNode = 7;
@@ -255,7 +248,9 @@ int main( int argc, char** argv ) {
   //! the id of the node local GPU
   int l_cudaDeviceId = l_mpiRank % l_cudaDevicesPerNode;
 
-  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_cudaDeviceId);
+  SWE_BlockCUDA::init(l_cudaDeviceId);
+
+  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
   #endif
 
   // initialize the wave propgation block
@@ -378,7 +373,7 @@ int main( int argc, char** argv ) {
 
   std::string l_fileName = generateBaseFileName(l_baseName,l_blockPositionX,l_blockPositionY);
   //boundary size of the ghost layers
-  io::BoundarySize l_boundarySize = {1};
+  io::BoundarySize l_boundarySize = {{1, 1, 1, 1}};
 #ifdef WRITENETCDF
   //construct a NetCdfWriter
   io::NetCdfWriter l_writer( l_fileName,

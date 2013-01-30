@@ -31,7 +31,7 @@
 
 #include "SWE_WavePropagationBlockCuda_kernels.hh"
 
-#include "tools/Logger.hpp"
+#include "tools/Logger.hh"
 
 #include <cassert>
 
@@ -91,8 +91,10 @@
  * @param i_offsetY spatial offset of the offset in y-direction.
  * @param i_cudaDevice ID of the CUDA-device, which should be used.
  */
-SWE_WavePropagationBlockCuda::SWE_WavePropagationBlockCuda(const int i_cudaDevice )
-	: SWE_BlockCUDA(i_cudaDevice)
+SWE_WavePropagationBlockCuda::SWE_WavePropagationBlockCuda(
+		int l_nx, int l_ny,
+		float l_dx, float l_dy)
+	: SWE_BlockCUDA(l_nx, l_ny, l_dx, l_dy)
 {
   // compute the size of one 1D net-update array.
   int sizeOfNetUpdates = (nx+1)*(ny+1)*sizeof(float);
@@ -140,10 +142,6 @@ SWE_WavePropagationBlockCuda::~SWE_WavePropagationBlockCuda() {
   cudaFree(hNetUpdatesAboveD);
   cudaFree(hvNetUpdatesBelowD);
   cudaFree(hvNetUpdatesAboveD);
-
-  // reset the cuda device
-  tools::Logger::logger.printString("Resetting the CUDA devices");
-  cudaDeviceReset();
 }
 
 /**

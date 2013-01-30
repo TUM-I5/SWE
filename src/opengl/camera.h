@@ -24,13 +24,14 @@
 
 class Camera {
 public:
-	Camera(float view_distance, const char* window_title);
+	Camera(const char* window_title);
 	// Set modelview matrix
-	void setCamera ();
+	void setCamera();
 
 	// Change viewing properties
 	void reset();
 
+	void viewDistance( float viewDistance );
 	void orient( float angX, float angY );
 	void zoomIn( float scaleFactor );
 	void zoomOut( float scaleFactor );

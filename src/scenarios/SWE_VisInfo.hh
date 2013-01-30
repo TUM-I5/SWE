@@ -31,7 +31,7 @@
 #ifndef __SWE_VISINFO_H
 #define __SWE_VISINFO_H
 
-#include "SWE_Scenario.h"
+#include "SWE_Scenario.hh"
 
 /**
  * SWE_VisInfo defines an interface that can be used for online 

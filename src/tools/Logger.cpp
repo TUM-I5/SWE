@@ -20,6 +20,6 @@
  * along with SWE.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Logger.hpp"
+#include "Logger.hh"
 
 tools::Logger tools::Logger::logger;

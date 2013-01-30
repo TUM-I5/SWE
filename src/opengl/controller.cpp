@@ -19,11 +19,11 @@
 // =====================================================================
 #include "controller.h"
 
-#include "../scenarios/SWE_simple_scenarios.h"
-#include "../scenarios/SWE_simple_scenarios_vis.h"
+#include "scenarios/SWE_simple_scenarios.hh"
+#include "scenarios/SWE_simple_scenarios_vis.hh"
 #ifdef ASAGI
-#include "../scenarios/SWE_AsagiScenario.hpp"
-#include "../scenarios/SWE_AsagiScenario_vis.hpp"
+#include "scenarios/SWE_AsagiScenario.hh"
+#include "scenarios/SWE_AsagiScenario_vis.hh"
 #endif // ASAGI
 
 /**
@@ -86,13 +86,13 @@ bool Controller::handleEvents() {
 				visualization->camera->zoomOut(1.2f);
 			} else if (event.button.button == SDL_BUTTON_RIGHT) {
 				visualization->camera->startPanning(event.button.x, event.button.y);
+			}
 			break;
 		case SDL_MOUSEBUTTONUP:
 			// Scroll wheel up
 			if ( event.button.button == SDL_BUTTON_WHEELUP ) {
 				// Zoom in
-				visualization->camera->zoomIn(1.15f);
-			}
+				visualization->camera->zoomIn(1.2f);
 			} else if (event.button.button == SDL_BUTTON_MIDDLE) {
 				visualization->camera->reset();
 			}
@@ -161,10 +161,6 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			// Switch rendering mode
 			visualization->toggleRenderingMode();
 			break;
-		case SDLK_s:
-			// Save simulation data to file
-			simulation->saveToFile();
-			break;
 		case SDLK_RIGHT:
 			// Advance single timestep when paused
 			allowStep = paused;
@@ -181,6 +177,17 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			// Decrease water scaling
 			visualization->modifyWaterScaling(1/1.5);
 			break;
+// Not working
+// Creating a BlockCUDA with a different resolution seams to be impossible
+// at the moment; results in a thrust error.
+//		case SDLK_g:
+//			// Decrease resolution
+//			simulation->resize(0.5);
+//			break;
+//		case SDLK_h:
+//			// Increase resolution
+//			simulation->resize(2);
+//			break;
 		case SDLK_1:
 			// Load scenario 1
 			{
@@ -189,14 +196,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  if (scenarios[0] == 0)
 				  scenarios[0] = new SWE_RadialDamBreakScenario;
 
-			  SWE_Scenario* newScene = scenarios[0];
-
-			  // define grid size and initial time step
-			  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
-
-			  simulation->loadNewScenario(newScene);
+			  simulation->loadNewScenario(scenarios[0]);
 			  visualization->init(*simulation);
 			}
 			break;
@@ -210,14 +210,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				  visInfos[1] = new SWE_BathymetryDamBreakVisInfo();
 			  }
 
-			  SWE_Scenario* newScene = scenarios[1];
-
-			  // define grid size and initial time step
-			  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
-
-			  simulation->loadNewScenario(newScene);
+			  simulation->loadNewScenario(scenarios[1]);
 			  visualization->init(*simulation, visInfos[1]);
 			}
 			break;
@@ -229,14 +222,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			  if (scenarios[2] == 0)
 				  scenarios[2] = new SWE_SplashingPoolScenario();
 
-			  SWE_Scenario* newScene = scenarios[2];
-
-			  // define grid size and initial time step
-			  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-			  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-			  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
-
-			  simulation->loadNewScenario(newScene);
+			  simulation->loadNewScenario(scenarios[2]);
 			  visualization->init(*simulation);
 			}
 			break;
@@ -259,14 +245,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				            (float) 28800., simulationArea);
 				}
 
-				SWE_Scenario* newScene = scenarios[3];
-
-				  // define grid size and initial time step
-				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
-
-				  simulation->loadNewScenario(newScene);
+				  simulation->loadNewScenario(scenarios[3]);
 				  visualization->init(*simulation);
 			}
 			break;
@@ -290,14 +269,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					visInfos[4] = new SWE_AsagiJapanSmallVisInfo();
 				}
 
-				SWE_Scenario* newScene = scenarios[4];
-
-				  // define grid size and initial time step
-				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
-
-				  simulation->loadNewScenario(newScene);
+				  simulation->loadNewScenario(scenarios[4]);
 				  visualization->init(*simulation, visInfos[4]);
 			}
 			break;
@@ -310,23 +282,16 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					//simulation area
 					float simulationArea[4];
 					simulationArea[0] = -13775000;
-					simulationArea[1] = 1655000;
-					simulationArea[2] = -2765000;
-					simulationArea[3] = 8870000;
+					simulationArea[1] = 1650000;
+					simulationArea[2] = -2750000;
+					simulationArea[3] = 8840000;
 					scenarios[5] = new SWE_AsagiScenario(
 							ASAGI_INPUT_DIR "chile_gebco_usgs_500m_bath.nc",
 				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
 				            (float) 28800., simulationArea);
 				}
 
-				SWE_Scenario* newScene = scenarios[5];
-
-				  // define grid size and initial time step
-				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
-
-				  simulation->loadNewScenario(newScene);
+				  simulation->loadNewScenario(scenarios[5]);
 				  visualization->init(*simulation);
 			}
 			break;
@@ -339,7 +304,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					//simulation area
 					float simulationArea[4];
 					simulationArea[0] = -2275000;
-					simulationArea[1] = 1655000;
+					simulationArea[1] = 1650000;
 					simulationArea[2] = -2265000;
 					simulationArea[3] = 1870000;
 					scenarios[6] = new SWE_AsagiScenario(
@@ -348,14 +313,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 				            (float) 28800., simulationArea);
 				}
 
-				SWE_Scenario* newScene = scenarios[6];
-
-				  // define grid size and initial time step
-				  float dx = (newScene->getBoundaryPos(BND_RIGHT) - newScene->getBoundaryPos(BND_LEFT) )/SWE_Block::getNx();
-				  float dy = (newScene->getBoundaryPos(BND_TOP) - newScene->getBoundaryPos(BND_BOTTOM) )/SWE_Block::getNy();
-				  SWE_Block::initGridData(SWE_Block::getNx(),SWE_Block::getNy(),dx,dy);
-
-				  simulation->loadNewScenario(newScene);
+				  simulation->loadNewScenario(scenarios[6]);
 				  visualization->init(*simulation);
 			}
 			break;

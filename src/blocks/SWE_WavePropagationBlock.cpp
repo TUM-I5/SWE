@@ -26,11 +26,12 @@
  * SWE_Block, which uses solvers in the wave propagation formulation.
  */
 
+#include "SWE_WavePropagationBlock.hh"
+
 #include <cassert>
 #include <string>
 #include <limits>
-#include "SWE_Block.hh"
-#include "SWE_WavePropagationBlock.hh"
+
 #ifdef LOOP_OPENMP
 #include <omp.h>
 #endif
@@ -79,8 +80,10 @@
  *   ***********
  * </pre>
  */
-SWE_WavePropagationBlock::SWE_WavePropagationBlock():
-  SWE_Block(),
+SWE_WavePropagationBlock::SWE_WavePropagationBlock(
+		int l_nx, int l_ny,
+		float l_dx, float l_dy):
+  SWE_Block(l_nx, l_ny, l_dx, l_dy),
   hNetUpdatesLeft  (nx+1, ny),
   hNetUpdatesRight (nx+1, ny),
   huNetUpdatesLeft (nx+1, ny),
@@ -106,104 +109,124 @@ SWE_WavePropagationBlock::SWE_WavePropagationBlock():
  * maximum allowed time step size
  */
 void SWE_WavePropagationBlock::computeNumericalFluxes() {
-  //maximum (linearized) wave speed within one iteration
-  float maxWaveSpeed = (float) 0.;
+	//maximum (linearized) wave speed within one iteration
+	float maxWaveSpeed = (float) 0.;
 
-  //compute the net-updates for the vertical edges
-  #ifdef LOOP_OPENMP
-  #pragma omp parallel
-  {
-  float l_maxWaveSpeed = (float) 0.;
-  solver::Hybrid<float> wavePropagationSolver;
-  #pragma omp for
-  #endif
-  for(int i = 1; i < nx+2; i++) {
+	// compute the net-updates for the vertical edges
+
+#ifdef LOOP_OPENMP
+#pragma omp parallel
+{
+
+	float l_maxWaveSpeed = (float) 0.;
+	solver::Hybrid<float> wavePropagationSolver;
+
+	// Use OpenMP for the outer loop
+	#pragma omp for
+#endif // LOOP_OPENMP
+	for(int i = 1; i < nx+2; i++) {
+
+
 #if  WAVE_PROPAGATION_SOLVER==4
+		// Vectorization is currently only possible for the FWaveVec solver
 #ifdef VECTORIZE
-	#pragma simd
-#endif
-#endif
-    for(int j = 1; j < ny+1; j++) {
-      float maxEdgeSpeed;
-      #if WAVE_PROPAGATION_SOLVER!=3
-      wavePropagationSolver.computeNetUpdates( h[i-1][j], h[i][j],
+		// Vectorize the inner loop
+		#pragma simd
+#endif // VECTORIZE
+#endif // WAVE_PROPAGATION_SOLVER==4
+		for(int j = 1; j < ny+1; j++) {
+
+			float maxEdgeSpeed;
+
+			#if WAVE_PROPAGATION_SOLVER!=3
+				wavePropagationSolver.computeNetUpdates( h[i-1][j], h[i][j],
                                                hu[i-1][j], hu[i][j],
                                                b[i-1][j], b[i][j],
                                                hNetUpdatesLeft[i-1][j-1], hNetUpdatesRight[i-1][j-1],
                                                huNetUpdatesLeft[i-1][j-1], huNetUpdatesRight[i-1][j-1],
                                                maxEdgeSpeed );
-     #else
-     //TODO: implement again.
-     assert(false);
-     #endif
+			#else // WAVE_PROPAGATION_SOLVER!=3
+				#error "Solver not implemented in SWE_WavePropagationBlock"
+			#endif // WAVE_PROPAGATION_SOLVER!=3
 
-      #ifdef LOOP_OPENMP
-      //update the maximum wave speed
-      l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
-      #else
-      //update the maximum wave speed
-      maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
-      #endif
-    }
-  }
+			#ifdef LOOP_OPENMP
+				//update the thread-local maximum wave speed
+				l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
+			#else // LOOP_OPENMP
+				//update the maximum wave speed
+				maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
+			#endif // LOOP_OPENMP
+		}
+	}
 
-  //compute the net-updates for the horizontal edges
-  #ifdef LOOP_OPENMP
-  #pragma omp for
-  #endif
-  for(int i = 1; i < nx+1; i++) {
+	// compute the net-updates for the horizontal edges
+
+#ifdef LOOP_OPENMP
+	// Use OpenMP for the outer loop
+	#pragma omp for
+#endif // LOOP_OPENMP
+	for(int i = 1; i < nx+1; i++) {
+
 #if  WAVE_PROPAGATION_SOLVER==4
+		// Vectorization is currently only possible for the FWaveVec solver
 #ifdef VECTORIZE
-	#pragma simd
-#endif
-#endif
-    for(int j = 1; j < ny+2; j++) {
-      float maxEdgeSpeed;
-      #if WAVE_PROPAGATION_SOLVER!=3
-      wavePropagationSolver.computeNetUpdates( h[i][j-1], h[i][j],
+		// Vectorize the inner loop
+		#pragma simd
+#endif // VECTORIZE
+#endif // WAVE_PROPAGATION_SOLVER==4
+		for(int j = 1; j < ny+2; j++) {
+			float maxEdgeSpeed;
+
+			#if WAVE_PROPAGATION_SOLVER!=3
+				wavePropagationSolver.computeNetUpdates( h[i][j-1], h[i][j],
                                                hv[i][j-1], hv[i][j],
                                                b[i][j-1], b[i][j],
                                                hNetUpdatesBelow[i-1][j-1], hNetUpdatesAbove[i-1][j-1],
                                                hvNetUpdatesBelow[i-1][j-1], hvNetUpdatesAbove[i-1][j-1],
                                                maxEdgeSpeed );
-      #else
-      //TODO: implement again.
-      assert(false);
-      #endif
+			#else // WAVE_PROPAGATION_SOLVER!=3
+				#error "Solver not implemented in SWE_WavePropagationBlock"
+			#endif // WAVE_PROPAGATION_SOLVER!=3
 
-      #ifdef LOOP_OPENMP
-      //update the maximum wave speed
-      l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
-      #else
-      //update the maximum wave speed
-      maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
-      #endif
-    }
-  }
-  #ifdef LOOP_OPENMP
-  #pragma omp critical
-  {
-  maxWaveSpeed = std::max(l_maxWaveSpeed, maxWaveSpeed);
-  }
-  } // end of parallel for block
-  #endif
+			#ifdef LOOP_OPENMP
+				//update the thread-local maximum wave speed
+				l_maxWaveSpeed = std::max(l_maxWaveSpeed, maxEdgeSpeed);
+			#else // LOOP_OPENMP
+				//update the maximum wave speed
+				maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
+			#endif // LOOP_OPENMP
+		}
+	}
 
-  if(maxWaveSpeed > 0.00001) { //TODO zeroTol
-    //compute the time step width
-    //CFL-Codition
-    //(max. wave speed) * dt / dx < .5
-    // => dt = .5 * dx/(max wave speed)
-    maxTimestep = std::min( dx/maxWaveSpeed, dy/maxWaveSpeed );
+#ifdef LOOP_OPENMP
+	#pragma omp critical
+	{
+		maxWaveSpeed = std::max(l_maxWaveSpeed, maxWaveSpeed);
+	}
 
-//    #if WAVE_PROPAGATION_SOLVER!=3
-    maxTimestep *= (float) .4; //CFL-number = .5
-//    #else
-//    dt *= (float) .8; //CFL-number = 1. (wave limiters)
-//    #endif
-  }
-  else
-    maxTimestep = std::numeric_limits<float>::max(); //might happen in dry cells
+} // #pragma omp parallel
+#endif
 
+	if(maxWaveSpeed > 0.00001) {
+		//TODO zeroTol
+
+		//compute the time step width
+		//CFL-Codition
+		//(max. wave speed) * dt / dx < .5
+		// => dt = .5 * dx/(max wave speed)
+
+		maxTimestep = std::min( dx/maxWaveSpeed, dy/maxWaveSpeed );
+
+		#if WAVE_PROPAGATION_SOLVER!=3
+			maxTimestep *= (float) .4; //CFL-number = .5
+		#else // WAVE_PROPAGATION_SOLVER!=3
+			#error "Solver not implemented in SWE_WavePropagationBlock"
+			// TODO
+			// dt *= (float) .8; //CFL-number = 1. (wave limiters)
+    	#endif // WAVE_PROPAGATION_SOLVER!=3
+	} else
+		//might happen in dry cells
+		maxTimestep = std::numeric_limits<float>::max();
 }
 
 /**
@@ -213,41 +236,43 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
  */
 void SWE_WavePropagationBlock::updateUnknowns(float dt) {
   //update cell averages with the net-updates
-  #ifdef LOOP_OPENMP
-  #pragma omp parallel for
-  #endif
-  for(int i = 1; i < nx+1; i++) {
-#ifdef VECTORIZE
-	  // Tell the compiler that he can safely ignore all dependencies in this loop
-	  #pragma ivdep
-#endif
-      for(int j = 1; j < ny+1; j++) {
-        h[i][j] -=   dt/dx * (hNetUpdatesRight[i-1][j-1] + hNetUpdatesLeft[i][j-1])
-                   + dt/dy * (hNetUpdatesAbove[i-1][j-1] + hNetUpdatesBelow[i-1][j]);
-        hu[i][j] -= dt/dx * (huNetUpdatesRight[i-1][j-1] + huNetUpdatesLeft[i][j-1]);
-        hv[i][j] -= dt/dy * (hvNetUpdatesAbove[i-1][j-1] + hvNetUpdatesBelow[i-1][j]);
-        #if WAVE_PROPAGATION_SOLVER==3
-        hv[i][j] -= dt/dx * (hvNetUpdatesRight[i-1][j-1] + hvNetUpdatesLeft[i][j-1]);
-        hu[i][j] -= dt/dy * (huNetUpdatesAbove[i-1][j-1] + huNetUpdatesBelow[i-1][j]);
-        #endif
+#ifdef LOOP_OPENMP
+	#pragma omp parallel for
+#endif // LOOP_OPENMP
+	for(int i = 1; i < nx+1; i++) {
 
-        //TODO: dryTol
-        if(h[i][j] < 0) {
+#ifdef VECTORIZE
+		// Tell the compiler that he can safely ignore all dependencies in this loop
+		#pragma ivdep
+#endif // VECTORIZE
+		for(int j = 1; j < ny+1; j++) {
+
+			h[i][j] -=   dt/dx * (hNetUpdatesRight[i-1][j-1] + hNetUpdatesLeft[i][j-1])
+                	   + dt/dy * (hNetUpdatesAbove[i-1][j-1] + hNetUpdatesBelow[i-1][j]);
+			hu[i][j] -= dt/dx * (huNetUpdatesRight[i-1][j-1] + huNetUpdatesLeft[i][j-1]);
+			hv[i][j] -= dt/dy * (hvNetUpdatesAbove[i-1][j-1] + hvNetUpdatesBelow[i-1][j]);
+        	#if WAVE_PROPAGATION_SOLVER==3
+				hv[i][j] -= dt/dx * (hvNetUpdatesRight[i-1][j-1] + hvNetUpdatesLeft[i][j-1]);
+				hu[i][j] -= dt/dy * (huNetUpdatesAbove[i-1][j-1] + huNetUpdatesBelow[i-1][j]);
+        	#endif // WAVE_PROPAGATION_SOLVER==3
+
+
+			if (h[i][j] < 0) {
+				//TODO: dryTol
 #ifndef NDEBUG
-          // Only print this warning when debug is enabled.
-          // Otherwise we cannot vectorize this loop
-          if(h[i][j] < -0.1) {
-            std::cerr << "Warning, negative height: (i,j)=(" << i << "," << j << ")=" << h[i][j] << std::endl;
-            std::cerr << "         b: " << b[i][j] << std::endl;
-          }
-#endif
-          //zero (small) negative depths
-          h[i][j] = hu[i][j] = hv[i][j] = 0.;
-        }
-        else if(h[i][j] < 0.1)
-          hu[i][j] = hv[i][j] = 0.; //no water, no speed!
-      }
-  }
+				// Only print this warning when debug is enabled
+				// Otherwise we cannot vectorize this loop
+				if (h[i][j] < -0.1) {
+					std::cerr << "Warning, negative height: (i,j)=(" << i << "," << j << ")=" << h[i][j] << std::endl;
+					std::cerr << "         b: " << b[i][j] << std::endl;
+				}
+#endif // NDEBUG
+				//zero (small) negative depths
+				h[i][j] = hu[i][j] = hv[i][j] = 0.;
+			} else if (h[i][j] < 0.1)
+				hu[i][j] = hv[i][j] = 0.; //no water, no speed!
+		}
+	}
 }
 
 /**
@@ -312,19 +337,3 @@ float SWE_WavePropagationBlock::simulate(float i_tStart,float i_tEnd) {
 
   return t;
 }
-
-#if WAVE_PROPAGATION_SOLVER==0
-#ifndef NDEBUG
-#ifndef LOOP_OPENMP
-/**
- * Gets the current solver statistics for a hybrid solver.
- *
- * @param o_counterFWave will be set to: times the f-Wave solver was used.
- * @param o_counterAugRie will be set to: times the Augmented Riemann solver was used.
- */
-void SWE_WavePropagationBlock::getSolverStats( long &o_counterFWave, long &o_counterAugRie ) {
-  wavePropagationSolver.getStats( o_counterFWave, o_counterAugRie );
-}
-#endif
-#endif
-#endif
