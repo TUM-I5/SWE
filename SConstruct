@@ -95,7 +95,7 @@ vars.AddVariables(
                 allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid', 'fwavevec')
               ),
                   
-  BoolVariable( 'vectorize', 'add pragmas to help vectorization (release only)', True ),
+  BoolVariable( 'vectorize', 'add pragmas to help vectorization (release only)', False ),
                   
   BoolVariable( 'showVectorization', 'show loop vectorization (Intel compiler only)', False ),
 
@@ -205,6 +205,9 @@ if env['compiler'] == 'intel' and env['showVectorization']:
 if env['compiler'] == 'intel' and env['platform'] == 'mic':
   env.Append(CCFLAGS=['-mmic'])
   env.Append(LINKFLAGS=['-mmic'])
+  
+# Compiler
+if env['compiler'] == 'intel':
   # Add Intel specific libraries
   env.Append(LIBS=['svml', 'imf', 'intlc'])
   
