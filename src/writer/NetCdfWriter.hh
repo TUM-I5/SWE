@@ -32,12 +32,6 @@
 #include <cstring>
 #include <string>
 #include <vector>
-
-// Needed for NetCDF
-#ifdef USEMPI
-#include <mpi.h>
-#endif
-
 #include <netcdf.h>
 
 #include "writer/Writer.hh"
