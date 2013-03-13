@@ -286,7 +286,6 @@ if env['asagi'] == True:
     env.Append(LIBS=['asagi_nompi'])
   else:
     env.Append(LIBS=['asagi'])
-  env.Append(LIBS=['netcdf_c++4'])
   if 'asagiDir' in env:
     env.Append(CPPPATH=[env['asagiDir']+'/include'])
     env.Append(LIBPATH=[env['asagiDir']+'/lib'])
