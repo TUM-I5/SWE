@@ -1,6 +1,8 @@
 build/build_SWE_*
 build/SWE_*
 
+documentation/doxy/
+
 *.pyc
 .sconsign.dblite
 *~

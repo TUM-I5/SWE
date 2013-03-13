@@ -156,7 +156,7 @@ We will model three different situations:
 To implement the boundary conditions, the class \texttt{SWE\_Block} contains an 
 array of four enum variables, \texttt{boundary[4]} (for left/right/bottom/top 
 boundary), that can take the values 
-\texttt{OUTFLOW}, \texttt{WALL}, and \texttt{CONNECT}.
+<code>OUTFLOW</code>, <code>WALL</code>, and <code>CONNECT</code>.
 
 
 \subsection multblocks Multiple Blocks
@@ -165,6 +165,8 @@ Via the connect boundary condition, it is also possible to connect several
 Cartesian grid blocks to build a more complicated domain. Figure \ref{fig:connect} 
 illustrates the exchange of ghost values for two connected blocks.
 
+\image html connect.gif
+\latexonly
 \begin{figure}
 \begin{center}
   \includegraphics[width=0.8\textwidth]{pics/connect.pdf}
@@ -172,10 +174,11 @@ illustrates the exchange of ghost values for two connected blocks.
 \caption{Exchange of values in ghost layers between two connected \texttt{SWE\_Block}s.}
 \label{fig:connect}
 \end{figure}
+\endlatexonly
 
-To store the neighbour block in case of a \texttt{CONNECT} boundary, \texttt{SWE\_Block} 
-contains a further array of four pointers, \texttt{neighbour[4]} (for left/right/bottom/top 
-boundary), that will store a pointer to the connected adjacent \texttt{SWE\_Block}.
+To store the neighbour block in case of a <code>CONNECT</code> boundary, <code>SWE_Block</code> 
+contains a further array of four pointers, <code>neighbour[4]</code> (for left/right/bottom/top 
+boundary), that will store a pointer to the connected adjacent <code>SWE_Block</code>.
 
 The respective block approach can also be exploited for parallelisation: 
 the different blocks would then be assigned to the available processors 
