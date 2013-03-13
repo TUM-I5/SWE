@@ -127,20 +127,6 @@ void SWE_Block::initScenario( float _offsetX, float _offsetY,
 
 /**
  * set water height h in all interior grid cells (i.e. except ghost layer) 
- * to a uniform value
- */
-void SWE_Block::setWaterHeight(float _h) {
-
-  for(int i=1; i<=nx; i++)
-    for(int j=1; j<=ny; j++) {
-      h[i][j] = _h;
-    };
-
-  synchWaterHeightAfterWrite();
-}
-
-/**
- * set water height h in all interior grid cells (i.e. except ghost layer) 
  * to values specified by parameter function _h
  */
 void SWE_Block::setWaterHeight(float (*_h)(float, float)) {
@@ -151,23 +137,6 @@ void SWE_Block::setWaterHeight(float (*_h)(float, float)) {
     };
 
   synchWaterHeightAfterWrite();
-}
-
-/**
- * set discharge unknowns in all interior grid cells (i.e. except ghost layer) 
- * to a uniform value
- * Note: unknowns hu and hv represent momentum, while parameters u and v are velocities!
- *    (_u and _v are multiplied with the resp. cell-local value of h) 
- */
-void SWE_Block::setDischarge(float _u, float _v) {
-
-  for(int i=1; i<=nx; i++)
-    for(int j=1; j<=ny; j++) {
-      hu[i][j] = h[i][j] * _u;
-      hv[i][j] = h[i][j] * _v;
-    };
-
-  synchDischargeAfterWrite();
 }
 
 /**
@@ -215,31 +184,6 @@ void SWE_Block::setBathymetry(float (*_b)(float, float)) {
 
   synchBathymetryAfterWrite();
 }
-
-// /** 
-// 	Restores values for h, v, and u from file data
-// 	@param _h		array holding h-values in sequence
-// 	@param _v		array holding v-values in sequence
-// 	@param _u		array holding u-values in sequence
-// */
-// void SWE_Block::setInitValues(float* _h, float* _u, float* _v) {
-// 	/* Corresponding output code
-// 	for (int j=1; j<ny+1;j++)
-// 	for (int i=1;i<nx+1;i++)
-// 		Vtk_file <<(h[i][j]+b[i][j])<<endl;
-// 	*/
-// 	int i, j;	
-// 	for(int k=0; k<nx*ny; k++) {
-// 		i = (k % ny) + 1;
-// 		j = (k / ny) + 1;
-// 		h[i][j] = _h[k];
-// 		hu[i][j] = _h[k] * _u[k];
-// 		hv[i][j] = _h[k] * _v[k]; 
-// 	};
-// 
-// 	synchWaterHeightAfterWrite();
-// 	synchDischargeAfterWrite();
-// }
 
 // /** 
 // 	Restores values for h, v, and u from file data
@@ -355,20 +299,6 @@ void SWE_Block::setBoundaryBathymetry()
 	synchBathymetryAfterWrite();
 }
 
-// /**
-//  * define a CONNECT boundary:
-//  * the block boundary with index egde (see method setBoundaryType()) 
-//  * is connect to the boundary neighEdge of block neighBlock
-//  */
-// void SWE_Block::connectBoundaries(BoundaryEdge edge, SWE_Block &neighBlock, BoundaryEdge neighEdge) {
-// 
-//   boundary[edge] = CONNECT;
-//   neighBlock.boundary[neighEdge] = CONNECT;
-// 
-//   neighbour[edge] = &neighBlock;
-//   neighBlock.neighbour[neighEdge] = this;
-// }
-// 
 /**
  * register the row or column layer next to a boundary as a "copy layer",
  * from which values will be copied into the ghost layer or a neighbour;

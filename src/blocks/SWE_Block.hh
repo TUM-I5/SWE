@@ -121,12 +121,8 @@ class SWE_Block {
     void initScenario(float _offsetX, float _offsetY,
     		SWE_Scenario &i_scenario, const bool i_multipleBlocks = false );
     // set unknowns
-    /// set the water height to a uniform value
-    void setWaterHeight(float _h);
     /// set the water height according to a given function
     void setWaterHeight(float (*_h)(float, float));
-    /// set the momentum/discharge to a uniform value
-    void setDischarge(float _u, float _v);
     /// set the momentum/discharge according to the provided functions
     void setDischarge(float (*_u)(float, float), float (*_v)(float, float));
     /// set the bathymetry to a uniform value
