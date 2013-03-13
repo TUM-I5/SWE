@@ -145,10 +145,6 @@ class SWE_Block {
     const Float2D& getBathymetry();
 
     // defining boundary conditions
-    /// set boundary conditions to type WALL at all boundaries
-    void setWallBoundaries();
-    /// set boundary conditions to type OUTFLOW at all boundaries
-    void setOutflowBoundaries();
     /// set type of boundary condition for the specified boundary
     void setBoundaryType(BoundaryEdge edge, BoundaryType boundtype, 
                          const SWE_Block1D* inflow = NULL);

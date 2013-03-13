@@ -308,28 +308,6 @@ const Float2D& SWE_Block::getBathymetry() {
 //==================================================================
 
 /**
- * set wall boundary tpye for the four block boundaries
- */
-void SWE_Block::setWallBoundaries() {
-  
-  boundary[BND_LEFT]   = WALL;
-  boundary[BND_RIGHT]  = WALL;
-  boundary[BND_BOTTOM] = WALL;
-  boundary[BND_TOP]    = WALL;
-}
-
-/**
- * set outflow boundary tpye for the four block boundaries
- */
-void SWE_Block::setOutflowBoundaries() {
-  
-  boundary[BND_LEFT]   = OUTFLOW;
-  boundary[BND_RIGHT]  = OUTFLOW;
-  boundary[BND_BOTTOM] = OUTFLOW;
-  boundary[BND_TOP]    = OUTFLOW;
-}
-
-/**
  * Set the boundary type for specific block boundary.
  *
  * @param i_edge location of the edge relative to the SWE_block.
