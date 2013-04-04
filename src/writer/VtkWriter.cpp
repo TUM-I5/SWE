@@ -63,7 +63,7 @@ void io::VtkWriter::writeTimeStep(
 	std::ofstream vtkFile(generateFileName().c_str());
 	assert(vtkFile.good());
 
-	// VTK HEADER
+	// VTK header
 	vtkFile << "<?xml version=\"1.0\"?>" << std::endl
 			<< "<VTKFile type=\"StructuredGrid\">" << std::endl
 			<< "<StructuredGrid WholeExtent=\"" << offsetX << " " << offsetX+nX
@@ -74,7 +74,7 @@ void io::VtkWriter::writeTimeStep(
 	vtkFile << "<Points>" << std::endl
 			<< "<DataArray NumberOfComponents=\"3\" type=\"Float32\" format=\"ascii\">" << std::endl;
 
-	//GITTER PUNKTE
+	//Grid points
 	for (int j=0; j < nX+1; j++)
 	      for (int i=0; i < nX+1; i++)
 	    	  vtkFile << (offsetX+i)*dX << " " << (offsetY+j)*dY <<" 0" << std::endl;
@@ -84,28 +84,28 @@ void io::VtkWriter::writeTimeStep(
 
 	vtkFile << "<CellData>" << std::endl;
 
-	// Water surface height (h+b)
-	vtkFile << "<DataArray Name=\"H\" type=\"Float32\" format=\"ascii\">" << std::endl;
+	// Water surface height h
+	vtkFile << "<DataArray Name=\"h\" type=\"Float32\" format=\"ascii\">" << std::endl;
 	for (int j=1; j < nY+1; j++)
 		for (int i=1; i < nX+1; i++)
-			vtkFile << i_h[i][j]+b[i][j] << std::endl;
+			vtkFile << i_h[i][j] << std::endl;
 	vtkFile << "</DataArray>" << std::endl;
 
-	// Velocities
-	vtkFile << "<DataArray Name=\"U\" type=\"Float32\" format=\"ascii\">" << std::endl;
+	// Momentums
+	vtkFile << "<DataArray Name=\"hu\" type=\"Float32\" format=\"ascii\">" << std::endl;
 	for (int j=1; j < nY+1; j++)
 		for (int i=1; i < nX+1; i++)
-			vtkFile << ((i_h[i][j]>0) ? i_hu[i][j]/i_h[i][j] : 0.0 ) << std::endl;
+			vtkFile << i_hu[i][j] << std::endl;
 	vtkFile << "</DataArray>" << std::endl;
 
-	vtkFile << "<DataArray Name=\"V\" type=\"Float32\" format=\"ascii\">" << std::endl;
+	vtkFile << "<DataArray Name=\"hv\" type=\"Float32\" format=\"ascii\">" << std::endl;
 	for (int j=1; j < nY+1; j++)
 		for (int i=1; i<nX+1; i++)
-			vtkFile << ((i_h[i][j]>0) ? i_hv[i][j]/i_h[i][j] : 0.0 ) << std::endl;
+			vtkFile << i_hv[i][j] << std::endl;
 	vtkFile << "</DataArray>" << std::endl;
 
 	// Bathymetry
-	vtkFile << "<DataArray Name=\"B\" type=\"Float32\" format=\"ascii\">" << std::endl;
+	vtkFile << "<DataArray Name=\"b\" type=\"Float32\" format=\"ascii\">" << std::endl;
 	for (int j=1; j<nY+1; j++)
 		for (int i=1; i<nX+1; i++)
 			vtkFile << b[i][j] << std::endl;
