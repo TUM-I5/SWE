@@ -295,6 +295,13 @@ void SWE_Block::setBoundaryBathymetry()
 		}
 	}
 
+
+	// set corner values
+        b[0][0]       = b[1][1];
+        b[0][ny+1]    = b[1][ny];
+        b[nx+1][0]    = b[nx][1];
+        b[nx+1][ny+1] = b[nx][ny];
+
 	// synchronize after an external update of the bathymetry
 	synchBathymetryAfterWrite();
 }
@@ -470,7 +477,7 @@ void SWE_Block::setBoundaryConditions() {
   // CONNECT boundary conditions are set in the calling function setGhostLayer
   // PASSIVE boundary conditions need to be set by the component using SWE_Block
 
-  // Linker Rand
+  // left boundary
   switch(boundary[BND_LEFT]) {
     case WALL:
     {
@@ -498,7 +505,7 @@ void SWE_Block::setBoundaryConditions() {
       break;
   };
 
-  // Rechter Rand
+  // right boundary
   switch(boundary[BND_RIGHT]) {
     case WALL:
     {
@@ -526,7 +533,7 @@ void SWE_Block::setBoundaryConditions() {
       break;
   };
 
-  // Unterer Rand
+  // bottom boundary
   switch(boundary[BND_BOTTOM]) {
     case WALL:
     {
@@ -554,7 +561,7 @@ void SWE_Block::setBoundaryConditions() {
       break;
   };
 
-  // Oberer Rand
+  // top boundary
   switch(boundary[BND_TOP]) {
     case WALL:
     {
@@ -582,12 +589,47 @@ void SWE_Block::setBoundaryConditions() {
       break;
   };
 
-  // only required for visualisation: set values in corner ghost cells
-  h[0][0] = h[1][1];
-  h[0][ny+1] = h[1][ny];
-  h[nx+1][0] = h[nx][1];
-  h[nx+1][ny+1] = h[nx][ny];
+  /*
+   * Set values in corner ghost cells. Required for dimensional splitting and visualizuation.
+   *   The quantities in the corner ghost cells are chosen to generate a zero Riemann solutions
+   *   (steady state) with the neighboring cells. For the lower left corner (0,0) using
+   *   the values of (1,1) generates a steady state (zero) Riemann problem for (0,0) - (0,1) and
+   *   (0,0) - (1,0) for both outflow and reflecting boundary conditions.
+   * 
+   *   Remark: Unsplit methods don't need corner values.
+   *
+   * Sketch (reflecting boundary conditions, lower left corner):
+   * <pre>
+   *                  **************************
+   *                  *  _    _    *  _    _   *   
+   *  Ghost           * |  h   |   * |  h   |  *   
+   *  cell    ------> * | -hu  |   * |  hu  |  * <------ Cell (1,1) inside the domain
+   *  (0,1)           * |_ hv _|   * |_ hv _|  *  
+   *                  *            *           *
+   *                  **************************
+   *                  *  _    _    *  _    _   *
+   *   Corner Ghost   * |  h   |   * |  h   |  *  
+   *   cell   ------> * |  hu  |   * |  hu  |  * <----- Ghost cell (1,0)
+   *   (0,0)          * |_ hv _|   * |_-hv _|  * 
+   *                  *            *           *
+   *                  **************************
+   * </pre>
+   */
+  h [0][0] = h [1][1];
+  hu[0][0] = hu[1][1];
+  hv[0][0] = hv[1][1];
 
+  h [0][ny+1] = h [1][ny];
+  hu[0][ny+1] = hu[1][ny];
+  hv[0][ny+1] = hv[1][ny];
+  
+  h [nx+1][0] = h [nx][1];
+  hu[nx+1][0] = hu[nx][1];
+  hv[nx+1][0] = hv[nx][1];
+
+  h [nx+1][ny+1] = h [nx][ny];
+  hu[nx+1][ny+1] = hu[nx][ny];
+  hv[nx+1][ny+1] = hv[nx][ny];
 }
 
 
