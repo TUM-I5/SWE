@@ -57,6 +57,7 @@
 #include "tools/CXMLConfig.hpp"
 #endif
 
+#include "tools/args.hh"
 #include "tools/help.hh"
 #include "tools/Logger.hh"
 #include "tools/ProgressBar.hh"
@@ -87,25 +88,6 @@ void exchangeLeftRightGhostLayers( const int i_leftNeighborRank,  SWE_Block1D* o
 void exchangeBottomTopGhostLayers( const int i_bottomNeighborRank, SWE_Block1D* o_bottomNeighborInflow, SWE_Block1D* i_bottomNeighborOutflow,
                                    const int i_topNeighborRank,    SWE_Block1D* o_topNeighborInflow,    SWE_Block1D* i_topNeighborOutflow,
                                    const MPI_Datatype i_mpiRow);
-
-// Get command line argument by the specified name.
-static char* getArgByName(std::vector<std::string> vargs, std::string arg_name, char** argv)
-{
-  std::vector<std::string>::iterator it = std::find(vargs.begin(), vargs.end(), arg_name);
-  if (it == vargs.end()) {
-    std::cerr << "Cannot find the command line argument matching the name \"" <<
-      arg_name << "\"" << endl;
-
-    // abort MPI execution
-    MPI_Abort(MPI_COMM_WORLD, -1);
-
-    exit(1);
-  }
-
-  return argv[it - vargs.begin()];
-}
-
-#define ARG(arg_name) getArgByName(vargs, arg_name, argv)
 
 /**
  * Main program for the simulation on a single SWE_WavePropagationBlock.
@@ -141,32 +123,33 @@ int main( int argc, char** argv ) {
   tools::Logger::logger.printNumberOfProcesses(l_numberOfProcesses);
 
   // check if the necessary command line input parameters are given
+  tools::Args args;
   #ifndef READXML
-  std::vector<std::string> vargs;
-  vargs.push_back(argv[0]);
-  vargs.push_back("grid_size_x");
-  vargs.push_back("grid_size_y");
-  vargs.push_back("output_basepath");
-  vargs.push_back("output_steps_count");
+  args.addOption("grid-size-x", 'x', "Number of cell in x direction");
+  args.addOption("grid-size-y", 'y', "Number of cell in y direction");
+  args.addOption("output-basepath", 'o', "Output base file name");
+  args.addOption("output-steps-count", 'c', "Number of output time steps");
   #ifdef ASAGI
-  vargs.push_back("bathymetry_file");
-  vargs.push_back("displacement_file");
-  vargs.push_back("simul_area_min_x");
-  vargs.push_back("simul_area_max_x");
-  vargs.push_back("simul_area_min_y");
-  vargs.push_back("simul_area_max_y");
-  vargs.push_back("simul_duration_secs");
+  args.addOption("bathymetry-file", 'b', "File containing the bathymetry");
+  args.addOption("displacement-file", 'd', "File containing the displacement");
+  args.addOption("simul-area-min-x", 0, "Simulation area");
+  args.addOption("simul-area-max-x", 0, "Simulation area");
+  args.addOption("simul-area-min-y", 0, "Simulation area");
+  args.addOption("simul-area-max-y", 0, "Simulation area");
+  args.addOption("simul-duration", 0, "Simulation time in seconds");
   #endif
-  if (argc != vargs.size()) {
-    std::cout << "Usage: " << vargs[0];
-    for (int i = 1, e = vargs.size(); i != e; i++)
-      std::cout << " <" << vargs[i] << ">";
-    std::cout << std::endl << std::flush;
+  #endif
+  tools::Args::Result ret = args.parse(argc, argv, l_mpiRank == 0);
 
-    MPI_Finalize();
-    return 1;
+  switch (ret)
+  {
+  case tools::Args::Error:
+	  MPI_Abort(MPI_COMM_WORLD, -1);
+	  return 1;
+  case tools::Args::Help:
+	  MPI_Finalize();
+	  return 0;
   }
-  #endif
 
   //! total number of grid cell in x- and y-direction.
   int l_nX, l_nY;
@@ -176,9 +159,9 @@ int main( int argc, char** argv ) {
 
   // read command line parameters
   #ifndef READXML
-  l_nX = atoi(ARG("grid_size_x"));
-  l_nY = atoi(ARG("grid_size_y"));
-  l_baseName = std::string(ARG("output_basepath"));
+  l_nX = args.getArgument<int>("grid-size-x");
+  l_nY = args.getArgument<int>("grid-size-y");
+  l_baseName = args.getArgument<std::string>("output-basepath");
   #endif
 
   // read xml file
@@ -230,14 +213,14 @@ int main( int argc, char** argv ) {
 
   //simulation area
   float simulationArea[4];
-  simulationArea[0] = atof(ARG("simul_area_min_x"));
-  simulationArea[1] = atof(ARG("simul_area_max_x"));
-  simulationArea[2] = atof(ARG("simul_area_min_y"));
-  simulationArea[3] = atof(ARG("simul_area_max_y"));
+  simulationArea[0] = args.getArgument<float>("simul-area-min-x");
+  simulationArea[1] = args.getArgument<float>("simul-area-max-x");
+  simulationArea[2] = args.getArgument<float>("simul-area-min-y");
+  simulationArea[3] = args.getArgument<float>("simul-area-max-y");
 
-  float simulationDuration = atof(ARG("simul_duration_secs"));
+  float simulationDuration = args.getArgument<float>("simul-duration");
 
-  SWE_AsagiScenario l_scenario(ARG("bathymetry_file"), ARG("displacement_file"),
+  SWE_AsagiScenario l_scenario(args.getArgument<std::string>("bathymetry-file"), args.getArgument<std::string>("displacement-file"),
                                simulationDuration, simulationArea);
   #else
   // create a simple artificial scenario
@@ -245,7 +228,7 @@ int main( int argc, char** argv ) {
   #endif
 
   //! number of checkpoints for visualization (at each checkpoint in time, an output file is written).
-  int l_numberOfCheckPoints = atoi(ARG("output_steps_count"));
+  int l_numberOfCheckPoints = args.getArgument<int>("output-steps-count");
 
   //! number of grid cells in x- and y-direction per process.
   int l_nXLocal, l_nYLocal;
