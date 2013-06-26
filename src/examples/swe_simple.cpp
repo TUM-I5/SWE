@@ -53,6 +53,7 @@
 #include "tools/CXMLConfig.hpp"
 #endif
 
+#include "tools/args.hh"
 #include "tools/help.hh"
 #include "tools/Logger.hh"
 #include "tools/ProgressBar.hh"
@@ -64,15 +65,23 @@ int main( int argc, char** argv ) {
   /**
    * Initialization.
    */
-  // check if the necessary command line input parameters are given
+  // Parse command line parameters
+  tools::Args args;
   #ifndef READXML
-  if(argc != 4) {
-    std::cout << "Aborting ... please provide proper input parameters." << std::endl
-              << "Example: ./SWE_parallel 200 300 /work/openmp_out" << std::endl
-              << "\tfor a single block of size 200 * 300" << std::endl;
-    return 1;
-  }
+  args.addOption("grid-size-x", 'x', "Number of cell in x direction");
+  args.addOption("grid-size-y", 'y', "Number of cell in y direction");
+  args.addOption("output-basepath", 'o', "Output base file name");
   #endif
+
+  tools::Args::Result ret = args.parse(argc, argv);
+
+  switch (ret)
+  {
+  case tools::Args::Error:
+	  return 1;
+  case tools::Args::Help:
+	  return 0;
+  }
 
   //! number of grid cells in x- and y-direction.
   int l_nX, l_nY;
@@ -82,9 +91,9 @@ int main( int argc, char** argv ) {
 
   // read command line parameters
   #ifndef READXML
-  l_nY = l_nX = atoi(argv[1]);
-  l_nY = atoi(argv[2]);
-  l_baseName = std::string(argv[3]);
+  l_nX = args.getArgument<int>("grid-size-x");
+  l_nY = args.getArgument<int>("grid-size-y");
+  l_baseName = args.getArgument<std::string>("output-basepath");
   #endif
 
   // read xml file
