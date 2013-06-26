@@ -78,7 +78,8 @@ vars.AddVariables(
 
   EnumVariable( 'computeCapability', 'optional architecture/compute capability of the CUDA card', 'sm_20',
                 allowed_values=('sm_10', 'sm_11', 'sm_12','sm_13',
-                                'sm_20', 'sm_21', 'sm_22', 'sm_23' )
+                                'sm_20', 'sm_21', 'sm_22', 'sm_23',
+                                'sm_30', 'sm_35' )
               ),
 
   BoolVariable( 'openGL', 'compile with OpenGL visualization', False),
