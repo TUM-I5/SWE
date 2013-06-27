@@ -433,7 +433,7 @@ int main( int argc, char** argv ) {
     // do time steps until next checkpoint is reached
     while( l_t < l_checkPoints[c] ) {
       //reset CPU-Communication clock
-      tools::Logger::logger.resetCpuCommunicationClockToCurrentTime();
+      tools::Logger::logger.resetClockToCurrentTime("CpuCommunication");
 
       // exchange ghost and copy layers
       exchangeLeftRightGhostLayers( l_leftNeighborRank,  l_leftInflow,  l_leftOutflow,
@@ -445,7 +445,7 @@ int main( int argc, char** argv ) {
                       l_mpiRow );
 
       // reset the cpu clock
-      tools::Logger::logger.resetCpuClockToCurrentTime();
+      tools::Logger::logger.resetClockToCurrentTime("Cpu");
 
       // set values in ghost cells
       l_wavePropgationBlock.setGhostLayer();
@@ -457,7 +457,7 @@ int main( int argc, char** argv ) {
       float l_maxTimeStepWidth = l_wavePropgationBlock.getMaxTimestep();
 
       // update the cpu time in the logger
-      tools::Logger::logger.updateCpuTime();
+      tools::Logger::logger.updateTime("Cpu");
 
       //! maximum allowed time steps of all blocks
       float l_maxTimeStepWidthGlobal;
@@ -466,14 +466,14 @@ int main( int argc, char** argv ) {
       MPI_Allreduce(&l_maxTimeStepWidth, &l_maxTimeStepWidthGlobal, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
 
       // reset the cpu time
-      tools::Logger::logger.resetCpuClockToCurrentTime();
+      tools::Logger::logger.resetClockToCurrentTime("Cpu");
 
       // update the cell values
       l_wavePropgationBlock.updateUnknowns(l_maxTimeStepWidthGlobal);
 
       // update the cpu and CPU-communication time in the logger
-      tools::Logger::logger.updateCpuTime();
-      tools::Logger::logger.updateCpuCommunicationTime();
+      tools::Logger::logger.updateTime("Cpu");
+      tools::Logger::logger.updateTime("CpuCommunication");
 
       // update simulation time with time step width.
       l_t += l_maxTimeStepWidthGlobal;
@@ -511,10 +511,10 @@ int main( int argc, char** argv ) {
   tools::Logger::logger.printStatisticsMessage();
 
   // print the cpu time
-  tools::Logger::logger.printCpuTime("CPU time");
+  tools::Logger::logger.printTime("Cpu", "CPU time");
 
   // print CPU + Communication time
-  tools::Logger::logger.printCpuCommunicationTime();
+  tools::Logger::logger.printTime("CpuCommunication", "CPU + Communication time");
 
   // print the wall clock time (includes plotting)
   tools::Logger::logger.printWallClockTime(time(NULL));

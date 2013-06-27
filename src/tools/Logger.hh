@@ -33,6 +33,7 @@
 #include <mpi.h>
 #endif
 
+#include <map>
 #include <string>
 #include <iostream>
 #include <ctime>
@@ -88,25 +89,15 @@ class tools::Logger {
   //! definition of indentation
   const std::string indentation;
 
-  //! CPU clock
+  //! Clocks
 #if (defined USEMPI && !defined CUDA)
-  double cpuClock;
+  std::map<std::string, double> clocks;
 #else
-  clock_t cpuClock;
+  std::map<std::string, clock_t> clocks;
 #endif
 
-  //! CPU-Communication clock
-#if (defined USEMPI && !defined CUDA)
-  double cpuCommClock;
-#else
-  clock_t cpuCommClock;
-#endif
-
-  //! CPU time
-  double cpuTime;
-
-  //! CPU and communication time
-  double cpuCommTime;
+  //! Timer
+  std::map<std::string, double> timer;
 
   //! wall clock time: cpu, communication, IO
   double wallClockTime;
@@ -178,8 +169,6 @@ class tools::Logger {
             midDelimiter(i_midDelimiter),
             largeDelimiter(i_largeDelimiter),
             indentation(i_indentation) {
-      //set time to zero
-      cpuTime = cpuCommTime = wallClockTime = 0.;
 
 #ifndef USEMPI
       // Since we have one static logger, we do not know the MPI rank in this
@@ -427,40 +416,30 @@ class tools::Logger {
     }
 
     /**
-     * Update the CPU time.
+     * Update a timer
+     *
+     * @param i_name Name of timer
      */
-    void updateCpuTime() {
+    void updateTime(const std::string &i_name) {
+    	// If the timer does not yet exist it will be initialized with 0 by std::map
+    	// Works only with [] no with .at()
 #if (defined USEMPI && !defined CUDA)
-      cpuTime += MPI_Wtime() - cpuClock;
+    	timer[i_name] += MPI_Wtime() - clocks.at(i_name);
 #else
-      cpuTime += (clock() - cpuClock)/(double)CLOCKS_PER_SEC;
+    	timer[i_name] += (clock() - clocks.at(i_name))/(double)CLOCKS_PER_SEC;
 #endif
     }
 
     /**
-     * Update the CPU-Communication time.
+     * Reset a clock to the current time
+     *
+     * @param i_name Name of timer/clock
      */
-    void updateCpuCommunicationTime() {
+    void resetClockToCurrentTime(const std::string &i_name) {
 #if (defined USEMPI && !defined CUDA)
-      cpuCommTime += MPI_Wtime() - cpuCommClock;
+    	clocks[i_name] = MPI_Wtime();
 #else
-      cpuCommTime += (clock() - cpuCommClock)/(double)CLOCKS_PER_SEC;
-#endif
-    }
-
-    void resetCpuClockToCurrentTime() {
-#if (defined USEMPI && !defined CUDA)
-      cpuClock = MPI_Wtime();
-#else
-      cpuClock = clock();
-#endif
-    }
-
-    void resetCpuCommunicationClockToCurrentTime() {
-#if (defined USEMPI && !defined CUDA)
-      cpuCommClock = MPI_Wtime();
-#else
-      cpuCommClock = clock();
+    	clocks[i_name] = clock();
 #endif
     }
 
@@ -487,25 +466,15 @@ class tools::Logger {
     }
 
     /**
-     * Print elapsed CPU time.
+     * Print elapsed time.
      *
-     * @param i_cpuTimeMessage cpu time message.
+     * @param i_name Name of the timer
+     * @param i_message time message.
      */
-    void printCpuTime(const std::string i_cpuTimeMessage = "CPU time" ) {
+    void printTime(const std::string &i_name, const std::string &i_message ) {
       timeCout() << indentation << "process " << processRank << " - "
-                << i_cpuTimeMessage << ": "
-                << cpuTime << " seconds"<< std::endl;
-    }
-
-    /**
-     * Print elapsed  CPU + communication time.
-     *
-     * @param i_cpuCommunicationTimeMessage CPU + communication time message.
-     */
-    void printCpuCommunicationTime( const std::string i_cpuCommunicationTimeMessage = "CPU + communication time" ) {
-      timeCout() << indentation << "process " << processRank << " - "
-                << i_cpuCommunicationTimeMessage << ": "
-                << cpuCommTime << " seconds"<< std::endl;
+                << i_message << ": "
+                << timer.at(i_name) << " seconds"<< std::endl;
     }
 
     /**
@@ -523,7 +492,7 @@ class tools::Logger {
     }
 
   public:
-    /** The logger all classes shoud use */
+    /** The logger all classes should use */
     static Logger logger;
 };
 
