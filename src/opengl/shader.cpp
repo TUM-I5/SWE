@@ -18,6 +18,8 @@
 // along with SWE_CUDA.  If not, see <http://www.gnu.org/licenses/>.
 // =====================================================================
 
+#include <unistd.h>
+
 #include "shader.h"
 
 #include "tools/Logger.hh"

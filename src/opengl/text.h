@@ -20,6 +20,8 @@
 #ifndef TEXT_H
 #define TEXT_H
 
+#include <unistd.h>
+
 #include <cmath>
 #include <string>
 #include <vector>
