@@ -65,7 +65,7 @@ vars.AddVariables(
   PathVariable( 'buildDir', 'where to build the code', 'build', PathVariable.PathIsDirCreate ),
 
   EnumVariable( 'compiler', 'used compiler', 'gnu',
-                allowed_values=('gnu', 'intel')
+                allowed_values=('gnu', 'intel', 'cray')
               ),
 
   EnumVariable( 'compileMode', 'mode of the compilation', 'release',
@@ -78,7 +78,8 @@ vars.AddVariables(
 
   EnumVariable( 'computeCapability', 'optional architecture/compute capability of the CUDA card', 'sm_20',
                 allowed_values=('sm_10', 'sm_11', 'sm_12','sm_13',
-                                'sm_20', 'sm_21', 'sm_22', 'sm_23' )
+                                'sm_20', 'sm_21', 'sm_22', 'sm_23',
+                                'sm_30', 'sm_35' )
               ),
 
   BoolVariable( 'openGL', 'compile with OpenGL visualization', False),
@@ -103,7 +104,9 @@ vars.AddVariables(
                 allowed_values=('default', 'mic' )
               ),
 
-  BoolVariable( 'xmlRuntime', 'use a xml-file for runtime parameters', False )
+  BoolVariable( 'xmlRuntime', 'use a xml-file for runtime parameters', False ),
+
+  BoolVariable( 'copyenv', 'copy the whole environment', False )
 )
 
 # external variables
@@ -145,13 +148,20 @@ if env['parallelization'] != 'cuda' and env['openGL'] == True:
   print >> sys.stderr, '** The parallelization "'+env['parallelization']+'" does not support OpenGL visualization (CUDA only).'
   Exit(3)
 
+# Copy whole environment?
+if env['copyenv']:
+  env.AppendUnique(ENV=os.environ, delete_existing=1)
+
 #
 # precompiler, compiler and linker flags
 #
 
 # Select the compiler (MPI and/or Intel, GNU is default)
 if env['parallelization'] in ['mpi', 'mpi_with_cuda']: 
-  env['CXX'] = env['LINKERFORPROGRAMS'] = env.Detect(['mpiCC', 'mpicxx'])
+  if env['compiler'] == 'cray':
+    env['CXX'] = 'CC'
+  else:
+    env['CXX'] = env['LINKERFORPROGRAMS'] = env.Detect(['mpiCC', 'mpicxx'])
   if not env['CXX']:
       print >> sys.stderr, '** MPI compiler not found, please update PATH environment variable'
       Exit(1)
@@ -165,9 +175,12 @@ if env['parallelization'] in ['mpi', 'mpi_with_cuda']:
 else:
   if env['compiler'] == 'intel':
     env['CXX'] = 'icpc'
+  elif env['compiler'] == 'cray':
+    env['CXX'] = env['LINKERFORPROGRAMS'] = 'CC'
 
 # eclipse specific flag
-env.Append(CCFLAGS=['-fmessage-length=0'])
+if env['compiler'] != 'cray':
+  env.Append(CCFLAGS=['-fmessage-length=0'])
 
 # xml parameters for the compiler TODO
 
@@ -181,6 +194,9 @@ if env['compileMode'] == 'debug':
   elif env['compiler'] == 'intel':
     env.Append(CCFLAGS=['-O0','-g'])
 
+  elif env['compiler'] == 'cray':
+    env.Append(CCFLAGS=['-O0'])
+
 elif env['compileMode'] == 'release':
   env.Append(CPPDEFINES=['NDEBUG'])
 
@@ -189,9 +205,13 @@ elif env['compileMode'] == 'release':
 
   elif env['compiler'] == 'intel':
     env.Append(CCFLAGS=['-O2'])
+
+  elif env['compiler'] == 'cray':
+    env.Append(CCFLAGS=['-O3'])
     
 # Other compiler flags (for all compilers)
-env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias'])
+if env['compiler'] != 'cray':
+  env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias'])
 
 # Vectorization?
 if env['compileMode'] == 'release' and env['vectorize']:
