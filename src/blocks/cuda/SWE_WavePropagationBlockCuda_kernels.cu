@@ -32,7 +32,11 @@
 #include <cmath>
 #include <cstdio>
 
+#if defined CUDA_AUGRIE
+#include "solvers/AugRieCUDA.h"
+#else
 #include "solvers/FWaveCuda.h"
+#endif
 
 /**
  * The compute net-updates kernel calls the solver for a defined CUDA-Block and does a reduction over the computed wave speeds within this block.
@@ -121,13 +125,22 @@ void computeNetUpdatesKernel(
     l_rightCellPosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ, i_nY+2);
 
     // compute the net-updates
+#if defined CUDA_AUGRIE
+    augRieComputeNetUpdates (
+                            i_h[l_leftCellPosition],  i_h[l_rightCellPosition],
+                            i_hu[l_leftCellPosition], i_hu[l_rightCellPosition],
+                            i_b[l_leftCellPosition],  i_b[l_rightCellPosition],
+                            static_cast<real>(9.81), static_cast<real>(0.01), static_cast<real>(0.000001), static_cast<real>(0.0001), 10,
+                            l_netUpdates
+                           );
+#else
     fWaveComputeNetUpdates( 9.81,
                             i_h[l_leftCellPosition],  i_h[l_rightCellPosition],
                             i_hu[l_leftCellPosition], i_hu[l_rightCellPosition],
                             i_b[l_leftCellPosition],  i_b[l_rightCellPosition],
                             l_netUpdates
                            );
-
+#endif
     // compute the location of the net-updates in the global CUDA-arrays.
     l_netUpdatePosition = computeOneDPositionKernel(l_cellIndexI-1, l_cellIndexJ, i_nY+1);
 
@@ -150,14 +163,23 @@ void computeNetUpdatesKernel(
     l_leftCellPosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ-1, i_nY+2);
     l_rightCellPosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ, i_nY+2);
 
-    // compute the net-updates
+// compute the net-updates
+#if defined CUDA_AUGRIE
+    augRieComputeNetUpdates (
+                            i_h[l_leftCellPosition],  i_h[l_rightCellPosition],
+                            i_hv[l_leftCellPosition], i_hv[l_rightCellPosition],
+                            i_b[l_leftCellPosition],  i_b[l_rightCellPosition],
+                            static_cast<real>(9.81), static_cast<real>(0.01), static_cast<real>(0.000001), static_cast<real>(0.0001), 10,
+                            l_netUpdates
+                           );
+#else
     fWaveComputeNetUpdates( 9.81,
                             i_h[l_leftCellPosition], i_h[l_rightCellPosition],
                             i_hv[l_leftCellPosition], i_hv[l_rightCellPosition],
                             i_b[l_leftCellPosition], i_b[l_rightCellPosition],
                             l_netUpdates
                            );
-
+#endif
     // compute the location of the net-updates in the global CUDA-arrays.
     l_netUpdatePosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ-1, i_nY+1);
 

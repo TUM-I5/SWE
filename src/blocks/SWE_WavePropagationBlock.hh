@@ -50,6 +50,8 @@
 #include "solvers/AugRieGeoClaw.hpp"
 #elif WAVE_PROPAGATION_SOLVER==4
 #include "solvers/FWaveVec.hpp"
+#elif WAVE_PROPAGATION_SOLVER==5
+#include "solvers/AugRie_SIMD.hpp"
 #else
 #include "solvers/Hybrid.hpp"
 #endif
@@ -62,91 +64,114 @@
  *  F-Wave, Apprximate Augmented Riemann, Hybrid (f-wave + augmented).
  *  (details can be found in the corresponding source files)
  */
-class SWE_WavePropagationBlock: public SWE_Block {
-//private:
-  //OpenMp: Every task defines it own solver -> SWE_WavePropagationBlock.cpp
+class SWE_WavePropagationBlock : public SWE_Block {
+	//private:
+	//OpenMp: Every task defines it own solver -> SWE_WavePropagationBlock.cpp
 #ifndef LOOP_OPENMP
-    //specify the wave propagation solver
+	//specify the wave propagation solver
 #if WAVE_PROPAGATION_SOLVER==1
-    //! F-wave Riemann solver
-    solver::FWave<float> wavePropagationSolver;
+	//! F-wave Riemann solver
+	solver::FWave<float> wavePropagationSolver;
 #elif WAVE_PROPAGATION_SOLVER==2
-    //! Approximate Augmented Riemann solver
-    solver::AugRie<float> wavePropagationSolver;
+	//! Approximate Augmented Riemann solver
+	solver::AugRie<float> wavePropagationSolver;
 #elif WAVE_PROPAGATION_SOLVER==3
-    //! Approximate Augmented Riemann solver
-    solver::AugRieGeoClaw<double> wavePropagationSolver;
+	//! Approximate Augmented Riemann solver
+	solver::AugRieGeoClaw<double> wavePropagationSolver;
 #elif WAVE_PROPAGATION_SOLVER==4
-    //! Vectorized FWave solver
-    solver::FWaveVec<float> wavePropagationSolver;
+	//! Vectorized FWave solver
+	solver::FWaveVec<float> wavePropagationSolver;
+#elif WAVE_PROPAGATION_SOLVER==5
+	//! SIMD Vectorized Augmented Riemann solver
+	solver::AugRie_SIMD wavePropagationSolver;
 #else
-    //! Hybrid solver (f-wave + augmented)
-    solver::Hybrid<float> wavePropagationSolver;
+	//! Hybrid solver (f-wave + augmented)
+	solver::Hybrid<float> wavePropagationSolver;
 #endif
 #endif
 
-    //! net-updates for the heights of the cells on the left sides of the vertical edges.
-    Float2D hNetUpdatesLeft;
-    //! net-updates for the heights of the cells on the right sides of the vertical edges.
-    Float2D hNetUpdatesRight;
+	//! net-updates for the heights of the cells on the left sides of the vertical edges.
+	Float2D hNetUpdatesLeft;
+	//! net-updates for the heights of the cells on the right sides of the vertical edges.
+	Float2D hNetUpdatesRight;
 
-    //! net-updates for the x-momentums of the cells on the left sides of the vertical edges.
-    Float2D huNetUpdatesLeft;
-    //! net-updates for the x-momentums of the cells on the right sides of the vertical edges.
-    Float2D huNetUpdatesRight;
+	//! net-updates for the x-momentums of the cells on the left sides of the vertical edges.
+	Float2D huNetUpdatesLeft;
+	//! net-updates for the x-momentums of the cells on the right sides of the vertical edges.
+	Float2D huNetUpdatesRight;
 
-    #if WAVE_PROPAGATION_SOLVER==3
-    //! net-updates for the y-momentums of the cells on the left sides of the vertical edges.
-    Float2D hvNetUpdatesLeft;
-    //! net-updates for the y-momentums of the cells on the right sides of the vertical edges.
-    Float2D hvNetUpdatesRight;
-    #endif
+#if WAVE_PROPAGATION_SOLVER==3
+	//! net-updates for the y-momentums of the cells on the left sides of the vertical edges.
+	Float2D hvNetUpdatesLeft;
+	//! net-updates for the y-momentums of the cells on the right sides of the vertical edges.
+	Float2D hvNetUpdatesRight;
+#endif
 
-    //! net-updates for the heights of the cells below the horizontal edges.
-    Float2D hNetUpdatesBelow;
-    //! net-updates for the heights of the cells above the horizontal edges.
-    Float2D hNetUpdatesAbove;
+	//! net-updates for the heights of the cells below the horizontal edges.
+	Float2D hNetUpdatesBelow;
+	//! net-updates for the heights of the cells above the horizontal edges.
+	Float2D hNetUpdatesAbove;
 
-    //! net-updates for the y-momentums of the cells below the horizontal edges.
-    Float2D hvNetUpdatesBelow;
-    //! net-updates for the y-momentums of the cells above the horizontal edges.
-    Float2D hvNetUpdatesAbove;
+	//! net-updates for the y-momentums of the cells below the horizontal edges.
+	Float2D hvNetUpdatesBelow;
+	//! net-updates for the y-momentums of the cells above the horizontal edges.
+	Float2D hvNetUpdatesAbove;
 
-    #if WAVE_PROPAGATION_SOLVER==3
-    //! net-updates for the x-momentums of the cells below the horizontal edges.
-    Float2D huNetUpdatesBelow;
-    //! net-updates for the x-momentums of the cells below the horizontal edges.
-    Float2D huNetUpdatesAbove;
-    #endif
+#if WAVE_PROPAGATION_SOLVER==3
+	//! net-updates for the x-momentums of the cells below the horizontal edges.
+	Float2D huNetUpdatesBelow;
+	//! net-updates for the x-momentums of the cells below the horizontal edges.
+	Float2D huNetUpdatesAbove;
+#endif
 
-  public:
-    //constructor of a SWE_WavePropagationBlock.
-    SWE_WavePropagationBlock(int l_nx, int l_ny,
-    					float l_dx, float l_dy);
+public:
+	//constructor of a SWE_WavePropagationBlock.
+	SWE_WavePropagationBlock (int l_nx, int l_ny, float l_dx, float l_dy);
+	
+#ifdef COUNTFLOPS
+	size_t flops;
+	double time_needed;
+#endif
 
-    //executes a single timestep.
-    virtual void simulateTimestep(float dt);
+	//executes a single timestep.
+	virtual void simulateTimestep (float dt);
 
-    //computes the net-updates for the block
-    void computeNumericalFluxes();
+	//computes the net-updates for the block
+	void computeNumericalFluxes ();
 
-    //update the cells
-    void updateUnknowns(float dt);
+	//update the cells
+	void updateUnknowns (float dt);
 
-    //runs the simulation until i_tEnd is reached.
-    float simulate(float i_tStart, float i_tEnd);
+	//runs the simulation until i_tEnd is reached.
+	float simulate (float i_tStart, float i_tEnd);
 
-    //updates the bathymetry with the current displacment values
+	//updates the bathymetry with the current displacment values
 #ifdef DYNAMIC_DISPLACEMENTS
-    bool updateBathymetryWithDynamicDisplacement(scenarios::Asagi &i_asagiScenario, float time);
+	bool updateBathymetryWithDynamicDisplacement (scenarios::Asagi &i_asagiScenario, float time);
 #endif
 
-    /**
-     * Destructor of a SWE_WavePropagationBlock.
-     *
-     * In the case of a hybrid solver (NDEBUG not defined) information about the used solvers will be printed.
-     */
-    virtual ~SWE_WavePropagationBlock() {}
+	/**
+	 * Destructor of a SWE_WavePropagationBlock.
+	 *
+	 * In the case of a hybrid solver (NDEBUG not defined) information about the used solvers will be printed.
+	 */
+	virtual
+	~SWE_WavePropagationBlock ()
+	{
+#ifdef COUNTFLOPS
+#ifdef LOOP_OPENMP
+		std :: cout << "Flops: " << flops << std :: endl;
+		std :: cout << "Time spend: " << time_needed << std :: endl;
+		std :: cout << "Flops per second: " << std :: scientific << flops / time_needed << std :: endl;
+#else
+		flops = wavePropagationSolver.flops;
+		
+		std :: cout << "Flops: " << flops << std :: endl;
+		std :: cout << "Time spend: " << time_needed / CLOCKS_PER_SEC<< std :: endl;
+		std :: cout << "Flops per second: " << std :: scientific << flops / time_needed * CLOCKS_PER_SEC << std :: endl;
+#endif
+#endif
+	}
 };
 
 #endif /* SWEWAVEPROPAGATIONBLOCK_HH_ */
