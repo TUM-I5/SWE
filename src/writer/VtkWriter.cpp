@@ -75,7 +75,7 @@ void io::VtkWriter::writeTimeStep(
 			<< "<DataArray NumberOfComponents=\"3\" type=\"Float32\" format=\"ascii\">" << std::endl;
 
 	//Grid points
-	for (int j=0; j < nX+1; j++)
+	for (int j=0; j < nY+1; j++)
 	      for (int i=0; i < nX+1; i++)
 	    	  vtkFile << (offsetX+i)*dX << " " << (offsetY+j)*dY <<" 0" << std::endl;
 
