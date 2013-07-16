@@ -286,7 +286,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					simulationArea[2] = -2750000;
 					simulationArea[3] = 8840000;
 					scenarios[5] = new SWE_AsagiScenario(
-							ASAGI_INPUT_DIR "chile_gebco_usgs_500m_bath.nc",
+							ASAGI_INPUT_DIR "chile_gebco_usgs_2000m_bath.nc",
 				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
 				            (float) 28800., simulationArea);
 				}
@@ -308,7 +308,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					simulationArea[2] = -2265000;
 					simulationArea[3] = 1870000;
 					scenarios[6] = new SWE_AsagiScenario(
-							ASAGI_INPUT_DIR "chile_gebco_usgs_500m_bath.nc",
+							ASAGI_INPUT_DIR "chile_gebco_usgs_2000m_bath.nc",
 				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
 				            (float) 28800., simulationArea);
 				}

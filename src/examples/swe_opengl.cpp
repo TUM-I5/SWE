@@ -34,6 +34,8 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 #define WINDOW_TITLE "Shallow Water Equations v1.3"
+#define GRID_XSIZE 401
+#define GRID_YSIZE 401
 
 /**
 	Main routine.
