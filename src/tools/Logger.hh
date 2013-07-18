@@ -478,6 +478,16 @@ class tools::Logger {
     }
 
     /**
+     * Get elapsed time
+     *
+     * @param i_name Name of the time
+     * @return elapsed time
+     */
+    double getTime(const std::string &i_name) {
+    	return timer.at(i_name);
+    }
+
+    /**
      * Print number of iterations done
      *
      * @param i_iterations Number of iterations done
