@@ -90,11 +90,7 @@ class tools::Logger {
   const std::string indentation;
 
   //! Clocks
-#if (defined USEMPI && !defined CUDA)
-  std::map<std::string, double> clocks;
-#else
   std::map<std::string, clock_t> clocks;
-#endif
 
   //! Timer
   std::map<std::string, double> timer;
@@ -421,13 +417,7 @@ class tools::Logger {
      * @param i_name Name of timer
      */
     void updateTime(const std::string &i_name) {
-    	// If the timer does not yet exist it will be initialized with 0 by std::map
-    	// Works only with [] no with .at()
-#if (defined USEMPI && !defined CUDA)
-    	timer[i_name] += MPI_Wtime() - clocks.at(i_name);
-#else
     	timer[i_name] += (clock() - clocks.at(i_name))/(double)CLOCKS_PER_SEC;
-#endif
     }
 
     /**
@@ -436,11 +426,7 @@ class tools::Logger {
      * @param i_name Name of timer/clock
      */
     void resetClockToCurrentTime(const std::string &i_name) {
-#if (defined USEMPI && !defined CUDA)
-    	clocks[i_name] = MPI_Wtime();
-#else
     	clocks[i_name] = clock();
-#endif
     }
 
     /**
