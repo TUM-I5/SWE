@@ -74,6 +74,12 @@ void Simulation::resize(float factor)
 */
 void Simulation::runCuda(struct cudaGraphicsResource **vbo_resource, struct cudaGraphicsResource **vbo_normals)
 {
+	if (loop) {
+		// Restart?
+		if (curTime >= scenario->endSimulation())
+			restart();
+	}
+
     // map OpenGL buffer object for writing from CUDA
     float3 *dptr, *dptr2;
 	std::size_t num_bytes, num_bytes2;

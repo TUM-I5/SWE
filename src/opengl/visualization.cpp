@@ -60,6 +60,7 @@ Visualization::Visualization(int windowWidth, int windowHeight, const char* wind
 	text->addText("  Space: Pause/Resume");
 	text->addText("  ->: Next frame (when paused)");
 	text->addText("  r: Restart scenario");
+	text->addText("  l: Endless loop");
 	text->addText("  +/-: Scale wave height");
 	text->addText("Mouse:");
 	text->addText("  Left button: rotate");

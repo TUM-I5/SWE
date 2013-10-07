@@ -157,6 +157,10 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 			allowStep = paused;
 			simulation->restart();
 			break;
+		case SDLK_l:
+			// Change loop
+			simulation->toogleLoop();
+			break;
 		case SDLK_w:
 			// Switch rendering mode
 			visualization->toggleRenderingMode();
@@ -264,7 +268,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					scenarios[4] = new SWE_AsagiScenario(
 							ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_bath.nc",
 				            ASAGI_INPUT_DIR "tohoku_gebco_ucsb3_500m_hawaii_displ.nc",
-				            (float) 28800., simulationArea);
+				            (float) 18800., simulationArea);
 
 					visInfos[4] = new SWE_AsagiJapanSmallVisInfo();
 				}
@@ -288,7 +292,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					scenarios[5] = new SWE_AsagiScenario(
 							ASAGI_INPUT_DIR "chile_gebco_usgs_2000m_bath.nc",
 				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
-				            (float) 28800., simulationArea);
+				            (float) 50000., simulationArea);
 				}
 
 				  simulation->loadNewScenario(scenarios[5]);
@@ -310,7 +314,7 @@ bool Controller::handleKeyPress( SDL_keysym *keysym) {
 					scenarios[6] = new SWE_AsagiScenario(
 							ASAGI_INPUT_DIR "chile_gebco_usgs_2000m_bath.nc",
 				            ASAGI_INPUT_DIR "chile_gebco_usgs_500m_displ.nc",
-				            (float) 28800., simulationArea);
+				            (float) 20000., simulationArea);
 				}
 
 				  simulation->loadNewScenario(scenarios[6]);

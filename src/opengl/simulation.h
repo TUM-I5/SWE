@@ -53,6 +53,8 @@ class Simulation {
 
     void getScalingApproximation(float &bScale, float &bOffset, float &wScale);
 
+    void toogleLoop() { loop = !loop; }
+
   private:
     // Default scenario (used when no other scenario is specified)
     SWE_SplashingPoolScenario defaultScenario;
@@ -71,6 +73,9 @@ class Simulation {
     float curTime;
     // Is this our first simulation step?
     int isFirstStep;
+
+    // Do endless loop?
+    bool loop;
 
     // Compute new water surface
     void calculateWaterSurface(float3* destBuffer);
