@@ -309,16 +309,6 @@ if 'libSDLDir' in env:
   env.Append(LIBPATH=[env['libSDLDir']+'/lib'])
   env.Append(RPATH=[env['libSDLDir']+'/lib'])
 
-# set the precompiler flags and includes for netCDF
-if env['writeNetCDF'] == True:
-  env.Append(CPPDEFINES=['WRITENETCDF'])
-  env.Append(LIBS=['netcdf'])
-  # set netCDF location
-  if 'netCDFDir' in env:
-    env.Append(CPPPATH=[env['netCDFDir']+'/include'])
-    env.Append(LIBPATH=[os.path.join(env['netCDFDir'], 'lib')])
-    env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
-
 # set the precompiler flags, includes and libraries for ASAGI
 if env['asagi'] == True:
   env.Append(CPPDEFINES=['ASAGI'])
@@ -337,6 +327,17 @@ if env['asagi'] == True:
     env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
   if 'asagiInputDir' in env:
     env.Append(CPPFLAGS=['\'-DASAGI_INPUT_DIR="'+env['asagiInputDir']+'"\''])
+
+# set the precompiler flags and includes for netCDF
+if env['writeNetCDF'] == True:
+  env.Append(CPPDEFINES=['WRITENETCDF'])
+  # TODO Check weather we need to link with hdf5
+  env.Append(LIBS=['netcdf'])
+  # set netCDF location
+  if 'netCDFDir' in env:
+    env.Append(CPPPATH=[env['netCDFDir']+'/include'])
+    env.Append(LIBPATH=[os.path.join(env['netCDFDir'], 'lib')])
+    env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
 
 # xml runtime parameters
 if env['xmlRuntime'] == True: #TODO

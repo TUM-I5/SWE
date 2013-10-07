@@ -27,11 +27,15 @@
 #
 
 # Build options
-parallelization='mpi'
-solver='fwave'
-#solver='augrie'
+parallelization='cuda'
+#solver='fwave'
+solver='augrie'
 asagi='yes'
 writeNetCDF='yes'
+
+# OpenGL
+openGL='yes'
+openGL_instr='yes'
 
 # Directory containing ASAGI input files (needs to be set)
 asagiInputDir=''
