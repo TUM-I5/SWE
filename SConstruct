@@ -72,6 +72,10 @@ vars.AddVariables(
                 allowed_values=('debug', 'release')
               ),
 
+  EnumVariable( 'vectorization', 'level of vectorization (intrinsics)', 'NONE',
+                allowed_values=('NONE', 'SSE4', 'AVX')
+              ),
+              
   EnumVariable( 'parallelization', 'level of parallelization', 'none',
                 allowed_values=('none', 'cuda', 'mpi_with_cuda', 'mpi')
               ),
@@ -93,7 +97,7 @@ vars.AddVariables(
   PathVariable( 'asagiInputDir', 'location of netcdf input files', '', PathVariable.PathAccept ),
 
   EnumVariable( 'solver', 'Riemann solver', 'augrie',
-                allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid', 'fwavevec')
+                allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid', 'fwavevec', 'augrie_simd')
               ),
                   
   BoolVariable( 'vectorize', 'add pragmas to help vectorization (release only)', False ),
@@ -106,7 +110,9 @@ vars.AddVariables(
 
   BoolVariable( 'xmlRuntime', 'use a xml-file for runtime parameters', False ),
 
-  BoolVariable( 'copyenv', 'copy the whole environment', False )
+  BoolVariable( 'copyenv', 'copy the whole environment', False ),
+  
+  BoolVariable( 'countflops', 'enable flop counting; defines the macro COUNTFLOPS', False )
 )
 
 # external variables
@@ -139,7 +145,7 @@ if unknownVariables:
 
 
 # valid solver for CUDA?
-if env['parallelization'] in ['cuda', 'mpi_with_cuda'] and env['solver'] != 'rusanov' and env['solver'] != 'fwave':
+if env['parallelization'] in ['cuda', 'mpi_with_cuda'] and env['solver'] != 'rusanov' and env['solver'] != 'fwave' and env['solver'] != 'augrie':
   print >> sys.stderr, '** The "'+env['solver']+'" solver is not supported in CUDA.'
   Exit(3)
 
@@ -211,7 +217,16 @@ elif env['compileMode'] == 'release':
     
 # Other compiler flags (for all compilers)
 if env['compiler'] != 'cray':
-  env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias'])
+  env.Append(CCFLAGS=['-fno-strict-aliasing', '-fargument-noalias', '-g', '-g3', '-ggdb', '-Wall', '-Wextra', '-Wstrict-aliasing=2'])
+  
+# Vectorization via Intrinsics
+if env['vectorization'] == 'SSE4':
+  env.Append(CCFLAGS=['-msse4'])
+elif env['vectorization'] == 'AVX':
+  env.Append(CCFLAGS=['-mavx'])
+
+if env['countflops']:
+  env.Append(CCFLAGS=['-DCOUNTFLOPS'])
 
 # Vectorization?
 if env['compileMode'] == 'release' and env['vectorize']:
@@ -233,6 +248,7 @@ if env['compiler'] == 'intel':
   
 # Add source directory to include path (important for subdirectories)
 env.Append(CPPPATH=['.'])
+env.Append(CPPPATH=['include'])
 
 # set the precompiler variables for the solver
 if env['solver'] == 'fwave':
@@ -243,6 +259,8 @@ elif env['solver'] == 'hybrid':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=0'])
 elif env['solver'] == 'fwavevec':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=4'])
+elif env['solver'] == 'augrie_simd':
+  env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=5'])
 
 # set the precompiler flags for CUDA
 if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
@@ -256,6 +274,9 @@ if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
   
   # set precompiler flag for nvcc
   env.Append(NVCCFLAGS=['-DCUDA'])
+  
+  if env['solver'] == 'augrie':
+    env.Append(NVCCFLAGS=['-DCUDA_AUGRIE'])
 
   # set the compute capability of the cuda compiler (needs to be set after the CudaTool
   env.Append(NVCCFLAGS=['--gpu-architecture='+env['computeCapability']])
@@ -304,6 +325,7 @@ if env['asagi'] == True:
   if env['parallelization'] == 'none' or env['parallelization'] == 'cuda':
     env.Append(CPPDEFINES=['ASAGI_NOMPI'])
     env.Append(LIBS=['asagi_nompi'])
+    env.Append(LIBPATH=['lib'])
   else:
     env.Append(LIBS=['asagi'])
   if 'asagiDir' in env:

@@ -46,7 +46,7 @@ else:
     sourceFiles.append( [ 'blocks/rusanov/SWE_RusanovBlockCUDA.cu',
                           'blocks/rusanov/SWE_RusanovBlockCUDA_kernels.cu']
                       )
-  elif env['solver'] == 'fwave':
+  elif env['solver'] == 'fwave' or env['solver'] == 'augrie':
     sourceFiles.append( [ 'blocks/cuda/SWE_WavePropagationBlockCuda.cu',
                           'blocks/cuda/SWE_WavePropagationBlockCuda_kernels.cu']
                       )
