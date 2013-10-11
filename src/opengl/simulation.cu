@@ -40,6 +40,7 @@ Simulation::Simulation ()
 	  nx(DEFAULT_NX), ny(DEFAULT_NY)
 {
 	loadNewScenario(&defaultScenario);
+	loop = false;
 }
 
 /** 
