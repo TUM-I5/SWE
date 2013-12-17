@@ -68,8 +68,8 @@ int main( int argc, char** argv ) {
   // Parse command line parameters
   tools::Args args;
   #ifndef READXML
-  args.addOption("grid-size-x", 'x', "Number of cell in x direction");
-  args.addOption("grid-size-y", 'y', "Number of cell in y direction");
+  args.addOption("grid-size-x", 'x', "Number of cells in x direction");
+  args.addOption("grid-size-y", 'y', "Number of cells in y direction");
   args.addOption("output-basepath", 'o', "Output base file name");
   #endif
 

@@ -162,6 +162,10 @@ public:
 		struct option o = {0, 0, 0, 0};
 		m_options.push_back(o);
 
+		// Update const char* in m_options
+		for (size_t i = 0; i < m_optionInfo.size(); i++)
+			m_options[i].name = m_optionInfo[i].longOption.c_str();
+
 		while (true) {
 			int optionIndex = 0;
 
