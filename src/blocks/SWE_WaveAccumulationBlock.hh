@@ -27,8 +27,8 @@
  * SWE_Block, which uses solvers in the wave propagation formulation.
  */
 
-#ifndef SWEWAVEPROPAGATIONBLOCK_HH_
-#define SWEWAVEPROPAGATIONBLOCK_HH_
+#ifndef SWE_WAVEACCUMULATION_BLOCK_HH_
+#define SWE_WAVEACCUMULATION_BLOCK_HH_
 
 #include "blocks/SWE_Block.hh"
 #ifdef DYNAMIC_DISPLACEMENTS
@@ -38,7 +38,7 @@
 
 #include <string>
 
-//SWE_WavePropagationBlock only support the following wave propagation solvers:
+// *** SWE_WaveAccumulationBlock only supports the following wave propagation solvers:
 //  2: Approximate Augmented Riemann solver (functional implementation: AugRieFun)
 //  4: f-Wave (vectorized implementation: FWaveVec) 
 #if WAVE_PROPAGATION_SOLVER==2
@@ -46,18 +46,18 @@
 #elif WAVE_PROPAGATION_SOLVER==4
 #include "solvers/FWaveVec.hpp"
 #else
-#error chosen wave propagation solver not supported by SWE_WavePropagationBlock
+#error chosen wave propagation solver not supported by SWE_WaveAccumulationBlock
 #endif
 
 /**
- * SWE_WavePropagationBlock is an implementation of the SWE_Block abstract class.
+ * SWE_WaveAccumulationBlock is an implementation of the SWE_Block abstract class.
  * It uses a wave propagation solver which is defined with the pre-compiler flag WAVE_PROPAGATION_SOLVER (see above).
  *
  * Possible wave propagation solvers are:
  *  F-Wave, Apprximate Augmented Riemann, Hybrid (f-wave + augmented).
  *  (details can be found in the corresponding source files)
  */
-class SWE_WavePropagationBlock: public SWE_Block {
+class SWE_WaveAccumulationBlock: public SWE_Block {
 
 #if WAVE_PROPAGATION_SOLVER==2
     //! Approximate Augmented Riemann solver
@@ -66,7 +66,7 @@ class SWE_WavePropagationBlock: public SWE_Block {
     //! Vectorized FWave solver
     solver::FWaveVec<float> wavePropagationSolver;
 #else
-#error This implementation of SWE_WavePropagationBlock only supports WAVE_PROPAGATION_SOLVER==2 (AugRie) and WAVE_PROPAGATION_SOLVER==4 (fWaveVec)
+#error This implementation of SWE_WaveAccumulationBlock only supports WAVE_PROPAGATION_SOLVER==2 (AugRie) and WAVE_PROPAGATION_SOLVER==4 (fWaveVec)
 #endif
 
     //! net-updates for the heights of the cells (for accumulation)
@@ -79,9 +79,8 @@ class SWE_WavePropagationBlock: public SWE_Block {
     Float2D hvNetUpdates;
 
   public:
-    //constructor of a SWE_WavePropagationBlock.
-    SWE_WavePropagationBlock(int l_nx, int l_ny,
-    					float l_dx, float l_dy);
+    //constructor of a SWE_WaveAccumulationBlock.
+    SWE_WaveAccumulationBlock(int l_nx, int l_ny, float l_dx, float l_dy);
 
     //executes a single timestep.
     virtual void simulateTimestep(float dt);
@@ -102,11 +101,11 @@ class SWE_WavePropagationBlock: public SWE_Block {
 #endif
 
     /**
-     * Destructor of a SWE_WavePropagationBlock.
+     * Destructor of a SWE_WaveAccumulationBlock.
      *
      * In the case of a hybrid solver (NDEBUG not defined) information about the used solvers will be printed.
      */
-    virtual ~SWE_WavePropagationBlock() {}
+    virtual ~SWE_WaveAccumulationBlock() {}
 };
 
-#endif /* SWEWAVEPROPAGATIONBLOCK_HH_ */
+#endif /* SWE_WAVEACCUMULATION_BLOCK_HH_ */

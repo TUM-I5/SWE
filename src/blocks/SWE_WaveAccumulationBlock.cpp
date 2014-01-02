@@ -27,7 +27,7 @@
  * SWE_Block, which uses solvers in the wave propagation formulation.
  */
 
-#include "SWE_WavePropagationBlock.hh"
+#include "SWE_WaveAccumulationBlock.hh"
 
 #include <cassert>
 #include <string>
@@ -38,7 +38,7 @@
 #endif
 
 /**
- * Constructor of a SWE_WavePropagationBlock.
+ * Constructor of a SWE_WaveAccumulationBlock.
  *
  * Allocates the variables for the simulation:
  *   unknowns h,hu,hv,b are defined on grid indices [0,..,nx+1]*[0,..,ny+1] (-> Abstract class SWE_Block)
@@ -50,7 +50,7 @@
  * Net updates are intended to hold the accumulated(!) net updates computed on the edges.
  *
  */
-SWE_WavePropagationBlock::SWE_WavePropagationBlock(
+SWE_WaveAccumulationBlock::SWE_WaveAccumulationBlock(
 		int l_nx, int l_ny,
 		float l_dx, float l_dy):
   SWE_Block(l_nx, l_ny, l_dx, l_dy),
@@ -64,7 +64,7 @@ SWE_WavePropagationBlock::SWE_WavePropagationBlock(
  * The member variable #maxTimestep will be updated with the 
  * maximum allowed time step size
  */
-void SWE_WavePropagationBlock::computeNumericalFluxes() {
+void SWE_WaveAccumulationBlock::computeNumericalFluxes() {
 
 	float dx_inv = 1.0f/dx;
 	float dy_inv = 1.0f/dy;
@@ -191,7 +191,7 @@ void SWE_WavePropagationBlock::computeNumericalFluxes() {
  *
  * @param dt time step width used in the update.
  */
-void SWE_WavePropagationBlock::updateUnknowns(float dt) {
+void SWE_WaveAccumulationBlock::updateUnknowns(float dt) {
 
   //update cell averages with the net-updates
 #ifdef LOOP_OPENMP
@@ -239,7 +239,7 @@ void SWE_WavePropagationBlock::updateUnknowns(float dt) {
  * @param i_asagiScenario the corresponding ASAGI-scenario
  */
 #ifdef DYNAMIC_DISPLACEMENTS
-bool SWE_WavePropagationBlock::updateBathymetryWithDynamicDisplacement(scenarios::Asagi &i_asagiScenario, const float i_time) {
+bool SWE_WaveAccumulationBlock::updateBathymetryWithDynamicDisplacement(scenarios::Asagi &i_asagiScenario, const float i_time) {
   if (!i_asagiScenario.dynamicDisplacementAvailable(i_time))
     return false;
 
@@ -266,7 +266,7 @@ bool SWE_WavePropagationBlock::updateBathymetryWithDynamicDisplacement(scenarios
  *
  * @param dt	time step width of the update
  */
-void SWE_WavePropagationBlock::simulateTimestep(float dt) {
+void SWE_WaveAccumulationBlock::simulateTimestep(float dt) {
   computeNumericalFluxes();
   updateUnknowns(dt);
 }
@@ -278,7 +278,7 @@ void SWE_WavePropagationBlock::simulateTimestep(float dt) {
  * @param i_tEnd  time when the simulation should end
  * @return time we reached after the last update step, in general a bit later than i_tEnd
  */
-float SWE_WavePropagationBlock::simulate(float i_tStart,float i_tEnd) {
+float SWE_WaveAccumulationBlock::simulate(float i_tStart,float i_tEnd) {
   float t = i_tStart;
   do {
      //set values in ghost cells
