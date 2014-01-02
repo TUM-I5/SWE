@@ -163,21 +163,12 @@ class SWE_Block {
     // compute the largest allowed time step for the current grid block
     void computeMaxTimestep( const float i_dryTol = 0.1, const float i_cflNumber = 0.4 );
 
-    /// execute a single time step of the simulation
-    virtual void simulateTimestep(float dt) = 0;
+    /// execute a single time step (with fixed time step size) of the simulation
+    virtual void simulateTimestep(float dt);
 
     /// perform the simulation starting with simulation time tStart,
     /// until simulation time tEnd is reached
-    /**
-     * simulate implements the main simulation loop between two checkpoints;
-     * note that this function can typically only be used, if you only 
-     * use a single SWE_Block; in particular, simulate can not trigger 
-     * calls to exchange values of copy and ghost layers between blocks!
-     * @param	tStart	time where the simulation is started
-     * @param	tEnd	time of the next checkpoint 
-     * @return	actual	end time reached
-     */
-    virtual float simulate(float tStart, float tEnd) = 0;
+    virtual float simulate(float tStart, float tEnd);
     
     /// compute the numerical fluxes for each edge of the Cartesian grid
     /**

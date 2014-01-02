@@ -99,9 +99,6 @@ private:
     SWE_WavePropagationBlock(int l_nx, int l_ny,
     					float l_dx, float l_dy);
 
-    //executes a single timestep.
-    virtual void simulateTimestep(float dt);
-
     //computes the net-updates for the block
     void computeNumericalFluxes();
 

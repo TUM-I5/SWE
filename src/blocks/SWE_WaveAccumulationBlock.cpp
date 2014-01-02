@@ -80,18 +80,16 @@ void SWE_WaveAccumulationBlock::computeNumericalFluxes() {
 	// thread-local maximum wave speed:
 	float l_maxWaveSpeed = (float) 0.;
 
-	// compute the net-updates for the vertical edges
-
 	// Use OpenMP for the outer loop
 	#pragma omp for
 #endif // LOOP_OPENMP
 	for(int i = 1; i < nx+2; i++) {
+		const int ny_end = ny+1;	// compiler might refuse to vectorize j-loop without this ...
 
-#ifdef VECTORIZE
-		// Vectorize the inner loop
+#ifdef VECTORIZE // Vectorize the inner loop
 		#pragma simd
 #endif // VECTORIZE
-		for(int j = 1; j < ny+1; j++) {
+		for(int j = 1; j < ny_end; j++) {
 
 			float maxEdgeSpeed;
 			float hNetUpLeft, hNetUpRight;
@@ -122,17 +120,16 @@ void SWE_WaveAccumulationBlock::computeNumericalFluxes() {
 
 	// compute the net-updates for the horizontal edges
 
-#ifdef LOOP_OPENMP
-	// Use OpenMP for the outer loop
+#ifdef LOOP_OPENMP // Use OpenMP for the outer loop
 	#pragma omp for
 #endif // LOOP_OPENMP
 	for(int i = 1; i < nx+1; i++) {
-		const int ny_max = ny+2;
-#ifdef VECTORIZE
-		// Vectorize the inner loop
+		const int ny_end = ny+2;	// compiler refused to vectorize j-loop without this ...
+
+#ifdef VECTORIZE // Vectorize the inner loop	
 		#pragma simd
 #endif // VECTORIZE
-		for(int j = 1; j < ny_max; j++) {
+		for(int j = 1; j < ny_end; j++) {
 			float maxEdgeSpeed;
 			float hNetUpDow, hNetUpUpw;
 			float hvNetUpDow, hvNetUpUpw;
@@ -258,40 +255,3 @@ bool SWE_WaveAccumulationBlock::updateBathymetryWithDynamicDisplacement(scenario
   return true;
 }
 #endif
-
-/**
- * Executes a single timestep.
- *  * compute net updates for every edge
- *  * update cell values with the net updates
- *
- * @param dt	time step width of the update
- */
-void SWE_WaveAccumulationBlock::simulateTimestep(float dt) {
-  computeNumericalFluxes();
-  updateUnknowns(dt);
-}
-
-/**
- * Runs the simulation until i_tEnd is reached.
- *
- * @param i_tStart time when the simulation starts
- * @param i_tEnd  time when the simulation should end
- * @return time we reached after the last update step, in general a bit later than i_tEnd
- */
-float SWE_WaveAccumulationBlock::simulate(float i_tStart,float i_tEnd) {
-  float t = i_tStart;
-  do {
-     //set values in ghost cells
-     setGhostLayer();
-
-     // compute net updates for every edge
-     computeNumericalFluxes();
-     //execute a wave propagation time step
-     updateUnknowns(maxTimestep);
-     t += maxTimestep;
-
-     std::cout << "Simulation at time " << t << std::endl << std::flush;
-  } while(t < i_tEnd);
-
-  return t;
-}

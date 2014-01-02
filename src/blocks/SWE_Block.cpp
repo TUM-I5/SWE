@@ -252,6 +252,51 @@ const Float2D& SWE_Block::getBathymetry() {
 //==================================================================
 
 /**
+ * Executes a single timestep with fixed time step size
+ *  * compute net updates for every edge
+ *  * update cell values with the net updates
+ *
+ * @param dt	time step width of the update
+ */
+void
+SWE_Block::simulateTimestep (float dt)
+{
+	computeNumericalFluxes ();
+	updateUnknowns (dt);
+}
+
+/**
+ * simulate implements the main simulation loop between two checkpoints;
+ * Note: this implementation can only be used, if you only use a single SWE_Block
+ *       and only apply simple boundary conditions! 
+ *       In particular, SWE_Block::simulate can not trigger calls to exchange values 
+ *       of copy and ghost layers between blocks!
+ * @param	tStart	time where the simulation is started
+ * @param	tEnd	time of the next checkpoint 
+ * @return	actual	end time reached
+ */
+float
+SWE_Block::simulate (float i_tStart, float i_tEnd)
+{
+	float t = i_tStart;
+	do {
+		//set values in ghost cells
+		setGhostLayer ();
+
+		// compute numerical fluxes for every edge
+		// -> computeNumericalFluxes might update maxTimestep
+		computeNumericalFluxes ();
+		// update unknowns accordingly
+		updateUnknowns (maxTimestep);
+		t += maxTimestep;
+
+		std::cout << "Simulation at time " << t << std::endl << std::flush;
+	} while (t < i_tEnd);
+
+	return t;
+}
+
+/**
  * Set the boundary type for specific block boundary.
  *
  * @param i_edge location of the edge relative to the SWE_block.

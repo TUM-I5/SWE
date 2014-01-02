@@ -81,31 +81,20 @@ class SWE_WaveAccumulationBlock: public SWE_Block {
   public:
     //constructor of a SWE_WaveAccumulationBlock.
     SWE_WaveAccumulationBlock(int l_nx, int l_ny, float l_dx, float l_dy);
-
-    //executes a single timestep.
-    virtual void simulateTimestep(float dt);
+    //destructor of a SWE_WaveAccumulationBlock.
+    virtual ~SWE_WaveAccumulationBlock() {}
 
     //computes the net-updates for the block
     void computeNumericalFluxes();
 
     //update the cells
     void updateUnknowns(float dt);
-    void updateUnknownsRow(float dt, int i);
-
-    //runs the simulation until i_tEnd is reached.
-    float simulate(float i_tStart, float i_tEnd);
 
     //updates the bathymetry with the current displacment values
 #ifdef DYNAMIC_DISPLACEMENTS
     bool updateBathymetryWithDynamicDisplacement(scenarios::Asagi &i_asagiScenario, float time);
 #endif
 
-    /**
-     * Destructor of a SWE_WaveAccumulationBlock.
-     *
-     * In the case of a hybrid solver (NDEBUG not defined) information about the used solvers will be printed.
-     */
-    virtual ~SWE_WaveAccumulationBlock() {}
 };
 
 #endif /* SWE_WAVEACCUMULATION_BLOCK_HH_ */
