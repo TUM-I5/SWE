@@ -120,7 +120,7 @@ SWE_WavePropagationBlock::computeNumericalFluxes ()
 			);
 
 			//update the thread-local maximum wave speed
-			l_maxWaveSpeed = std::max (l_maxWaveSpeed, maxEdgeSpeed);
+			maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
 		}
 	}
 

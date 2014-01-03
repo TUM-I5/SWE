@@ -46,7 +46,7 @@
 #elif WAVE_PROPAGATION_SOLVER==2
 #include "solvers/AugRie.hpp"
 #else
-#error SWE_WavePropagationBlock should only be used with Riemann solvers 0, 1, and 2 (FWave, AugRie or Hybrid)
+#warning SWE_WavePropagationBlock should only be used with Riemann solvers 0, 1, and 2 (FWave, AugRie or Hybrid)
 #endif
 
 /**
@@ -70,8 +70,6 @@ private:
 #elif WAVE_PROPAGATION_SOLVER==2
     //! Approximate Augmented Riemann solver
     solver::AugRie<float> wavePropagationSolver;
-#else
-#error SWE_WavePropagationBlock should only be used with Riemann solvers 0, 1, and 2 (FWave, AugRie or Hybrid)
 #endif
 
     //! net-updates for the heights of the cells on the left sides of the vertical edges.
@@ -105,9 +103,6 @@ private:
     //update the cells
     void updateUnknowns(float dt);
     void updateUnknownsRow(float dt, int i);
-
-    //runs the simulation until i_tEnd is reached.
-    float simulate(float i_tStart, float i_tEnd);
 
     /**
      * Destructor of a SWE_WavePropagationBlock.

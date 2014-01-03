@@ -46,7 +46,7 @@
 #elif WAVE_PROPAGATION_SOLVER==4
 #include "solvers/FWaveVec.hpp"
 #else
-#error chosen wave propagation solver not supported by SWE_WaveAccumulationBlock
+#warning chosen wave propagation solver not supported by SWE_WaveAccumulationBlock
 #endif
 
 /**
@@ -65,8 +65,6 @@ class SWE_WaveAccumulationBlock: public SWE_Block {
 #elif WAVE_PROPAGATION_SOLVER==4
     //! Vectorized FWave solver
     solver::FWaveVec<float> wavePropagationSolver;
-#else
-#error This implementation of SWE_WaveAccumulationBlock only supports WAVE_PROPAGATION_SOLVER==2 (AugRie) and WAVE_PROPAGATION_SOLVER==4 (fWaveVec)
 #endif
 
     //! net-updates for the heights of the cells (for accumulation)
