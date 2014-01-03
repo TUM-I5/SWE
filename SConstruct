@@ -72,7 +72,7 @@ vars.AddVariables(
                 allowed_values=('debug', 'release')
               ),
 
-  EnumVariable( 'vectorization', 'level of vectorization (intrinsics)', 'NONE',
+  EnumVariable( 'simdExtensions', 'SIMD extensions used for vectorization (for intrinsics code)', 'NONE',
                 allowed_values=('NONE', 'SSE4', 'AVX')
               ),
               
@@ -97,10 +97,12 @@ vars.AddVariables(
   PathVariable( 'asagiInputDir', 'location of netcdf input files', '', PathVariable.PathAccept ),
 
   EnumVariable( 'solver', 'Riemann solver', 'augrie',
-                allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid', 'fwavevec', 'augrie_simd')
+                allowed_values=('rusanov', 'fwave', 'augrie', 'hybrid', 'fwavevec', 'augriefun', 'augrie_simd')
               ),
                   
   BoolVariable( 'vectorize', 'add pragmas to help vectorization (release only)', False ),
+                  
+  BoolVariable( 'openmp', 'compile with OpenMP parallelization enabled', False ),
                   
   BoolVariable( 'showVectorization', 'show loop vectorization (Intel compiler only)', False ),
 
@@ -145,7 +147,7 @@ if unknownVariables:
 
 
 # valid solver for CUDA?
-if env['parallelization'] in ['cuda', 'mpi_with_cuda'] and env['solver'] != 'rusanov' and env['solver'] != 'fwave' and env['solver'] != 'augrie':
+if env['parallelization'] in ['cuda', 'mpi_with_cuda'] and env['solver'] not in ['rusanov','fwave','augrie']:
   print >> sys.stderr, '** The "'+env['solver']+'" solver is not supported in CUDA.'
   Exit(3)
 
@@ -212,7 +214,7 @@ elif env['compileMode'] == 'release':
   elif env['compiler'] == 'intel':
     env.Append(CCFLAGS=['-O2'])
 
-  elif env['compiler'] == 'cray':
+  else: # especially for env['compiler'] == 'cray'
     env.Append(CCFLAGS=['-O3'])
     
 # Other compiler flags (for all compilers)
@@ -220,9 +222,9 @@ if env['compiler'] != 'cray':
   env.Append(CCFLAGS=['-fno-strict-aliasing', '-fargument-noalias', '-g', '-g3', '-ggdb', '-Wall', '-Wextra', '-Wstrict-aliasing=2'])
   
 # Vectorization via Intrinsics
-if env['vectorization'] == 'SSE4':
+if env['simdExtensions'] == 'SSE4':
   env.Append(CCFLAGS=['-msse4'])
-elif env['vectorization'] == 'AVX':
+elif env['simdExtensions'] == 'AVX':
   env.Append(CCFLAGS=['-mavx'])
 
 if env['countflops']:
@@ -231,10 +233,19 @@ if env['countflops']:
 # Vectorization?
 if env['compileMode'] == 'release' and env['vectorize']:
   env.Append(CPPDEFINES=['VECTORIZE'])
-  if env['compiler'] == 'intel':
+  if env['compiler'] == 'intel' and env['platform'] != 'mic':
     env.Append(CCFLAGS=['-xHost'])
 if env['compiler'] == 'intel' and env['showVectorization']:
-  env.Append(CCFLAGS=['-vec-report2'])
+  env.Append(CCFLAGS=['-vec-report2','-opt-report'])
+
+# OpenMP parallelism
+if env['openmp']:
+  if env['compiler'] == 'intel':
+    env.Append(CCFLAGS=['-openmp'])
+    env.Append(LINKFLAGS=['-openmp'])
+  if env['compiler'] == 'gnu':
+    env.Append(CCFLAGS=['-fopenmp'])
+  # cray: OpenMP turned on by default
   
 # Platform
 if env['compiler'] == 'intel' and env['platform'] == 'mic':
@@ -253,7 +264,7 @@ env.Append(CPPPATH=['include'])
 # set the precompiler variables for the solver
 if env['solver'] == 'fwave':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=1'])
-elif env['solver'] == 'augrie':
+elif env['solver'] == 'augrie' or env['solver'] == 'augriefun':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=2'])
 elif env['solver'] == 'hybrid':
   env.Append(CPPDEFINES=['WAVE_PROPAGATION_SOLVER=0'])
@@ -309,6 +320,16 @@ if 'libSDLDir' in env:
   env.Append(LIBPATH=[env['libSDLDir']+'/lib'])
   env.Append(RPATH=[env['libSDLDir']+'/lib'])
 
+# set the precompiler flags and includes for netCDF
+if env['writeNetCDF'] == True:
+  env.Append(CPPDEFINES=['WRITENETCDF'])
+  env.Append(LIBS=['netcdf'])
+  # set netCDF location
+  if 'netCDFDir' in env:
+    env.Append(CPPPATH=[env['netCDFDir']+'/include'])
+    env.Append(LIBPATH=[os.path.join(env['netCDFDir'], 'lib')])
+    env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
+
 # set the precompiler flags, includes and libraries for ASAGI
 if env['asagi'] == True:
   env.Append(CPPDEFINES=['ASAGI'])
@@ -327,17 +348,6 @@ if env['asagi'] == True:
     env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
   if 'asagiInputDir' in env:
     env.Append(CPPFLAGS=['\'-DASAGI_INPUT_DIR="'+env['asagiInputDir']+'"\''])
-
-# set the precompiler flags and includes for netCDF
-if env['writeNetCDF'] == True:
-  env.Append(CPPDEFINES=['WRITENETCDF'])
-  # TODO Check weather we need to link with hdf5
-  env.Append(LIBS=['netcdf'])
-  # set netCDF location
-  if 'netCDFDir' in env:
-    env.Append(CPPPATH=[env['netCDFDir']+'/include'])
-    env.Append(LIBPATH=[os.path.join(env['netCDFDir'], 'lib')])
-    env.Append(RPATH=[os.path.join(env['netCDFDir'], 'lib')])
 
 # xml runtime parameters
 if env['xmlRuntime'] == True: #TODO
@@ -365,6 +375,10 @@ program_name += '_'+env['parallelization']
 
 # solver
 program_name += '_'+env['solver']
+
+# vectorization
+if env['vectorize'] == True:
+  program_name += '_vec'
 
 # build directory
 build_dir = env['buildDir']+'/build_'+program_name
