@@ -37,6 +37,7 @@
 
 #ifndef CUDA
 #include "blocks/SWE_WavePropagationBlock.hh"
+#include "blocks/SWE_WaveAccumulationBlock.hh"
 #else
 #include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
 #endif
@@ -90,7 +91,7 @@ void exchangeBottomTopGhostLayers( const int i_bottomNeighborRank, SWE_Block1D* 
                                    const MPI_Datatype i_mpiRow);
 
 /**
- * Main program for the simulation on a single SWE_WavePropagationBlock.
+ * Main program for the simulation on a single SWE_WavePropagationBlock or SWE_WaveAccumulationBlock.
  */
 int main( int argc, char** argv ) {
   /**
@@ -257,7 +258,8 @@ int main( int argc, char** argv ) {
 
   // create a single wave propagation block
   #ifndef CUDA
-  SWE_WavePropagationBlock l_wavePropgationBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
+  // SWE_WavePropagationBlock l_waveBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
+  SWE_WaveAccumulationBlock l_waveBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
   #else
   //! number of CUDA devices per node TODO: hardcoded
   int l_cudaDevicesPerNode = 7;
@@ -267,11 +269,11 @@ int main( int argc, char** argv ) {
 
   SWE_BlockCUDA::init(l_cudaDeviceId);
 
-  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
+  SWE_WavePropagationBlockCuda l_waveBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
   #endif
 
   // initialize the wave propgation block
-  l_wavePropgationBlock.initScenario(l_originX, l_originY, l_scenario, true);
+  l_waveBlock.initScenario(l_originX, l_originY, l_scenario, true);
 
   //! time when the simulation ends.
   float l_endSimulation = l_scenario.endSimulation();
@@ -289,29 +291,29 @@ int main( int argc, char** argv ) {
    */
   // left and right boundaries
   tools::Logger::logger.printString("Connecting SWE blocks at left boundaries.");
-  SWE_Block1D* l_leftInflow  = l_wavePropgationBlock.grabGhostLayer(BND_LEFT);
-  SWE_Block1D* l_leftOutflow = l_wavePropgationBlock.registerCopyLayer(BND_LEFT);
+  SWE_Block1D* l_leftInflow  = l_waveBlock.grabGhostLayer(BND_LEFT);
+  SWE_Block1D* l_leftOutflow = l_waveBlock.registerCopyLayer(BND_LEFT);
   if (l_blockPositionX == 0)
-    l_wavePropgationBlock.setBoundaryType(BND_LEFT, OUTFLOW);
+    l_waveBlock.setBoundaryType(BND_LEFT, OUTFLOW);
 
   tools::Logger::logger.printString("Connecting SWE blocks at right boundaries.");
-  SWE_Block1D* l_rightInflow  = l_wavePropgationBlock.grabGhostLayer(BND_RIGHT);
-  SWE_Block1D* l_rightOutflow = l_wavePropgationBlock.registerCopyLayer(BND_RIGHT);
+  SWE_Block1D* l_rightInflow  = l_waveBlock.grabGhostLayer(BND_RIGHT);
+  SWE_Block1D* l_rightOutflow = l_waveBlock.registerCopyLayer(BND_RIGHT);
   if (l_blockPositionX == l_blocksX-1)
-    l_wavePropgationBlock.setBoundaryType(BND_RIGHT, OUTFLOW);
+    l_waveBlock.setBoundaryType(BND_RIGHT, OUTFLOW);
 
   // bottom and top boundaries
   tools::Logger::logger.printString("Connecting SWE blocks at bottom boundaries.");
-  SWE_Block1D* l_bottomInflow  = l_wavePropgationBlock.grabGhostLayer(BND_BOTTOM);
-  SWE_Block1D* l_bottomOutflow = l_wavePropgationBlock.registerCopyLayer(BND_BOTTOM);
+  SWE_Block1D* l_bottomInflow  = l_waveBlock.grabGhostLayer(BND_BOTTOM);
+  SWE_Block1D* l_bottomOutflow = l_waveBlock.registerCopyLayer(BND_BOTTOM);
   if (l_blockPositionY == 0)
-    l_wavePropgationBlock.setBoundaryType(BND_BOTTOM, OUTFLOW);
+    l_waveBlock.setBoundaryType(BND_BOTTOM, OUTFLOW);
 
   tools::Logger::logger.printString("Connecting SWE blocks at top boundaries.");
-  SWE_Block1D* l_topInflow  = l_wavePropgationBlock.grabGhostLayer(BND_TOP);
-  SWE_Block1D* l_topOutflow = l_wavePropgationBlock.registerCopyLayer(BND_TOP);
+  SWE_Block1D* l_topInflow  = l_waveBlock.grabGhostLayer(BND_TOP);
+  SWE_Block1D* l_topOutflow = l_waveBlock.registerCopyLayer(BND_TOP);
   if (l_blockPositionY == l_blocksY-1)
-    l_wavePropgationBlock.setBoundaryType(BND_TOP, OUTFLOW);
+    l_waveBlock.setBoundaryType(BND_TOP, OUTFLOW);
 
   /*
    * The grid is stored column wise in memory:
@@ -394,7 +396,7 @@ int main( int argc, char** argv ) {
 #ifdef WRITENETCDF
   //construct a NetCdfWriter
   io::NetCdfWriter l_writer( l_fileName,
-		  l_wavePropgationBlock.getBathymetry(),
+		  l_waveBlock.getBathymetry(),
 		  l_boundarySize,
 		  l_nXLocal, l_nYLocal,
 		  l_dX, l_dY,
@@ -402,16 +404,16 @@ int main( int argc, char** argv ) {
 #else
   // Construct a VtkWriter
   io::VtkWriter l_writer( l_fileName,
-		  l_wavePropgationBlock.getBathymetry(),
+		  l_waveBlock.getBathymetry(),
 		  l_boundarySize,
 		  l_nXLocal, l_nYLocal,
 		  l_dX, l_dY,
 		  l_blockPositionX*l_nXLocal, l_blockPositionY*l_nYLocal );
 #endif
   // Write zero time step
-  l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
-                          l_wavePropgationBlock.getDischarge_hu(),
-                          l_wavePropgationBlock.getDischarge_hv(),
+  l_writer.writeTimeStep( l_waveBlock.getWaterHeight(),
+                          l_waveBlock.getDischarge_hu(),
+                          l_waveBlock.getDischarge_hv(),
                           (float) 0.);
   /**
    * Simulation.
@@ -448,13 +450,13 @@ int main( int argc, char** argv ) {
       tools::Logger::logger.resetClockToCurrentTime("Cpu");
 
       // set values in ghost cells
-      l_wavePropgationBlock.setGhostLayer();
+      l_waveBlock.setGhostLayer();
 
       // compute numerical flux on each edge
-      l_wavePropgationBlock.computeNumericalFluxes();
+      l_waveBlock.computeNumericalFluxes();
 
       //! maximum allowed time step width within a block.
-      float l_maxTimeStepWidth = l_wavePropgationBlock.getMaxTimestep();
+      float l_maxTimeStepWidth = l_waveBlock.getMaxTimestep();
 
       // update the cpu time in the logger
       tools::Logger::logger.updateTime("Cpu");
@@ -469,7 +471,7 @@ int main( int argc, char** argv ) {
       tools::Logger::logger.resetClockToCurrentTime("Cpu");
 
       // update the cell values
-      l_wavePropgationBlock.updateUnknowns(l_maxTimeStepWidthGlobal);
+      l_waveBlock.updateUnknowns(l_maxTimeStepWidthGlobal);
 
       // update the cpu and CPU-communication time in the logger
       tools::Logger::logger.updateTime("Cpu");
@@ -491,9 +493,9 @@ int main( int argc, char** argv ) {
     progressBar.update(l_t);
 
     // write output
-    l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
-                            l_wavePropgationBlock.getDischarge_hu(),
-                            l_wavePropgationBlock.getDischarge_hv(),
+    l_writer.writeTimeStep( l_waveBlock.getWaterHeight(),
+                            l_waveBlock.getDischarge_hu(),
+                            l_waveBlock.getDischarge_hv(),
                             l_t);
   }
 
