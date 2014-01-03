@@ -33,10 +33,14 @@ Import('env')
 
 # Code without CUDA
 if env['parallelization'] not in ['cuda', 'mpi_with_cuda']:
-  if env['solver'] != 'rusanov':
-    sourceFiles = ['blocks/SWE_WavePropagationBlock.cpp']
-  else:
+  if env['solver'] == 'rusanov':
     sourceFiles = ['blocks/rusanov/SWE_RusanovBlock.cpp']
+  elif env['solver'] == 'augrie_simd' or env['simdExtensions'] != 'NONE':
+    sourceFiles = ['blocks/SWE_WavePropagationBlockSIMD.cpp']
+  elif env['solver'] == 'augriefun' or env['solver'] == 'fwavevec':
+    sourceFiles = ['blocks/SWE_WaveAccumulationBlock.cpp']
+  else:
+    sourceFiles = ['blocks/SWE_WavePropagationBlock.cpp']
 
 # Code with CUDA
 else:
