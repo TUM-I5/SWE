@@ -85,33 +85,80 @@ class Float1D
  * Besides constructor/deconstructor, the class provides overloading of 
  * the []-operator, such that elements can be accessed as a[i][j]. 
  */ 
-class Float2D
-{
-public:
-	/**
-         * Constructor
-         * @param _cols	number of columns (i.e., elements in horizontal direction)
-         * @param _rows rumber of rows (i.e., elements in vertical directions)
-         */
-        Float2D(int _cols, int _rows) : rows(_rows),cols(_cols)
-	{
-		elem = new float[rows*cols];
-		for (int i = 0; i < rows*cols; i++)
-			elem[i] = 0;
-	}
+class Float2D {
+  public:
+  	/**
+     * Constructor:
+	   * takes size of the 2D array as parameters and creates a respective Float2D object;
+		 * allocates memory for the array, but does not initialise value.
+     * @param _cols	number of columns (i.e., elements in horizontal direction)
+     * @param _rows rumber of rows (i.e., elements in vertical directions)
+     */
+    Float2D(int _cols, int _rows, bool _allocateMemory = true):
+      rows(_rows),
+      cols(_cols),
+      allocateMemory(_allocateMemory) {
+      if (_allocateMemory) {
+        elem = new float[rows*cols];
+      }
+	  }
 
-	~Float2D()
-	{
-		delete[] elem;
-	}
+    /**
+     * Constructor:
+		 * takes size of the 2D array as parameters and creates a respective Float2D object;
+		 * this constructor does not allocate memory for the array, but uses the allocated memory 
+		 * provided via the respective variable #_elem 
+     * @param _cols	number of columns (i.e., elements in horizontal direction)
+     * @param _rows rumber of rows (i.e., elements in vertical directions)
+     * @param _elem pointer to a suitably allocated region of memory to be used for thew array elements
+     */
+    Float2D(int _cols, int _rows, float* _elem):
+      rows(_rows),
+      cols(_cols),
+      allocateMemory(false) {
+		  elem = _elem;
+	  }
 
-	inline float* operator[](int i) { 
-		return (elem + (rows * i)); 
-	}
 
-	inline float const* operator[](int i) const {
-		return (elem + (rows * i)); 
-	}
+    /**
+     * Constructor:
+     * takes size of the 2D array as parameters and creates a respective Float2D object;
+     * this constructor does not allocate memory for the array, but uses the allocated memory
+     * provided via the respective variable #_elem
+     * @param _cols number of columns (i.e., elements in horizontal direction)
+     * @param _rows rumber of rows (i.e., elements in vertical directions)
+     * @param _elem pointer to a suitably allocated region of memory to be used for thew array elements
+     */
+    Float2D(Float2D& _elem, bool shallowCopy):
+      rows(_elem.rows),
+      cols(_elem.cols),
+      allocateMemory(!shallowCopy) {
+      if (shallowCopy) {
+        elem = _elem.elem;
+        allocateMemory = false;
+      }
+      else {
+        elem = new float[rows*cols];
+        for (int i=0; i<rows*cols; i++) {
+          elem[i] = _elem.elem[i];
+        }
+        allocateMemory = true;
+      }
+    }
+
+	  ~Float2D() {
+		  if (allocateMemory) {
+		    delete[] elem;
+		  }
+  	}
+
+	  inline float* operator[](int i) {
+  		return (elem + (rows * i));
+  	}
+
+	  inline float const* operator[](int i) const {
+  		return (elem + (rows * i));
+  	}
 
 	inline float* elemVector() {
 		return elem;
@@ -135,7 +182,8 @@ public:
   private:
     int rows;
     int cols;
-    float* elem; 
+    float* elem;
+	bool allocateMemory;
 };
 
 //-------- Methods for Visualistion of Results --------
