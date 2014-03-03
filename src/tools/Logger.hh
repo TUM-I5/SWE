@@ -487,6 +487,21 @@ class tools::Logger {
     	}
     }
 
+    /**
+     * Print number of element updates done
+     *
+     * @param i_iterations Number of iterations done
+     * @param i_interationMessage Iterations done message
+     */
+    void printElementUpdatesDone(unsigned int i_iterations, const int i_nX, const int i_nY, 
+	                             const std::string &i_name, const std::string i_iterationMessage = "element updates per second done")
+    {
+    	if (processRank == 0) {
+    		timeCout() << indentation << double(i_iterations)*i_nX*i_nY / timer.at(i_name)
+    			<< ' ' << i_iterationMessage << std::endl;
+    	}
+    }
+
   public:
     /** The logger all classes should use */
     static Logger logger;
