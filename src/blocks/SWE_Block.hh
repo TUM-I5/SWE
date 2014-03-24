@@ -37,9 +37,6 @@
 
 using namespace std;
 
-// number of blocks for multiple-block-version of the code
-const int BLOCKS=4;
-
 // forward declaration
 class SWE_Block1D;
 
