@@ -219,7 +219,7 @@ elif env['compileMode'] == 'release':
     
 # Other compiler flags (for all compilers)
 if env['compiler'] != 'cray':
-  env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias')
+  env.Append(CCFLAGS=['-fstrict-aliasing', '-fargument-noalias'])
   # env.Append(CCFLAGS=['-fno-strict-aliasing', '-fargument-noalias', '-g', '-g3', '-ggdb', '-Wall', '-Wextra', '-Wstrict-aliasing=2'])
   
 # Vectorization via Intrinsics

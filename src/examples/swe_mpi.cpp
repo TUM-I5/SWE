@@ -225,7 +225,7 @@ int main( int argc, char** argv ) {
                                simulationDuration, simulationArea);
   #else
   // create a simple artificial scenario
-  SWE_BathymetryDamBreakScenario l_scenario;
+  SWE_RadialDamBreakScenario l_scenario;
   #endif
 
   //! number of checkpoints for visualization (at each checkpoint in time, an output file is written).
