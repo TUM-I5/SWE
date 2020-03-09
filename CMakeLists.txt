@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 
 project(SWE)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake-Aux/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 option(ENABLE_NETCDF "Enable Output using NetCDF" ON)
 option(ENABLE_OPENMP "Enable shared-memory parallelization of intra-block iterations using OpenMP" ON)
