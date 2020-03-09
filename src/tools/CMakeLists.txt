@@ -1,5 +1,8 @@
-target_sources(swe PUBLIC
+target_sources(swe 
+    PRIVATE
     Logger.cpp
+
+    PUBLIC
     Logger.hh
     ProgressBar.hh
     args.hh

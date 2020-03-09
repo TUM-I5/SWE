@@ -1,7 +1,11 @@
-target_sources(swe PUBLIC
-    #    NetCdfWriter.cpp
+target_sources(swe 
+
+    PUBLIC
     #    NetCdfWriter.hh
-    VtkWriter.cpp
     VtkWriter.hh
     Writer.hh
+ 
+    PRIVATE
+    #    NetCdfWriter.cpp
+    VtkWriter.cpp
 )
