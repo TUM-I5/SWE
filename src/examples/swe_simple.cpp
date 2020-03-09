@@ -32,7 +32,7 @@
 #include <iostream>
 
 #ifndef CUDA
-#include "blocks/SWE_WavePropagationBlock.hh"
+#include "blocks/SWE_WaveAccumulationBlock.hh"
 #else
 #include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
 #endif
@@ -152,7 +152,7 @@ int main( int argc, char** argv ) {
 
   // create a single wave propagation block
   #ifndef CUDA
-  SWE_WavePropagationBlock l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
+  SWE_WaveAccumulationBlock l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
   #else
   SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
   #endif
