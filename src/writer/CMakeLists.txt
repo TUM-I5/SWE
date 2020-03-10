@@ -1,11 +1,17 @@
-target_sources(swe 
+if (NetCDF_FOUND AND ENABLE_NETCDF)
+    set(SELECTED_WRITER_COMPILATION_UNIT NetCdfWriter.cpp)
+    set(SELECTED_WRITER_HEADER NetCdfWriter.hh)
+else()
+    set(SELECTED_WRITER_COMPILATION_UNIT VtkWriter.cpp)
+    set(SELECTED_WRITER_HEADER VtkWriter.hh)
+endif()
 
+
+target_sources(swe 
     PUBLIC
-    #    NetCdfWriter.hh
-    VtkWriter.hh
+    ${SELECTED_WRITER_HEADER}
     Writer.hh
  
     PRIVATE
-    #    NetCdfWriter.cpp
-    VtkWriter.cpp
+    ${SELECTED_WRITER_COMPILATION_UNIT}
 )
