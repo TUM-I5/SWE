@@ -49,6 +49,18 @@ target_include_directories(swe-single-node PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/s
 
 target_compile_definitions(swe PUBLIC WAVE_PROPAGATION_SOLVER=4)
 
+
+if (ENABLE_NETCDF)
+if (NETCDF_FOUND)
+  message(STATUS "Enabled NetCDF writer")
+  target_compile_definitions(swe PRIVATE WRITENETCDF)
+  target_include_directories(swe PRIVATE ${NETCDF_INCLUDE_DIRS})
+  target_link_libraries(swe PRIVATE ${NETCDF_LIBRARIES})
+else ()
+  message(WARNING "Enabled VTK IO (Slow, fall-back, as NetCDF is unavailable)")
+endif()
+endif()
+
 target_link_libraries(swe-single-node PUBLIC swe)
 
 # Warnings
