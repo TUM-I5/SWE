@@ -2,9 +2,9 @@ target_sources(swe
     PRIVATE
     SWE_Block.cpp
     SWE_WaveAccumulationBlock.cpp
-    SWE_WavePropagationBlockSIMD.cpp
+    #   SWE_WavePropagationBlockSIMD.cpp
     PUBLIC
     SWE_Block.hh
     SWE_WaveAccumulationBlock.hh
-    SWE_WavePropagationBlockSIMD.hh
+    #    SWE_WavePropagationBlockSIMD.hh
 )

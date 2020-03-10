@@ -36,7 +36,6 @@
 #include <vector>
 
 #ifndef CUDA
-#include "blocks/SWE_WavePropagationBlock.hh"
 #include "blocks/SWE_WaveAccumulationBlock.hh"
 #else
 #include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"

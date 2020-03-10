@@ -12,7 +12,6 @@ find_package(OpenMP)
 find_package(MPI)
 
 add_executable(swe-single-node)
-add_executable(swe-mpi)
 add_library(swe)
 
 add_subdirectory(src/blocks)
@@ -25,19 +24,30 @@ target_sources(swe-single-node
     src/examples/swe_simple.cpp
 )
 
-target_sources(swe-mpi 
-    PRIVATE
-    src/examples/swe_mpi.cpp
-)
+if (MPI_FOUND)
+    add_executable(swe-mpi)
+    target_sources(swe-mpi 
+        PRIVATE
+        src/examples/swe_mpi.cpp
+    )
+    target_link_libraries(swe-mpi PUBLIC swe)
+    target_link_libraries(swe-mpi PRIVATE ${MPI_CXX_LIBRARIES})
+    target_include_directories(swe-mpi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_include_directories(swe-mpi PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+endif()
+
+if (OpenMP_FOUND AND ENABLE_OPENMP)
+    target_compile_definitions(swe PUBLIC LOOP_OPENMP)
+    target_link_libraries(swe PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
 
 target_include_directories(swe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(swe-single-node PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_include_directories(swe-mpi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_compile_definitions(swe PUBLIC WAVE_PROPAGATION_SOLVER=4)
 
 target_link_libraries(swe-single-node PUBLIC swe)
-target_link_libraries(swe-mpi PUBLIC swe)
 
 
 #if(NOT BUILD_USING_UPCXX_WRAPPER)
