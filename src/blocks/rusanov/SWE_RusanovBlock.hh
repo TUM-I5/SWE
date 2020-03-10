@@ -33,7 +33,7 @@
 #include <fstream>
 
 #include "tools/help.hh"
-#include "SWE_Block.hh"
+#include "blocks/SWE_Block.hh"
 
 
 using namespace std;
@@ -47,7 +47,7 @@ class SWE_RusanovBlock : public SWE_Block {
 
   public:
     // Constructor und Destructor
-    SWE_RusanovBlock(float _offsetX = 0, float _offsetY = 0);
+    SWE_RusanovBlock(float l_nx, float l_ny, float l_dx, float l_dy);
     virtual ~SWE_RusanovBlock();
     
   // object methods

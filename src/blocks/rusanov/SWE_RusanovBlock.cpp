@@ -45,8 +45,8 @@
  * @ param _offsetX	x coordinate of block origin
  * @ param _offsetY	y coordinate of block origin
  */
-SWE_RusanovBlock::SWE_RusanovBlock(float _offsetX, float _offsetY) 
-: SWE_Block(_offsetX,_offsetY),
+SWE_RusanovBlock::SWE_RusanovBlock(float l_ny, float l_nx, float l_dx, float l_dy)
+: SWE_Block(l_nx, l_ny, l_dx, l_dy),
   Fh(nx+1,ny+1), Fhu(nx+1,ny+1), Fhv(nx+1,ny+1),
   Gh(nx+1,ny+1), Ghu(nx+1,ny+1), Ghv(nx+1,ny+1),
   Bx(nx+1,ny+1), By(nx+1,ny+1)

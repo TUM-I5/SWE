@@ -15,6 +15,7 @@ add_executable(swe-single-node)
 add_library(swe)
 
 add_subdirectory(src/blocks)
+add_subdirectory(src/blocks/rusanov)
 add_subdirectory(src/scenarios)
 add_subdirectory(src/tools)
 add_subdirectory(src/writer)
@@ -23,6 +24,8 @@ target_sources(swe-single-node
     PRIVATE
     src/examples/swe_simple.cpp
 )
+    
+target_link_libraries(swe-single-node PUBLIC swe)
 
 if (MPI_FOUND)
     add_executable(swe-mpi)
@@ -39,10 +42,10 @@ endif()
 if (OpenMP_FOUND AND ENABLE_OPENMP)
     target_compile_definitions(swe PUBLIC LOOP_OPENMP)
     target_link_libraries(swe PRIVATE OpenMP::OpenMP_CXX)
+    message(STATUS "OpenMP supported loop parallelization is enabled.")
+else()
+    message(STATUS "OpenMP loop parallelization is disabled.")
 endif()
-
-
-
 
 target_include_directories(swe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(swe-single-node PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -61,10 +64,9 @@ else ()
 endif()
 endif()
 
-target_link_libraries(swe-single-node PUBLIC swe)
 
 # Warnings
-target_compile_options(swe PUBLIC -Wall -Wextra -pedantic)
+target_compile_options(swe PUBLIC -Wall) # -Wextra -pedantic)
 
 #if(NOT BUILD_USING_UPCXX_WRAPPER)
 #    target_include_directories(actorlib PUBLIC ${UPCXX_INCLUDES})
