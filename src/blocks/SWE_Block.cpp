@@ -33,9 +33,22 @@
 #include <iostream>
 #include <cassert>
 #include <limits>
+#include <memory>
 
 // gravitational acceleration
 const float SWE_Block::g = 9.81f;
+
+static std::unique_ptr<SWE_Block> getBlockInstance(float nx, float ny, float dx, float dy) {
+    #if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE)
+        return std::make_unique<SWE_WaveAccumulationBlock>(nx, ny, dx,dy);
+    #elif defined(SOLVER_RUSANOV)
+        return std::make_unique<SWE_RusanovBlock>(nx,ny,dx,dy);
+    #elif defined(SOLVER_AUGRIE_SIMD)
+        #error "Not implemented yet!"
+    #endif
+
+}
+
 
 /**
  * Constructor: allocate variables for simulation
@@ -755,4 +768,3 @@ void SWE_Block::synchBathymetryBeforeRead() {}
  * before an external access to the unknowns
  */
 void SWE_Block::synchCopyLayerBeforeRead() {}
-

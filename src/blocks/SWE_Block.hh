@@ -34,11 +34,15 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 using namespace std;
 
 // forward declaration
 class SWE_Block1D;
+class SWE_WaveAccumulationBlock;
+class SWE_WavePropagationBlock;
+class SWE_RusanovBlock;
 
 /**
  * SWE_Block is the main data structure to compute our shallow water model 
@@ -113,6 +117,8 @@ class SWE_Block1D;
 class SWE_Block {
 
   public:
+
+    static std::unique_ptr<SWE_Block>&& getBlockInstance(float nx, float ny, float dx, float dy);   
   // object methods
     /// initialise unknowns to a specific scenario:
     void initScenario(float _offsetX, float _offsetY,
