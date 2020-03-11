@@ -1,10 +1,24 @@
+#Todo: add other solvers
+
+
+if (SOLVER STREQUAL "fwave")
+    set(SELECTED_SWE_BLOCK_COMPILATION_UNIT SWE_WavePropagationBlock.cpp)
+    set(SELECTED_SWE_BLOCK_HEADER SWE_WavePropagationBlock.hh)
+elseif(SOLVER STREQUAL "rusanov")
+    set(SELECTED_SWE_BLOCK_COMPILATION_UNIT rusanov/SWE_RusanovBlock.cpp)
+    set(SELECTED_SWE_BLOCK_HEADER rusanov/SWE_RusanovBlock.hh)
+elseif(SOLVER STREQUAL "augRie")
+    set(SELECTED_SWE_BLOCK_COMPILATION_UNIT SWE_WaveAccumulationBlock.cpp)
+    set(SELECTED_SWE_BLOCK_HEADER SWE_WaveAccumulationBlock.hh)
+else()
+    message ("${SOLVER} test")
+endif()
+
 target_sources(swe 
     PRIVATE
     SWE_Block.cpp
-    SWE_WaveAccumulationBlock.cpp
-    #   SWE_WavePropagationBlockSIMD.cpp
+    ${SELECTED_SWE_BLOCK_COMPILATION_UNIT}
     PUBLIC
     SWE_Block.hh
-    SWE_WaveAccumulationBlock.hh
-    #    SWE_WavePropagationBlockSIMD.hh
+    ${SELECTED_SWE_BLOCK_HEADER}
 )

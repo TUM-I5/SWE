@@ -7,12 +7,33 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 option(ENABLE_NETCDF "Enable Output using NetCDF" ON)
 option(ENABLE_OPENMP "Enable shared-memory parallelization of intra-block iterations using OpenMP" ON)
 
+#todo: adapt these to supported solvers
+set(SOLVER_STRINGS "rusanov" "augRie" "fwave")
+
+set(SOLVER "augRie" CACHE STRING "Default Riemann solver")
+set_property(CACHE SOLVER PROPERTY STRINGS ${SOLVER_STRINGS})
+
+
+if( NOT SOLVER IN_LIST SOLVER_STRINGS)
+  message(FATAL_ERROR "solver must be one of ${SOLVER_STRINGS}")
+endif()
+
+message(STATUS "Using riemann solver ${SOLVER}")
+
 find_package(NetCDF)
 find_package(OpenMP)
 find_package(MPI)
 
 add_executable(swe-single-node)
 add_library(swe)
+
+if(SOLVER STREQUAL "augRie")
+  target_compile_definitions(swe PUBLIC SOLVER_AUGRIE)
+elseif(SOLVER STREQUAL "fwave")
+  target_compile_definitions(swe PUBLIC SOLVER_FWAVE)
+elseif(SOLVER STREQUAL "rusanov")
+  target_compile_definitions(swe PUBLIC SOLVER_RUSANOV)
+endif()
 
 add_subdirectory(src/blocks)
 add_subdirectory(src/blocks/rusanov)
@@ -50,7 +71,7 @@ endif()
 target_include_directories(swe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(swe-single-node PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_compile_definitions(swe PUBLIC WAVE_PROPAGATION_SOLVER=4)
+#target_compile_definitions(swe PUBLIC WAVE_PROPAGATION_SOLVER=${WAVE_PROPAGATION_SOLVER})
 
 
 if (ENABLE_NETCDF)
