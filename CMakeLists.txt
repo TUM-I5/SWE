@@ -89,6 +89,9 @@ endif()
 # Warnings
 target_compile_options(swe PUBLIC -Wall) # -Wextra -pedantic)
 
+#C++ Standard
+set_property(TARGET swe PROPERTY CXX_STANDARD 14)
+
 #if(NOT BUILD_USING_UPCXX_WRAPPER)
 #    target_include_directories(actorlib PUBLIC ${UPCXX_INCLUDES})
 #    target_compile_definitions(actorlib PUBLIC ${UPCXX_DEFINES})
