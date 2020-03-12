@@ -35,11 +35,7 @@
 #include <string>
 #include <vector>
 
-#ifndef CUDA
-#include "blocks/SWE_WaveAccumulationBlock.hh"
-#else
-#include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
-#endif
+#include "blocks/SWE_Block.hh"
 
 #ifdef WRITENETCDF
 #include "writer/NetCdfWriter.hh"
@@ -51,10 +47,6 @@
 #include "scenarios/SWE_AsagiScenario.hh"
 #else
 #include "scenarios/SWE_simple_scenarios.hh"
-#endif
-
-#ifdef READXML
-#include "tools/CXMLConfig.hpp"
 #endif
 
 #include "tools/args.hh"
@@ -124,12 +116,13 @@ int main( int argc, char** argv ) {
 
   // check if the necessary command line input parameters are given
   tools::Args args;
-  #ifndef READXML
+  
   args.addOption("grid-size-x", 'x', "Number of cell in x direction");
   args.addOption("grid-size-y", 'y', "Number of cell in y direction");
   args.addOption("output-basepath", 'o', "Output base file name");
   args.addOption("output-steps-count", 'c', "Number of output time steps");
-  #ifdef ASAGI
+  
+#ifdef ASAGI
   args.addOption("bathymetry-file", 'b', "File containing the bathymetry");
   args.addOption("displacement-file", 'd', "File containing the displacement");
   args.addOption("simul-area-min-x", 0, "Simulation area");
@@ -138,7 +131,7 @@ int main( int argc, char** argv ) {
   args.addOption("simul-area-max-y", 0, "Simulation area");
   args.addOption("simul-duration", 0, "Simulation time in seconds");
   #endif
-  #endif
+
   tools::Args::Result ret = args.parse(argc, argv, l_mpiRank == 0);
 
   switch (ret)
@@ -149,6 +142,8 @@ int main( int argc, char** argv ) {
   case tools::Args::Help:
 	  MPI_Finalize();
 	  return 0;
+  default:
+      break;
   }
 
   //! total number of grid cell in x- and y-direction.
@@ -158,28 +153,9 @@ int main( int argc, char** argv ) {
   std::string l_baseName;
 
   // read command line parameters
-  #ifndef READXML
   l_nX = args.getArgument<int>("grid-size-x");
   l_nY = args.getArgument<int>("grid-size-y");
   l_baseName = args.getArgument<std::string>("output-basepath");
-  #endif
-
-  // read xml file
-  #ifdef READXML
-  assert(false); //TODO: not implemented.
-  if(argc != 2) {
-    l_sweLogger.printString("Aborting. Please provide a proper input file.");
-    l_sweLogger.printString("Example: ./SWE_gnu_debug_none_augrie config.xml");
-    return 1;
-  }
-  l_sweLogger.printString("Reading xml-file.");
-
-  std::string l_xmlFile = std::string(argv[1]);
-  l_sweLogger.printString(l_xmlFile);
-
-  CXMLConfig l_xmlConfig;
-  l_xmlConfig.loadConfig(l_xmlFile.c_str());
-  #endif // READXML
 
   //! number of SWE_Blocks in x- and y-direction.
   int l_blocksX, l_blocksY;
@@ -256,24 +232,8 @@ int main( int argc, char** argv ) {
   l_originY = l_scenario.getBoundaryPos(BND_BOTTOM) + l_blockPositionY*l_nYLocal*l_dY;
 
   // create a single wave propagation block
-  /*
-  #ifndef CUDA
-  // SWE_WavePropagationBlock l_waveBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
-  SWE_WaveAccumulationBlock l_waveBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
-  #else
-  //! number of CUDA devices per node TODO: hardcoded
-  int l_cudaDevicesPerNode = 7;
-
-  //! the id of the node local GPU
-  int l_cudaDeviceId = l_mpiRank % l_cudaDevicesPerNode;
-
-  SWE_BlockCUDA::init(l_cudaDeviceId);
-
-  SWE_WavePropagationBlockCuda l_waveBlock(l_nXLocal,l_nYLocal,l_dX,l_dY);
-  #endif
-
-  */
   auto l_waveBlock = SWE_Block::getBlockInstance(l_nXLocal, l_nYLocal, l_dX, l_dY);
+  
   // initialize the wave propgation block
   l_waveBlock->initScenario(l_originX, l_originY, l_scenario, true);
 

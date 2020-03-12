@@ -67,11 +67,9 @@ int main( int argc, char** argv ) {
    */
   // Parse command line parameters
   tools::Args args;
-  #ifndef READXML
   args.addOption("grid-size-x", 'x', "Number of cells in x direction");
   args.addOption("grid-size-y", 'y', "Number of cells in y direction");
   args.addOption("output-basepath", 'o', "Output base file name");
-  #endif
 
   tools::Args::Result ret = args.parse(argc, argv);
 
@@ -81,6 +79,8 @@ int main( int argc, char** argv ) {
 	  return 1;
   case tools::Args::Help:
 	  return 0;
+  default: 
+      break;
   }
 
   //! number of grid cells in x- and y-direction.
@@ -90,28 +90,9 @@ int main( int argc, char** argv ) {
   std::string l_baseName;
 
   // read command line parameters
-  #ifndef READXML
   l_nX = args.getArgument<int>("grid-size-x");
   l_nY = args.getArgument<int>("grid-size-y");
   l_baseName = args.getArgument<std::string>("output-basepath");
-  #endif
-
-  // read xml file
-  #ifdef READXML
-  assert(false); //TODO: not implemented.
-  if(argc != 2) {
-    s_sweLogger.printString("Aborting. Please provide a proper input file.");
-    s_sweLogger.printString("Example: ./SWE_gnu_debug_none_augrie config.xml");
-    return 1;
-  }
-  s_sweLogger.printString("Reading xml-file.");
-
-  std::string l_xmlFile = std::string(argv[1]);
-  s_sweLogger.printString(l_xmlFile);
-
-  CXMLConfig l_xmlConfig;
-  l_xmlConfig.loadConfig(l_xmlFile.c_str());
-  #endif
 
   #ifdef ASAGI
   /* Information about the example bathymetry grid (tohoku_gebco_ucsb3_500m_hawaii_bath.nc):
@@ -151,12 +132,6 @@ int main( int argc, char** argv ) {
   l_dY = (l_scenario.getBoundaryPos(BND_TOP) - l_scenario.getBoundaryPos(BND_BOTTOM) )/l_nY;
 
   // create a single wave propagation block
-/*  #ifndef CUDA
-  SWE_WaveAccumulationBlock l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
-  #else
-  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
-  #endif
-  */
   auto l_waveBlock = SWE_Block::getBlockInstance(l_nX, l_nY, l_dX, l_dY);
   //! origin of the simulation domain in x- and y-direction
   float l_originX, l_originY;
