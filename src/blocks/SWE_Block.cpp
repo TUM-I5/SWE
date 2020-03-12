@@ -26,7 +26,12 @@
  * TODO
  */
 
-#include "SWE_Block.hh"
+#include "blocks/SWE_Block.hh"
+#if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE)
+#include "blocks/SWE_WaveAccumulationBlock.hh"
+#elif defined(SOLVER_RUSANOV)
+#include "blocks/SWE_RusanovBlock.hh"
+#endif
 #include "tools/help.hh"
 
 #include <cmath>
@@ -34,19 +39,20 @@
 #include <cassert>
 #include <limits>
 #include <memory>
+#include <type_traits>
 
 // gravitational acceleration
 const float SWE_Block::g = 9.81f;
 
-static std::unique_ptr<SWE_Block> getBlockInstance(float nx, float ny, float dx, float dy) {
+std::shared_ptr<SWE_Block> SWE_Block::getBlockInstance(float nx, float ny, float dx, float dy) {
     #if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE)
-        return std::make_unique<SWE_WaveAccumulationBlock>(nx, ny, dx,dy);
+        std::shared_ptr<SWE_Block> block = std::make_shared<SWE_WaveAccumulationBlock>(nx, ny, dx,dy);
     #elif defined(SOLVER_RUSANOV)
-        return std::make_unique<SWE_RusanovBlock>(nx,ny,dx,dy);
+        std::shared_ptr<SWE_Block> block = std::make_shared<SWE_RusanovBlock>(nx,ny,dx,dy);
     #elif defined(SOLVER_AUGRIE_SIMD)
         #error "Not implemented yet!"
     #endif
-
+    return block;
 }
 
 
