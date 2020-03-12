@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(SWE)
+project(SWE LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+option(ENABLE_CUDA   "Enable CUDA-accelerated SWE_Blocks" ON)
 option(ENABLE_NETCDF "Enable Output using NetCDF" ON)
 option(ENABLE_OPENMP "Enable shared-memory parallelization of intra-block iterations using OpenMP" ON)
 
@@ -13,6 +14,9 @@ set(SOLVER_STRINGS "rusanov" "augRie" "fwave")
 set(SOLVER "augRie" CACHE STRING "Default Riemann solver")
 set_property(CACHE SOLVER PROPERTY STRINGS ${SOLVER_STRINGS})
 
+if (ENABLE_CUDA)
+    enable_language(CUDA)
+endif()
 
 if( NOT SOLVER IN_LIST SOLVER_STRINGS)
   message(FATAL_ERROR "solver must be one of ${SOLVER_STRINGS}")
@@ -87,7 +91,7 @@ endif()
 
 
 # Warnings
-target_compile_options(swe PUBLIC -Wall) # -Wextra -pedantic)
+target_compile_options(swe PUBLIC -Wall -g) # -Wextra -pedantic)
 
 #C++ Standard
 set_property(TARGET swe PROPERTY CXX_STANDARD 14)

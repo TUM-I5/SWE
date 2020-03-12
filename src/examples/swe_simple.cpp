@@ -67,11 +67,9 @@ int main( int argc, char** argv ) {
    */
   // Parse command line parameters
   tools::Args args;
-  #ifndef READXML
   args.addOption("grid-size-x", 'x', "Number of cells in x direction");
   args.addOption("grid-size-y", 'y', "Number of cells in y direction");
   args.addOption("output-basepath", 'o', "Output base file name");
-  #endif
 
   tools::Args::Result ret = args.parse(argc, argv);
 
@@ -81,6 +79,8 @@ int main( int argc, char** argv ) {
 	  return 1;
   case tools::Args::Help:
 	  return 0;
+  default: 
+      break;
   }
 
   //! number of grid cells in x- and y-direction.
@@ -90,28 +90,9 @@ int main( int argc, char** argv ) {
   std::string l_baseName;
 
   // read command line parameters
-  #ifndef READXML
   l_nX = args.getArgument<int>("grid-size-x");
   l_nY = args.getArgument<int>("grid-size-y");
   l_baseName = args.getArgument<std::string>("output-basepath");
-  #endif
-
-  // read xml file
-  #ifdef READXML
-  assert(false); //TODO: not implemented.
-  if(argc != 2) {
-    s_sweLogger.printString("Aborting. Please provide a proper input file.");
-    s_sweLogger.printString("Example: ./SWE_gnu_debug_none_augrie config.xml");
-    return 1;
-  }
-  s_sweLogger.printString("Reading xml-file.");
-
-  std::string l_xmlFile = std::string(argv[1]);
-  s_sweLogger.printString(l_xmlFile);
-
-  CXMLConfig l_xmlConfig;
-  l_xmlConfig.loadConfig(l_xmlFile.c_str());
-  #endif
 
   #ifdef ASAGI
   /* Information about the example bathymetry grid (tohoku_gebco_ucsb3_500m_hawaii_bath.nc):
@@ -151,12 +132,7 @@ int main( int argc, char** argv ) {
   l_dY = (l_scenario.getBoundaryPos(BND_TOP) - l_scenario.getBoundaryPos(BND_BOTTOM) )/l_nY;
 
   // create a single wave propagation block
-  #ifndef CUDA
-  SWE_WaveAccumulationBlock l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
-  #else
-  SWE_WavePropagationBlockCuda l_wavePropgationBlock(l_nX,l_nY,l_dX,l_dY);
-  #endif
-
+  auto l_waveBlock = SWE_Block::getBlockInstance(l_nX, l_nY, l_dX, l_dY);
   //! origin of the simulation domain in x- and y-direction
   float l_originX, l_originY;
 
@@ -165,7 +141,7 @@ int main( int argc, char** argv ) {
   l_originY = l_scenario.getBoundaryPos(BND_BOTTOM);
 
   // initialize the wave propagation block
-  l_wavePropgationBlock.initScenario(l_originX, l_originY, l_scenario);
+  l_waveBlock->initScenario(l_originX, l_originY, l_scenario);
 
 
   //! time when the simulation ends.
@@ -192,7 +168,7 @@ int main( int argc, char** argv ) {
 #ifdef WRITENETCDF
   //construct a NetCdfWriter
   io::NetCdfWriter l_writer( l_fileName,
-		  l_wavePropgationBlock.getBathymetry(),
+		  l_waveBlock->getBathymetry(),
 		  l_boundarySize,
 		  l_nX, l_nY,
 		  l_dX, l_dY,
@@ -200,15 +176,15 @@ int main( int argc, char** argv ) {
 #else
   // consturct a VtkWriter
   io::VtkWriter l_writer( l_fileName,
-		  l_wavePropgationBlock.getBathymetry(),
+		  l_waveBlock->getBathymetry(),
 		  l_boundarySize,
 		  l_nX, l_nY,
 		  l_dX, l_dY );
 #endif
   // Write zero time step
-  l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
-                          l_wavePropgationBlock.getDischarge_hu(),
-                          l_wavePropgationBlock.getDischarge_hv(),
+  l_writer.writeTimeStep( l_waveBlock->getWaterHeight(),
+                          l_waveBlock->getDischarge_hu(),
+                          l_waveBlock->getDischarge_hv(),
                           (float) 0.);
 
 
@@ -232,7 +208,7 @@ int main( int argc, char** argv ) {
     // do time steps until next checkpoint is reached
     while( l_t < l_checkPoints[c] ) {
       // set values in ghost cells:
-      l_wavePropgationBlock.setGhostLayer();
+      l_waveBlock->setGhostLayer();
       
       // reset the cpu clock
       tools::Logger::logger.resetClockToCurrentTime("Cpu");
@@ -240,16 +216,16 @@ int main( int argc, char** argv ) {
       // approximate the maximum time step
       // TODO: This calculation should be replaced by the usage of the wave speeds occuring during the flux computation
       // Remark: The code is executed on the CPU, therefore a "valid result" depends on the CPU-GPU-synchronization.
-//      l_wavePropgationBlock.computeMaxTimestep();
+//      l_waveBlock->computeMaxTimestep();
 
       // compute numerical flux on each edge
-      l_wavePropgationBlock.computeNumericalFluxes();
+      l_waveBlock->computeNumericalFluxes();
 
       //! maximum allowed time step width.
-      float l_maxTimeStepWidth = l_wavePropgationBlock.getMaxTimestep();
+      float l_maxTimeStepWidth = l_waveBlock->getMaxTimestep();
 
       // update the cell values
-      l_wavePropgationBlock.updateUnknowns(l_maxTimeStepWidth);
+      l_waveBlock->updateUnknowns(l_maxTimeStepWidth);
 
       // update the cpu time in the logger
       tools::Logger::logger.updateTime("Cpu");
@@ -270,9 +246,9 @@ int main( int argc, char** argv ) {
     progressBar.update(l_t);
 
     // write output
-    l_writer.writeTimeStep( l_wavePropgationBlock.getWaterHeight(),
-                            l_wavePropgationBlock.getDischarge_hu(),
-                            l_wavePropgationBlock.getDischarge_hv(),
+    l_writer.writeTimeStep( l_waveBlock->getWaterHeight(),
+                            l_waveBlock->getDischarge_hu(),
+                            l_waveBlock->getDischarge_hv(),
                             l_t);
   }
 

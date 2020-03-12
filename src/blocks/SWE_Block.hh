@@ -40,9 +40,6 @@ using namespace std;
 
 // forward declaration
 class SWE_Block1D;
-class SWE_WaveAccumulationBlock;
-class SWE_WavePropagationBlock;
-class SWE_RusanovBlock;
 
 /**
  * SWE_Block is the main data structure to compute our shallow water model 
@@ -118,7 +115,7 @@ class SWE_Block {
 
   public:
 
-    static std::unique_ptr<SWE_Block>&& getBlockInstance(float nx, float ny, float dx, float dy);   
+    static std::shared_ptr<SWE_Block> getBlockInstance(float nx, float ny, float dx, float dy);   
   // object methods
     /// initialise unknowns to a specific scenario:
     void initScenario(float _offsetX, float _offsetY,
@@ -201,12 +198,12 @@ class SWE_Block {
   // Konstanten:
     /// static variable that holds the gravity constant (g = 9.81 m/s^2):
     static const float g;
-	
+    virtual ~SWE_Block();
+  
   protected:
     // Constructor und Destructor
     SWE_Block(int l_nx, int l_ny,
     		float l_dx, float l_dy);
-    virtual ~SWE_Block();
 
     // Sets the bathymetry on outflow and wall boundaries
     void setBoundaryBathymetry();
