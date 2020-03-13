@@ -45,6 +45,11 @@ add_subdirectory(src/scenarios)
 add_subdirectory(src/tools)
 add_subdirectory(src/writer)
 
+if (ENABLE_CUDA)
+  target_compile_definitions(swe PUBLIC CUDA)
+   add_subdirectory(src/blocks/cuda)
+endif()
+
 target_sources(swe-single-node 
     PRIVATE
     src/examples/swe_simple.cpp
@@ -91,7 +96,13 @@ endif()
 
 
 # Warnings
-target_compile_options(swe PUBLIC -Wall -g) # -Wextra -pedantic)
+
+target_compile_options(swe PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wall -g>
+          $<$<COMPILE_LANGUAGE:CUDA>:-g>)
+#target_compile_options(swe PUBLIC <$<$>:-Wall -g>) # -Wextra -pedantic)
+
+
+#target_compile_options(swe PUBLIC <$<$ >:-g>) # -Wextra -pedantic)
 
 #C++ Standard
 set_property(TARGET swe PROPERTY CXX_STANDARD 14)

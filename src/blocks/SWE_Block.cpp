@@ -27,11 +27,22 @@
  */
 
 #include "blocks/SWE_Block.hh"
+
+// without CUDA
+#if !defined(CUDA) 
 #if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE)
 #include "blocks/SWE_WaveAccumulationBlock.hh"
 #elif defined(SOLVER_RUSANOV)
 #include "blocks/SWE_RusanovBlock.hh"
 #endif
+// with CUDA
+#else 
+#if defined(SOLVER_FWAVE)
+#include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
+#endif
+
+#endif
+
 #include "tools/help.hh"
 
 #include <cmath>
@@ -45,6 +56,8 @@
 const float SWE_Block::g = 9.81f;
 
 std::shared_ptr<SWE_Block> SWE_Block::getBlockInstance(float nx, float ny, float dx, float dy) {
+
+  #if !defined(CUDA)
     #if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE)
         std::shared_ptr<SWE_Block> block = std::make_shared<SWE_WaveAccumulationBlock>(nx, ny, dx,dy);
     #elif defined(SOLVER_RUSANOV)
@@ -52,6 +65,12 @@ std::shared_ptr<SWE_Block> SWE_Block::getBlockInstance(float nx, float ny, float
     #elif defined(SOLVER_AUGRIE_SIMD)
         #error "Not implemented yet!"
     #endif
+  #else
+    //Todo: other solvers with CUDA
+    #if defined(SOLVER_FWAVE)
+        std::shared_ptr<SWE_Block> block = std::make_shared<SWE_WavePropagationBlockCuda>(nx, ny, dx,dy);
+    #endif
+  #endif
     return block;
 }
 

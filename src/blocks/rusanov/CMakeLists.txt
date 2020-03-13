@@ -1,7 +1,13 @@
-target_sources(swe
-    PUBLIC
-    SWE_RusanovBlock.cpp
+if(SOLVER STREQUAL "rusanov")
+    set(SELECTED_SWE_BLOCK_COMPILATION_UNIT rusanov/SWE_RusanovBlock.cpp)
+    set(SELECTED_SWE_BLOCK_HEADER rusanov/SWE_RusanovBlock.hh)
+endif()
 
-    PRIVATE 
-    SWE_RusanovBlock.hh
+target_sources(swe 
+    PRIVATE
+    ${SELECTED_SWE_BLOCK_COMPILATION_UNIT}
+    PUBLIC
+    ${SELECTED_SWE_BLOCK_HEADER}
 )
+
+

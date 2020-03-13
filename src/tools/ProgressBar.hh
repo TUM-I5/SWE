@@ -141,9 +141,9 @@ private:
 				for (int i = 0; i < TIME_SIZE; i++)
 					std::cout << '9';
 			} else {
-				streamsize oldPrec = std::cout.precision();
+				std::streamsize oldPrec = std::cout.precision();
 				std::ios::fmtflags oldFlags = std::cout.flags();
-				streamsize oldWidth = std::cout.width();
+				std::streamsize oldWidth = std::cout.width();
 
 				std::cout.precision(std::max(0, TIME_SIZE-digits-2));
 				std::cout.setf(std::ios::fixed);
@@ -171,7 +171,7 @@ private:
 
 		std::cout << '(';
 
-		streamsize oldWidth = std::cout.width();
+		std::streamsize oldWidth = std::cout.width();
 
 		std::cout.width(3);
 		std::cout << per;

@@ -38,7 +38,7 @@
 
 #include <cuda_runtime.h>
 
-using namespace std;
+//using namespace std;
 
 void checkCUDAError(const char *msg);
 void tryCUDA(cudaError_t err, const char *msg);

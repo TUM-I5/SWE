@@ -41,7 +41,7 @@
 
 // Thrust library (used for the final maximum reduction in the method computeNumericalFluxes(...))
 #include <thrust/device_vector.h>
-
+#include <thrust/extrema.h>
 
 /**
  * Constructor of a SWE_WavePropagationBlockCuda.

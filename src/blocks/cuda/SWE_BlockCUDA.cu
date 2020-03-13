@@ -39,6 +39,8 @@
 //const int TILE_SIZE=16;
 //const int TILE_SIZE=8;
 
+using namespace std;
+
 // #include "SWE_BlockCUDA_kernels.cu"
 
 /*

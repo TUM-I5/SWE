@@ -36,7 +36,7 @@
 #include <fstream>
 #include <memory>
 
-using namespace std;
+//using namespace std;
 
 // forward declaration
 struct SWE_Block1D;
