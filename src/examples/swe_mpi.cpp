@@ -37,11 +37,7 @@
 
 #include "blocks/SWE_Block.hh"
 
-#ifdef WRITENETCDF
-#include "writer/NetCdfWriter.hh"
-#else
-#include "writer/VtkWriter.hh"
-#endif
+#include "writer/Writer.hh"
 
 #ifdef ASAGI
 #include "scenarios/SWE_AsagiScenario.hh"
@@ -355,6 +351,7 @@ int main( int argc, char** argv ) {
   std::string l_fileName = generateBaseFileName(l_baseName,l_blockPositionX,l_blockPositionY);
   //boundary size of the ghost layers
   io::BoundarySize l_boundarySize = {{1, 1, 1, 1}};
+  /*
 #ifdef WRITENETCDF
   //construct a NetCdfWriter
   io::NetCdfWriter l_writer( l_fileName,
@@ -372,8 +369,19 @@ int main( int argc, char** argv ) {
 		  l_dX, l_dY,
 		  l_blockPositionX*l_nXLocal, l_blockPositionY*l_nYLocal );
 #endif
+  */
+  auto l_writer = io::Writer::createWriterInstance(
+          l_fileName,
+          l_waveBlock->getBathymetry(),
+          l_boundarySize,
+          l_nXLocal, l_nYLocal,
+          l_dX, l_dY,
+          l_blockPositionX*l_nXLocal, l_blockPositionY*l_nYLocal,
+          l_originX, l_originY,
+          0);
+  //
   // Write zero time step
-  l_writer.writeTimeStep( l_waveBlock->getWaterHeight(),
+  l_writer->writeTimeStep( l_waveBlock->getWaterHeight(),
                           l_waveBlock->getDischarge_hu(),
                           l_waveBlock->getDischarge_hv(),
                           (float) 0.);
@@ -455,7 +463,7 @@ int main( int argc, char** argv ) {
     progressBar.update(l_t);
 
     // write output
-    l_writer.writeTimeStep( l_waveBlock->getWaterHeight(),
+    l_writer->writeTimeStep( l_waveBlock->getWaterHeight(),
                             l_waveBlock->getDischarge_hu(),
                             l_waveBlock->getDischarge_hv(),
                             l_t);

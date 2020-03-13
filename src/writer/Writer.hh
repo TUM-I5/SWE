@@ -27,6 +27,7 @@
 #define WRITER_HH_
 
 #include "tools/help.hh"
+#include <memory>
 
 namespace io {
 	struct BoundarySize;
@@ -77,6 +78,13 @@ protected:
     size_t timeStep;
 
 public:
+
+    static std::shared_ptr<Writer> createWriterInstance(std::string &fileName, const Float2D &bathymetry, 
+                                                     const BoundarySize &boundarySize, int nX, int nY,
+                                                     float dX, float dY, float offsetX, float offsetY,
+                                                     float originX, float originY, int flush);
+
+
     /**
 	 * @param i_boundarySize size of the boundaries.
 	 */

@@ -14,4 +14,5 @@ target_sources(swe
  
     PRIVATE
     ${SELECTED_WRITER_COMPILATION_UNIT}
+    Writer.cpp
 )

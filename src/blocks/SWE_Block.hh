@@ -39,7 +39,7 @@
 using namespace std;
 
 // forward declaration
-class SWE_Block1D;
+struct SWE_Block1D;
 
 /**
  * SWE_Block is the main data structure to compute our shallow water model 
