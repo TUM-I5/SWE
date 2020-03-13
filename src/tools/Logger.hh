@@ -143,7 +143,7 @@ class tools::Logger {
     Logger( const int i_processRank = 0,
             const std::string i_programName = "SWE",
             const std::string i_welcomeMessage = "Welcome to",
-            const std::string i_copyRights =  "\n\nSWE Copyright (C) 2012-2013\n"
+            const std::string i_copyRights =  "\n\nSWE Copyright (C) 2012-2020\n"
                                               "  Technische Universitaet Muenchen\n"
                                               "  Department of Informatics\n"
                                               "  Chair of Scientific Computing\n"
