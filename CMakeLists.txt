@@ -98,7 +98,7 @@ endif()
 # Warnings
 
 target_compile_options(swe PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wall -g -std=gnu++14>
-          $<$<COMPILE_LANGUAGE:CUDA>:-g>)
+          $<$<COMPILE_LANGUAGE:CUDA>:-g --std=c++11>)
 #target_compile_options(swe PUBLIC <$<$>:-Wall -g>) # -Wextra -pedantic)
 
 
