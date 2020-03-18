@@ -31,11 +31,7 @@
 #include <string>
 #include <iostream>
 
-#ifndef CUDA
-#include "blocks/SWE_WaveAccumulationBlock.hh"
-#else
-#include "blocks/cuda/SWE_WavePropagationBlockCuda.hh"
-#endif
+#include "blocks/SWE_Block.hh"
 
 #include "writer/Writer.hh"
 
@@ -276,5 +272,7 @@ int main( int argc, char** argv ) {
   // printer iteration counter
   tools::Logger::logger.printIterationsDone(l_iterations);
 
+  // dispose of the block!
+  delete l_waveBlock;
   return 0;
 }

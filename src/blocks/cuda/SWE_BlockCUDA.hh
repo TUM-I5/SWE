@@ -60,7 +60,6 @@ class SWE_BlockCUDA : public SWE_Block {
     		float l_dx, float l_dy);
     virtual ~SWE_BlockCUDA();
     
-    static SWE_Block* getCudaBlockInstance(float nx, float ny, float dx, float dy);
   // object methods
 
 // ---> COULD BE IMPLEMENTED TO PROVIDE A DEFAULT IMPLEMENTATION
@@ -170,5 +169,6 @@ int getBathyCoord(int x, int y, int ny) {
    return x*ny + y;
 }
 
+SWE_Block* getCudaBlockInstance(float nx, float ny, float dx, float dy);
 
 #endif

@@ -48,7 +48,7 @@
 const float SWE_Block::g = 9.81f;
 
 #if defined(CUDA)
-extern SWE_Block* SWE_BlockCUDA::getCudaBlockInstance(float, float, float, float);
+extern SWE_Block* getCudaBlockInstance(float, float, float, float);
 #endif
 
 
@@ -63,7 +63,6 @@ SWE_Block* SWE_Block::getBlockInstance(float nx, float ny, float dx, float dy) {
     #endif
   #else
       SWE_Block *block = getCudaBlockInstance(nx, ny, dx,dy);
-    #endif
   #endif
   return block;
 }

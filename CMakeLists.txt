@@ -97,17 +97,18 @@ endif()
 
 # Warnings
 
-target_compile_options(swe PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wall -g -std=gnu++14>
-          $<$<COMPILE_LANGUAGE:CUDA>:-g --std=c++11>)
+target_compile_options(swe PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wall -g>
+          $<$<COMPILE_LANGUAGE:CUDA>:-g>)
 #target_compile_options(swe PUBLIC <$<$>:-Wall -g>) # -Wextra -pedantic)
 
 
 #target_compile_options(swe PUBLIC <$<$ >:-g>) # -Wextra -pedantic)
 
 #C++ Standard
-set_property(TARGET swe PROPERTY CXX_STANDARD 14)
-set_property(TARGET swe-mpi PROPERTY CXX_STANDARD 14)
-set_property(TARGET swe-single-node PROPERTY CXX_STANDARD 14)
+set_property(TARGET swe PROPERTY CXX_STANDARD 11)
+set_property(TARGET swe PROPERTY CUDA_STANDARD 11)
+set_property(TARGET swe-mpi PROPERTY CXX_STANDARD 11)
+set_property(TARGET swe-single-node PROPERTY CXX_STANDARD 11)
 
 #if(NOT BUILD_USING_UPCXX_WRAPPER)
 #    target_include_directories(actorlib PUBLIC ${UPCXX_INCLUDES})

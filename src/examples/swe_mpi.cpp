@@ -497,6 +497,9 @@ int main( int argc, char** argv ) {
   // print the finish message
   tools::Logger::logger.printFinishMessage();
 
+  // Dispose of the SWE block!
+  delete l_waveBlock;
+
   // finalize MPI execution
   MPI_Finalize();
 
