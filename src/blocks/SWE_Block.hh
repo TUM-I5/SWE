@@ -115,7 +115,7 @@ class SWE_Block {
 
   public:
 
-    static std::shared_ptr<SWE_Block> getBlockInstance(float nx, float ny, float dx, float dy);   
+    static SWE_Block* getBlockInstance(float nx, float ny, float dx, float dy);   
   // object methods
     /// initialise unknowns to a specific scenario:
     void initScenario(float _offsetX, float _offsetY,

@@ -68,6 +68,15 @@ void tryCUDA(cudaError_t err, const char *msg)
     }
 }
 
+SWE_Block* SWE_BlockCUDA::getCudaBlockInstance(float nx, float ny, float dx, float dy) {
+  #if defined(SOLVER_FWAVE)
+    SWE_Block *block = new SWE_WavePropagationBlockCUDA(nx, ny, dx, dy);
+  #else
+    #error "Currently, only the fWave solver is supported!
+  #endif
+  return block;
+}
+
 /**
  * Constructor: allocate variables for simulation
  *
