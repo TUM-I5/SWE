@@ -10,7 +10,11 @@ if (SOLVER STREQUAL "fwave")
 elseif(SOLVER STREQUAL "rusanov")
     #Todo
 elseif(SOLVER STREQUAL "augRie")
-    #Todo
+    set(SELECTED_SWE_BLOCK_COMPILATION_UNIT_CUDA SWE_WavePropagationBlockCuda.cu)
+    set(SELECTED_SWE_BLOCK_HEADER_CUDA SWE_WavePropagationBlockCuda.hh)
+
+    set(SELECTED_SWE_BLOCK_COMPILATION_UNIT_CUDA_KERNELS SWE_WavePropagationBlockCuda_kernels.cu)
+    set(SELECTED_SWE_BLOCK_HEADER_CUDA_KERNELS SWE_WavePropagationBlockCuda_kernels.hh)
 else()
     message (FATAL_ERROR "${SOLVER} is not supported with cuda")
 endif()

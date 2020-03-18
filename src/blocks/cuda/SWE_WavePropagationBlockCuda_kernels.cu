@@ -32,10 +32,12 @@
 #include <cmath>
 #include <cstdio>
 
-#if defined CUDA_AUGRIE
+#if defined(SOLVER_AUGRIE)
 #include "solvers/AugRieCUDA.h"
-#else
+#elif defined(SOLVER_FWAVE)
 #include "solvers/FWaveCuda.h"
+#else
+#error "Invalid solver configuration. The SWE_WavePropagationBlockCuda may only be used with CUDA enabled and either the fWave or the augRie solver!"
 #endif
 
 /**
@@ -125,7 +127,7 @@ void computeNetUpdatesKernel(
     l_rightCellPosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ, i_nY+2);
 
     // compute the net-updates
-#if defined CUDA_AUGRIE
+#if defined(SOLVER_AUGRIE)
     augRieComputeNetUpdates (
                             i_h[l_leftCellPosition],  i_h[l_rightCellPosition],
                             i_hu[l_leftCellPosition], i_hu[l_rightCellPosition],
@@ -164,7 +166,7 @@ void computeNetUpdatesKernel(
     l_rightCellPosition = computeOneDPositionKernel(l_cellIndexI, l_cellIndexJ, i_nY+2);
 
 // compute the net-updates
-#if defined CUDA_AUGRIE
+#if defined(SOLVER_AUGRIE)
     augRieComputeNetUpdates (
                             i_h[l_leftCellPosition],  i_h[l_rightCellPosition],
                             i_hv[l_leftCellPosition], i_hv[l_rightCellPosition],
