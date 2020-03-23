@@ -4,7 +4,7 @@ project(SWE LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-option(ENABLE_CUDA                  "Enable CUDA-accelerated SWE_Blocks" ON)
+option(ENABLE_CUDA                  "Enable CUDA-accelerated SWE_Blocks" OFF)
 option(ENABLE_NETCDF                "Enable Output using NetCDF" ON)
 option(ENABLE_OPENMP                "Enable shared-memory parallelization of intra-block iterations using OpenMP" ON)
 option(ENABLE_VECTORIZATION         "Enable auto-vectorization of the block iteration on the CPU (only supported solvers), and in Release Mode." OFF)
