@@ -82,7 +82,8 @@ else()
 endif()
 
 if (OpenMP_FOUND AND ENABLE_VECTORIZATION)
-    target_compile_definitions(swe PUBLIC $<$<CONFIG:Release>:VECTORIZE>)
+    #target_compile_definitions(swe PUBLIC $<$<CONFIG:Release>:VECTORIZE NDEBUG>)
+    target_compile_definitions(swe PUBLIC VECTORIZE NDEBUG)
     target_link_libraries(swe PRIVATE OpenMP::OpenMP_CXX)
     target_compile_options(swe PRIVATE 
         $<$<CXX_COMPILER_ID:Clang>: -march=native -fno-math-errno>

@@ -199,12 +199,12 @@ void SWE_WaveAccumulationBlock::updateUnknowns(float dt) {
 	#pragma omp parallel for
 #endif // LOOP_OPENMP
 	for(int i = 1; i < nx+1; i++) {
-
+                const int ny_end = ny + 1;
 #ifdef VECTORIZE
 		// Tell the compiler that he can safely ignore all dependencies in this loop
 		#pragma omp simd
 #endif // VECTORIZE
-		for(int j = 1; j < ny+1; j++) {
+		for(int j = 1; j < ny_end; j++) {
 
 			h[i][j]  -= dt * hNetUpdates[i][j];
 			hu[i][j] -= dt * huNetUpdates[i][j];
