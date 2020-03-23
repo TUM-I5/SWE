@@ -4,10 +4,11 @@ project(SWE LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-option(ENABLE_CUDA          "Enable CUDA-accelerated SWE_Blocks" ON)
-option(ENABLE_NETCDF        "Enable Output using NetCDF" ON)
-option(ENABLE_OPENMP        "Enable shared-memory parallelization of intra-block iterations using OpenMP" ON)
-option(ENABLE_VECTORIZATION "Enable auto-vectorization of the block iteration on the CPU (only supported solvers), and in Release Mode." OFF)
+option(ENABLE_CUDA                  "Enable CUDA-accelerated SWE_Blocks" ON)
+option(ENABLE_NETCDF                "Enable Output using NetCDF" ON)
+option(ENABLE_OPENMP                "Enable shared-memory parallelization of intra-block iterations using OpenMP" ON)
+option(ENABLE_VECTORIZATION         "Enable auto-vectorization of the block iteration on the CPU (only supported solvers), and in Release Mode." OFF)
+option(ENABLE_VECTORIZATION_VERBOSE "Enable verbose auto-vectorization reporting." OFF)
 
 #todo: adapt these to supported solvers
 set(SOLVER_STRINGS "rusanov" "augRie" "fwave" "hlle")
@@ -84,11 +85,17 @@ if (OpenMP_FOUND AND ENABLE_VECTORIZATION)
     target_compile_definitions(swe PUBLIC $<$<CONFIG:Release>:VECTORIZE>)
     target_link_libraries(swe PRIVATE OpenMP::OpenMP_CXX)
     target_compile_options(swe PRIVATE 
-        $<$<CXX_COMPILER_ID:Clang,AppleClang>: -march=native -Rpass-analysis=loop-vectorize -fno-math-errno>
-        $<$<CXX_COMPILER_ID:Intel>: -xHost -qopt-report-phase=vec -qopt-report=2>
-        $<$<CXX_COMPILER_ID:GNU>: -march=native -ffast-math -fassociative-math -ftree-vectorizer-verbose=2>
-
+        $<$<CXX_COMPILER_ID:Clang,AppleClang>: -march=native -fno-math-errno>
+        $<$<CXX_COMPILER_ID:Intel>: -xHost>
+        $<$<CXX_COMPILER_ID:GNU>: -march=native -ffast-math -fassociative-math>
     )
+    if(ENABLE_VECTORIZATION_VERBOSE)
+        target_compile_definitions(swe PRIVATE
+            $<$<CXX_COMPILER_ID:Clang,AppleClang>: -Rpass-analysis=loop-vectorize>
+            $<$<CXX_COMPILER_ID:Intel>: -qopt-report-phase=vec -qopt-report=2>
+            $<$<CXX_COMPILER_ID:GNU>: -ftree-vectorizer-verbose=4 -fopt-info-all-vec>
+        )
+    endif()
     message(STATUS "OpenMP vectorization is enabled (Only for Release Mode).")
 
 elseif(OpenMP_NOTFOUND AND ENABLE_VECTORIZATION)
