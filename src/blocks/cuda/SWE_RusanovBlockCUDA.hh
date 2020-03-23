@@ -33,7 +33,7 @@
 #include <fstream>
 #include <cuda_runtime.h>
 #include "tools/help.hh"
-#include "SWE_Block.hh"
+#include "blocks/SWE_Block.hh"
 #include "SWE_BlockCUDA.hh"
 
 using namespace std;
@@ -48,7 +48,7 @@ class SWE_RusanovBlockCUDA : public SWE_BlockCUDA {
 
   public:
     // Constructor und Destructor
-    SWE_RusanovBlockCUDA(float _offsetX = 0, float _offsetY = 0, const int i_cudaDevice = 0);
+    SWE_RusanovBlockCUDA(int l_nx, int l_ny, float l_dx, float l_dy);
     virtual ~SWE_RusanovBlockCUDA();
     
   // object methods

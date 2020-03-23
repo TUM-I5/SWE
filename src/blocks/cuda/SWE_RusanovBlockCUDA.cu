@@ -50,8 +50,8 @@
  *
  * bathymetry source terms are defined for cells with indices [1,..,nx]*[1,..,ny]
  */
-SWE_RusanovBlockCUDA::SWE_RusanovBlockCUDA(float _offsetX, float _offsetY, const int i_cudaDevice)
- : SWE_BlockCUDA(_offsetX,_offsetY, i_cudaDevice)
+SWE_RusanovBlockCUDA::SWE_RusanovBlockCUDA(int l_nx, int l_ny, float l_dx, float l_dy)
+ : SWE_BlockCUDA(l_nx, l_ny, l_dx, l_dy)
 #ifdef DBG
  , Fh(nx+1,ny+1), Fhu(nx+1,ny+1), Fhv(nx+1,ny+1),
    Gh(nx+1,ny+1), Ghu(nx+1,ny+1), Ghv(nx+1,ny+1)

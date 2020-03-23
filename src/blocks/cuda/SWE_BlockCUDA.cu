@@ -34,7 +34,7 @@
 #if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE)
 #include "SWE_WavePropagationBlockCuda.hh"
 #elif defined(SOLVER_RUSANOV)
-#include "blocks/rusanov/SWE_RusanovBlockCUDA.hh"
+#include "SWE_RusanovBlockCUDA.hh"
 #endif
 
 #include "tools/help.hh"
@@ -79,6 +79,8 @@ void tryCUDA(cudaError_t err, const char *msg)
 SWE_Block* getCudaBlockInstance(float nx, float ny, float dx, float dy) {
   #if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE)
     SWE_Block *block = new SWE_WavePropagationBlockCuda(nx, ny, dx, dy);
+  #elif defined(SOLVER_RUSANOV)
+    SWE_Block *block = new SWE_RusanovBlockCUDA(nx, ny, dx, dy);
   #else
     #error "Currently, only the fWave solver is supported!"
   #endif
