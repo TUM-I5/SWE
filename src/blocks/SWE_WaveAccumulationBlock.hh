@@ -43,6 +43,8 @@
 //  4: f-Wave (vectorized implementation: FWaveVec) 
 #if defined(SOLVER_AUGRIE)
 #include "solvers/AugRieFun.hpp"
+#elif defined(SOLVER_HLLE)
+#include "solvers/HLLEFun.hpp"
 #elif defined(SOLVER_FWAVE)
 #include "solvers/FWaveVec.hpp"
 #else
@@ -62,6 +64,9 @@ class SWE_WaveAccumulationBlock: public SWE_Block {
 #if defined(SOLVER_AUGRIE)
     //! Approximate Augmented Riemann solver
     solver::AugRieFun<float> wavePropagationSolver;
+#elif defined(SOLVER_HLLE)
+    //! Vectorized FWave solver
+    solver::HLLEFun<float> wavePropagationSolver;
 #elif defined(SOLVER_FWAVE)
     //! Vectorized FWave solver
     solver::FWaveVec<float> wavePropagationSolver;

@@ -86,8 +86,10 @@ void SWE_WaveAccumulationBlock::computeNumericalFluxes() {
 	for(int i = 1; i < nx+2; i++) {
 		const int ny_end = ny+1;	// compiler might refuse to vectorize j-loop without this ...
 
-#ifdef VECTORIZE // Vectorize the inner loop
-		#pragma simd
+#if defined(VECTORIZE) && defined(LOOP_OPENMP) // Vectorize the inner loop
+        #pragma omp simd reduction(max:l_maxWaveSpeed)
+#elif defined(VECTORIZE)
+        #pragma omp simd reduction(max:maxWaveSpeed)
 #endif // VECTORIZE
 		for(int j = 1; j < ny_end; j++) {
 
@@ -126,8 +128,10 @@ void SWE_WaveAccumulationBlock::computeNumericalFluxes() {
 	for(int i = 1; i < nx+1; i++) {
 		const int ny_end = ny+2;	// compiler refused to vectorize j-loop without this ...
 
-#ifdef VECTORIZE // Vectorize the inner loop	
-		#pragma simd
+#if defined(VECTORIZE) && defined(LOOP_OPENMP) // Vectorize the inner loop
+        #pragma omp simd reduction(max:l_maxWaveSpeed)
+#elif defined(VECTORIZE)
+        #pragma omp simd reduction(max:maxWaveSpeed)
 #endif // VECTORIZE
 		for(int j = 1; j < ny_end; j++) {
 			float maxEdgeSpeed;
@@ -198,7 +202,7 @@ void SWE_WaveAccumulationBlock::updateUnknowns(float dt) {
 
 #ifdef VECTORIZE
 		// Tell the compiler that he can safely ignore all dependencies in this loop
-		#pragma ivdep
+		#pragma omp simd
 #endif // VECTORIZE
 		for(int j = 1; j < ny+1; j++) {
 
