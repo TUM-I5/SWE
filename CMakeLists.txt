@@ -85,13 +85,15 @@ if (OpenMP_FOUND AND ENABLE_VECTORIZATION)
     target_compile_definitions(swe PUBLIC $<$<CONFIG:Release>:VECTORIZE>)
     target_link_libraries(swe PRIVATE OpenMP::OpenMP_CXX)
     target_compile_options(swe PRIVATE 
-        $<$<CXX_COMPILER_ID:Clang,AppleClang>: -march=native -fno-math-errno>
+        $<$<CXX_COMPILER_ID:Clang>: -march=native -fno-math-errno>
+        $<$<CXX_COMPILER_ID:AppleClang>: -march=native -fno-math-errno>
         $<$<CXX_COMPILER_ID:Intel>: -xHost>
         $<$<CXX_COMPILER_ID:GNU>: -march=native -ffast-math -fassociative-math>
     )
     if(ENABLE_VECTORIZATION_VERBOSE)
-        target_compile_definitions(swe PRIVATE
-            $<$<CXX_COMPILER_ID:Clang,AppleClang>: -Rpass-analysis=loop-vectorize>
+        target_compile_options(swe PRIVATE
+            $<$<CXX_COMPILER_ID:AppleClang>: -Rpass-analysis=loop-vectorize>
+            $<$<CXX_COMPILER_ID:Clang>: -Rpass-analysis=loop-vectorize>
             $<$<CXX_COMPILER_ID:Intel>: -qopt-report-phase=vec -qopt-report=2>
             $<$<CXX_COMPILER_ID:GNU>: -ftree-vectorizer-verbose=4 -fopt-info-all-vec>
         )
