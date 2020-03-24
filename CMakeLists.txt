@@ -123,7 +123,7 @@ endif()
 # Warnings
 
 target_compile_options(swe PUBLIC 
-    $<$<COMPILE_LANGUAGE:CXX>:-Wall -g>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wno-unused-parameter -g -pedantic>
     $<$<COMPILE_LANGUAGE:CUDA>:-g>
 )
 
