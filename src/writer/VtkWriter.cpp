@@ -75,8 +75,8 @@ void io::VtkWriter::writeTimeStep(
 			<< "<DataArray NumberOfComponents=\"3\" type=\"Float32\" format=\"ascii\">" << std::endl;
 
 	//Grid points
-	for (int j=0; j < nY+1; j++)
-	      for (int i=0; i < nX+1; i++)
+	for (size_t j=0; j < nY+1; j++)
+	      for (size_t i=0; i < nX+1; i++)
 	    	  vtkFile << (offsetX+i)*dX << " " << (offsetY+j)*dY <<" 0" << std::endl;
 
 	vtkFile << "</DataArray>" << std::endl
@@ -86,28 +86,28 @@ void io::VtkWriter::writeTimeStep(
 
 	// Water surface height h
 	vtkFile << "<DataArray Name=\"h\" type=\"Float32\" format=\"ascii\">" << std::endl;
-	for (int j=1; j < nY+1; j++)
-		for (int i=1; i < nX+1; i++)
+	for (size_t j=1; j < nY+1; j++)
+		for (size_t i=1; i < nX+1; i++)
 			vtkFile << i_h[i][j] << std::endl;
 	vtkFile << "</DataArray>" << std::endl;
 
 	// Momentums
 	vtkFile << "<DataArray Name=\"hu\" type=\"Float32\" format=\"ascii\">" << std::endl;
-	for (int j=1; j < nY+1; j++)
-		for (int i=1; i < nX+1; i++)
+	for (size_t j=1; j < nY+1; j++)
+		for (size_t i=1; i < nX+1; i++)
 			vtkFile << i_hu[i][j] << std::endl;
 	vtkFile << "</DataArray>" << std::endl;
 
 	vtkFile << "<DataArray Name=\"hv\" type=\"Float32\" format=\"ascii\">" << std::endl;
-	for (int j=1; j < nY+1; j++)
-		for (int i=1; i<nX+1; i++)
+	for (size_t j=1; j < nY+1; j++)
+		for (size_t i=1; i<nX+1; i++)
 			vtkFile << i_hv[i][j] << std::endl;
 	vtkFile << "</DataArray>" << std::endl;
 
 	// Bathymetry
 	vtkFile << "<DataArray Name=\"b\" type=\"Float32\" format=\"ascii\">" << std::endl;
-	for (int j=1; j<nY+1; j++)
-		for (int i=1; i<nX+1; i++)
+	for (size_t j=1; j<nY+1; j++)
+		for (size_t i=1; i<nX+1; i++)
 			vtkFile << b[i][j] << std::endl;
 	vtkFile << "</DataArray>" << std::endl;
 

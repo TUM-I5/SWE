@@ -32,7 +32,7 @@
 #if defined(SOLVER_FWAVE) || defined(SOLVER_AUGRIE) || defined(SOLVER_HLLE)
 #include "blocks/SWE_WaveAccumulationBlock.hh"
 #elif defined(SOLVER_RUSANOV)
-#include "blocks/SWE_RusanovBlock.hh"
+#include "blocks/rusanov/SWE_RusanovBlock.hh"
 #endif
 #endif
 
@@ -252,7 +252,7 @@ void SWE_Block::setBathymetry(float (*_b)(float, float)) {
 const Float2D& SWE_Block::getWaterHeight() { 
   synchWaterHeightBeforeRead();
   return h; 
-};
+}
 
 /**
  * return reference to discharge unknown hu
@@ -260,7 +260,7 @@ const Float2D& SWE_Block::getWaterHeight() {
 const Float2D& SWE_Block::getDischarge_hu() { 
   synchDischargeBeforeRead();
   return hu; 
-};
+}
 
 /**
  * return reference to discharge unknown hv
@@ -268,7 +268,7 @@ const Float2D& SWE_Block::getDischarge_hu() {
 const Float2D& SWE_Block::getDischarge_hv() { 
   synchDischargeBeforeRead();
   return hv;
-};
+}
 
 /**
  * return reference to bathymetry unknown b
@@ -276,7 +276,7 @@ const Float2D& SWE_Block::getDischarge_hv() {
 const Float2D& SWE_Block::getBathymetry() { 
   synchBathymetryBeforeRead();
   return b; 
-};
+}
 
 //==================================================================
 // methods for simulation

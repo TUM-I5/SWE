@@ -65,7 +65,7 @@ int computeNumberOfBlockRows(int i_numberOfProcesses) {
   int l_numberOfRows = std::sqrt(i_numberOfProcesses);
   while (i_numberOfProcesses % l_numberOfRows != 0) l_numberOfRows--;
   return l_numberOfRows;
-};
+}
 
 // Exchanges the left and right ghost layers.
 void exchangeLeftRightGhostLayers( const int i_leftNeighborRank,  SWE_Block1D* o_leftInflow,  SWE_Block1D* i_leftOutflow,

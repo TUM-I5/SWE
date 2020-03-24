@@ -200,7 +200,7 @@ inline std::string generateFileName(std::string baseName, int timeStep) {
 	std::ostringstream FileName;
 	FileName << baseName <<timeStep<<".vtk";
 	return FileName.str();
-};
+}
 
 /**
  * Generates an output file name for a multiple SWE_Block version based on the ordering of the blocks.
@@ -221,7 +221,7 @@ inline std::string generateFileName( std::string i_baseName,
 
   l_fileName << i_baseName << "_" << i_blockPositionX << i_blockPositionY << i_fileExtension;
   return l_fileName.str();
-};
+}
 
 /**
  * generate output filename for the multiple-SWE_Block version
@@ -236,7 +236,7 @@ inline std::string generateFileName(std::string baseName, int timeStep, int bloc
 	std::ostringstream FileName;
 	FileName << baseName <<"_"<< block_X<<"_"<<block_Y<<"_"<<timeStep<<i_fileExtension;
 	return FileName.str();
-};
+}
 
 /**
  * Generates an output file name for a multiple SWE_Block version based on the ordering of the blocks.
@@ -265,7 +265,7 @@ inline std::string generateContainerFileName(std::string baseName, int timeStep)
 	std::ostringstream FileName;
 	FileName << baseName<<"_"<<timeStep<<".pvts";
 	return FileName.str();
-};
+}
 
 
 #endif
