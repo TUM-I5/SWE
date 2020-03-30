@@ -48,6 +48,7 @@ add_subdirectory(src/blocks/rusanov)
 add_subdirectory(src/scenarios)
 add_subdirectory(src/tools)
 add_subdirectory(src/writer)
+add_subdirectory(src/solvers)
 
 if (ENABLE_CUDA)
     target_compile_definitions(swe PUBLIC CUDA)
