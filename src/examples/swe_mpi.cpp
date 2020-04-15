@@ -204,6 +204,7 @@ int main( int argc, char** argv ) {
 
   //! number of grid cells in x- and y-direction per process.
   int l_nXLocal, l_nYLocal;
+  int l_nXNormal, l_nYNormal;
 
   //! size of a single cell in x- and y-direction
   float l_dX, l_dY;
@@ -211,6 +212,8 @@ int main( int argc, char** argv ) {
   // compute local number of cells for each SWE_Block
   l_nXLocal = (l_blockPositionX < l_blocksX-1) ? l_nX/l_blocksX : l_nX - (l_blocksX-1)*(l_nX/l_blocksX);
   l_nYLocal = (l_blockPositionY < l_blocksY-1) ? l_nY/l_blocksY : l_nY - (l_blocksY-1)*(l_nY/l_blocksY);
+  l_nXNormal = l_nX/l_blocksX;
+  l_nYNormal = l_nY/l_blocksY;
 
   // compute the size of a single cell
   l_dX = (l_scenario.getBoundaryPos(BND_RIGHT) - l_scenario.getBoundaryPos(BND_LEFT) )/l_nX;
@@ -224,8 +227,8 @@ int main( int argc, char** argv ) {
   float l_originX, l_originY;
 
   // get the origin from the scenario
-  l_originX = l_scenario.getBoundaryPos(BND_LEFT) + l_blockPositionX*l_nXLocal*l_dX;;
-  l_originY = l_scenario.getBoundaryPos(BND_BOTTOM) + l_blockPositionY*l_nYLocal*l_dY;
+  l_originX = l_scenario.getBoundaryPos(BND_LEFT) + l_blockPositionX*l_nXNormal*l_dX;;
+  l_originY = l_scenario.getBoundaryPos(BND_BOTTOM) + l_blockPositionY*l_nYNormal*l_dY;
 
   // create a single wave propagation block
   auto l_waveBlock = SWE_Block::getBlockInstance(l_nXLocal, l_nYLocal, l_dX, l_dY);
