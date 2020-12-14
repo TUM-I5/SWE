@@ -120,6 +120,18 @@ else ()
     message(WARNING "Enabled VTK IO (Slow, fall-back, as NetCDF is unavailable)")
 endif()
 
+if (ENABLE_MEMORY_SANITATION AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    message(STATUS "Memory sanitation enabled. Linking appropriate libraries.")
+    target_compile_options(swe PUBLIC -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -Wuninitialized -Wall -Wextra -pedantic -g)
+    target_link_libraries(swe PUBLIC -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined -g)
+    # For some old Ubuntu machines, you may need to use a different linker. Set the following variable: CMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold
+elseif(ENABLE_MEMORY_SANITATION)
+    message(STATUS "Full Memory sanitation only supported on GNU Environment. Trying to use intel fallback.")
+    target_compile_options(swe PUBLIC -g -traceback -check-uninit)
+    target_link_libraries(swe PUBLIC -g -traceback -check-uninit)
+    
+endif()
+
 
 # Warnings
 

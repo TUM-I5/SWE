@@ -292,6 +292,7 @@ if env['parallelization'] in ['cuda', 'mpi_with_cuda']:
 
   # set the compute capability of the cuda compiler (needs to be set after the CudaTool
   env.Append(NVCCFLAGS=['--gpu-architecture='+env['computeCapability']])
+  env.Append(NVCCFLAGS=['--std=c++11'])
   
   # Append the source directory to the include path
   env.Append(NVCCFLAGS=['-Isrc'])
