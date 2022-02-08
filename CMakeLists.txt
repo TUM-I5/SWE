@@ -72,6 +72,7 @@ if (MPI_FOUND)
     target_link_libraries(swe-mpi PRIVATE ${MPI_CXX_LIBRARIES})
     target_include_directories(swe-mpi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_include_directories(swe-mpi PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+    add_definitions(-DUSEMPI)
 endif()
 
 if (OpenMP_FOUND AND ENABLE_OPENMP)
