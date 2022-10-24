@@ -179,12 +179,17 @@ void SWE_BlockCUDA::setBoundaryConditions() {
 #endif
   // Fill ghost layer corner cells
   kernelHdBufferEdges<<<1,1>>>(hd, nx, ny);
+  kernelHdBufferEdges<<<1,1>>>(hud, nx, ny);
+  kernelHdBufferEdges<<<1,1>>>(hvd, nx, ny);
 
 #ifdef DBG
  cout << "Call kernel to compute left/right boundaries " << flush << endl;
 #endif
 //   synchWaterHeightAfterWrite();
 //   synchDischargeAfterWrite();
+#ifdef USEMPI
+  synchGhostLayerAfterWrite();
+#endif
 
   if (boundary[BND_LEFT] == PASSIVE || boundary[BND_LEFT] == CONNECT) {
      // nothing to be done: 
