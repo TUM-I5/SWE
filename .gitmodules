@@ -1,3 +1,0 @@
-[submodule "submodules/swe_solvers"]
-	path = submodules/swe_solvers
-	url = https://github.com/TUM-I5/swe_solvers.git
