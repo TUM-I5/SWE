@@ -1,13 +1,68 @@
-build/build_SWE_*
-build/SWE_*
+# Prerequisites
+*.d
 
-documentation/doxy/
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.ko
+*.elf
 
-*.pyc
-.sconsign.dblite
-*~
+# Linker output
+*.ilk
+*.map
+*.exp
 
-.settings
-.project
-.cproject
-.pydevproject
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# CUDA
+*.i
+*.ii
+*.gpu
+*.ptx
+*.cubin
+*.fatbin
+
+# Misc
+.DS_Store
