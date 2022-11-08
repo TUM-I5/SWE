@@ -20,6 +20,7 @@ RUN apt-get update -y && \
         libopenmpi-dev \
         libtool \
         make \
+        netcdf-bin \
         ninja-build \
         pkg-config \
         python3 \

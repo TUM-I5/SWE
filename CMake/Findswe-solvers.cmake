@@ -1,8 +1,8 @@
 include(FetchContent)
 
 FetchContent_Declare(
-    swe-solvers
+    SWE-Solvers
     GIT_REPOSITORY https://github.com/TUM-I5/SWE-Solvers.git
     GIT_TAG        master
 )
-FetchContent_MakeAvailable(swe-solvers)
+FetchContent_MakeAvailable(SWE-Solvers)

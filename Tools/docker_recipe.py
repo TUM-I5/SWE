@@ -4,7 +4,8 @@ Stage0 += packages(ospackages=['python3','python3-pip',
     'autoconf','automake','libtool', 'git', 'less', 'wget', 'curl', 'bzip2', 'pkg-config', 'vim', 'unifdef',
     'libopenmpi-dev',
     'gdb', 'valgrind', 'cppcheck', 'ccache', 'graphviz',
-    'clang-format', 'clang-tidy', 'doxygen', 'iwyu'])
+    'clang-format', 'clang-tidy', 'doxygen', 'iwyu',
+    'netcdf-bin'])
 Stage0 += gnu()
 Stage0 += cmake(eula=True)
 Stage0 += shell(commands=[
