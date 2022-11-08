@@ -68,7 +68,7 @@ Blocks::Block* Blocks::Block::getBlockInstance(int nx, int ny, RealType dx, Real
   Block* block = nullptr;
 #if !defined(ENABLE_CUDA)
 #if defined(WITH_SOLVER_FWAVE) || defined(WITH_SOLVER_AUGRIE) || defined(WITH_SOLVER_HLLE)
-  //block = new WaveAccumulationBlock(nx, ny, dx, dy);
+  // block = new WaveAccumulationBlock(nx, ny, dx, dy);
   block = new WavePropagationBlock(nx, ny, dx, dy);
 #elif defined(WITH_SOLVER_RUSANOV)
   block = new Rusanov::RusanovBlock(nx, ny, dx, dy);
