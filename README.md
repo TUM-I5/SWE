@@ -9,7 +9,7 @@ SWE
 
 ## General Information
 This code has been tested under Ubuntu 20.04 or higher. Other Linux distributions will probably work. However, we do not recommend using Windows or MacOS. If you do not have Linux installed on your computer, please use WSL, Virtual Machine, or similar.
-Since SWE1D uses CMake, it should work under Windows with MSVC or MacOS.
+Since SWE uses CMake, it should work under Windows with MSVC or MacOS.
 
 ## Dockerfile
 You can use the Dockerfile included in the repository. This will create an image where everything is set up and you can just begin with compiling the code.
@@ -47,13 +47,13 @@ The command line version of SWE will write a NetCDF file or multiple ASCII-VTK f
 
 **Hint:** The output files contain the absolute height of the water column _h_. To get the relative height of the water column, use a _Calculator_ in Paraview with the formula `h+b`. If you have dry cells in your scenario, you may want to use the formula `min(h, h+b)`. This will give you the relative height for wet cells and 0 for dry cells.
 
-Besides the [VTKWriter](/TUM-I5/SWE/blob/master/Source/Writers/VTKWriter.hpp), SWE is also able to write [netCDF](http://www.unidata.ucar.edu/software/netcdf/) files. You can enable the [NetCDFWriter](/TUM-I5/SWE/blob/master/Source/Writers/NetCDFWriter.hpp) with the CMake option `-DENABLE_NETCDF=ON`.
+Besides the [VTKWriter](/Source/Writers/VTKWriter.hpp), SWE is also able to write [netCDF](http://www.unidata.ucar.edu/software/netcdf/) files. You can enable the [NetCDFWriter](/Source/Writers/NetCDFWriter.hpp) with the CMake option `-DENABLE_NETCDF=ON`.
 
-The [NetCDFWriter](/TUM-I5/SWE/blob/master/Source/Writers/NetCDFWriter.hpp) has two advantages:
+The [NetCDFWriter](Source/Writers/NetCDFWriter.hpp) has two advantages:
 * It creates binary files and is therefore faster to read and write.
 * All time steps are stored in a single file.
 
-The [NetCDFWriter](/TUM-I5/SWE/blob/master/Source/Writers/NetCDFWriter.hpp) respects the COARDS standard, thus you can also visualize the netCDF files with ParaView.
+The [NetCDFWriter](Source/Writers/NetCDFWriter.hpp) respects the COARDS standard, thus you can also visualize the netCDF files with ParaView.
 
 ### Visualization with SWE-Visualizer
 [Under development](https://github.com/TUM-I5/SWE-Visualizer)

@@ -34,6 +34,8 @@
 #include <ctime>
 #include <iostream>
 #include <limits>
+#include <unistd.h>
+#include <sys/ioctl.h>
 
 static constexpr int          TIME_SIZE     = 8;
 static constexpr unsigned int MIN_TERM_SIZE = 80;

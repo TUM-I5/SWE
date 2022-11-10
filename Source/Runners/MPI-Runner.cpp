@@ -375,15 +375,17 @@ int main(int argc, char** argv) {
       Tools::Logger::logger.updateTime("CPU");
       Tools::Logger::logger.updateTime("CPU-Communication");
 
-      // Update simulation time with time step width
-      simulationTime += maxTimeStepWidthGlobal;
-      iterations++;
-
       // Print the current simulation time
       progressBar.clear();
       Tools::Logger::logger.printSimulationTime(
-        simulationTime, "Simulation with dt " + std::to_string(maxTimeStepWidth) + " at time"
+        simulationTime,
+        "[" + std::to_string(iterations) + "]: Simulation with max. global dt " + std::to_string(maxTimeStepWidthGlobal)
+          + " at time"
       );
+
+      // Update simulation time with time step width
+      simulationTime += maxTimeStepWidthGlobal;
+      iterations++;
       progressBar.update(simulationTime);
     }
 
