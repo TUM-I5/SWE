@@ -155,7 +155,7 @@ void Writers::NetCDFWriter::writeVarTimeDependent(const Tools::Float2D<RealType>
   std::size_t count[] = {1, nY_, 1};
   for (unsigned int col = 0; col < nX_; col++) {
     start[2] = col; // Select column (dim "x")
-    nc_put_vara_float(
+    nc_put_vara_double(
       dataFile_,
       ncVariable,
       start,
@@ -173,7 +173,7 @@ void Writers::NetCDFWriter::writeVarTimeIndependent(const Tools::Float2D<RealTyp
   std::size_t count[] = {nY_, 1};
   for (unsigned int col = 0; col < nX_; col++) {
     start[1] = col; // Select column (dim "x")
-    nc_put_vara_float(
+    nc_put_vara_double(
       dataFile_,
       ncVariable,
       start,
@@ -186,12 +186,14 @@ void Writers::NetCDFWriter::writeVarTimeIndependent(const Tools::Float2D<RealTyp
 void Writers::NetCDFWriter::writeTimeStep(
   const Tools::Float2D<RealType>& h, const Tools::Float2D<RealType>& hu, const Tools::Float2D<RealType>& hv, double time
 ) {
-  if (timeStep_ == 0)
+  if (timeStep_ == 0) {
     // Write bathymetry
     writeVarTimeIndependent(bathymetry_, bVar_);
+  }
 
   // Write time
-  nc_put_var1_float(dataFile_, timeVar_, &timeStep_, &time);
+  std::size_t timeStep = timeStep_;
+  nc_put_var1_double(dataFile_, timeVar_, &timeStep, &time);
 
   // Write water height
   writeVarTimeDependent(h, hVar_);
@@ -205,7 +207,7 @@ void Writers::NetCDFWriter::writeTimeStep(
   // Increment timeStep for next call
   timeStep_++;
 
-  if (flush_ > 0 && timeStep % flush_ == 0) {
+  if (flush_ > 0 && timeStep_ % flush_ == 0) {
     nc_sync(dataFile_);
   }
 }

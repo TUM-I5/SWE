@@ -26,7 +26,7 @@
 
 #include "Writer.hpp"
 #if defined(ENABLE_NETCDF)
-#include "NetCFDWriter.hpp"
+#include "NetCDFWriter.hpp"
 #else
 #include "VTKWriter.hpp"
 #endif
@@ -60,13 +60,14 @@ std::shared_ptr<Writers::Writer> Writers::Writer::createWriterInstance(
 ) {
 
 #if defined(ENABLE_NETCDF)
-    auto writer = std::make_shared<NetCDFWriter>(fileName, bathymetry, boundarySize, nX, nY, dX, dY, originX, originY, flush)
+  auto writer = std::make_shared<NetCDFWriter>(
+    fileName, bathymetry, boundarySize, nX, nY, dX, dY, originX, originY, flush
   );
 #else
   auto writer = std::make_shared<VTKWriter>(fileName, bathymetry, boundarySize, nX, nY, dX, dY, offsetX, offsetY);
 #endif
 
-    return writer;
+  return writer;
 }
 
 Writers::Writer::Writer(

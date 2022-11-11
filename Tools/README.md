@@ -21,6 +21,8 @@ As a next step, you need to build the Docker image using the previously generate
 docker build -t swe .
 ```
 
+This might take a while, since the full LaTeX distribution is also installed.
+
 ## Run Docker image
 In order to run the Docker image as a container you need to execute the following command:
 

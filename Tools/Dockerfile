@@ -17,6 +17,10 @@ RUN apt-get update -y && \
         graphviz \
         iwyu \
         less \
+        libnetcdf-c++4 \
+        libnetcdf-c++4-dev \
+        libnetcdf-cxx-legacy-dev \
+        libnetcdf-dev \
         libopenmpi-dev \
         libtool \
         make \
@@ -25,6 +29,8 @@ RUN apt-get update -y && \
         pkg-config \
         python3 \
         python3-pip \
+        texlive \
+        texlive-full \
         unifdef \
         valgrind \
         vim \
