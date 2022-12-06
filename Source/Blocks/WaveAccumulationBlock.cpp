@@ -34,6 +34,8 @@
 #include <omp.h>
 #endif
 
+#include <iostream>
+
 Blocks::WaveAccumulationBlock::WaveAccumulationBlock(int nx, int ny, RealType dx, RealType dy):
   Block(nx, ny, dx, dy),
   hNetUpdates_(nx + 2, ny + 2),

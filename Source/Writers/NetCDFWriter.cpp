@@ -151,8 +151,8 @@ void Writers::NetCDFWriter::writeVarTimeDependent(const Tools::Float2D<RealType>
   // Write column wise, necessary to get rid of the boundary
   // Storage in Float2D is column wise
   // Read carefully, the dimensions are confusing
-  std::size_t start[] = {timeStep_, 0, 0};
-  std::size_t count[] = {1, nY_, 1};
+  std::size_t start[] = {static_cast<std::size_t>(timeStep_), 0, 0};
+  std::size_t count[] = {1, static_cast<std::size_t>(nY_), 1};
   for (unsigned int col = 0; col < nX_; col++) {
     start[2] = col; // Select column (dim "x")
     nc_put_vara_double(
@@ -170,7 +170,7 @@ void Writers::NetCDFWriter::writeVarTimeIndependent(const Tools::Float2D<RealTyp
   // Storage in Float2D is column wise
   // Read carefully, the dimensions are confusing
   std::size_t start[] = {0, 0};
-  std::size_t count[] = {nY_, 1};
+  std::size_t count[] = {static_cast<std::size_t>(nY_), 1};
   for (unsigned int col = 0; col < nX_; col++) {
     start[1] = col; // Select column (dim "x")
     nc_put_vara_double(
