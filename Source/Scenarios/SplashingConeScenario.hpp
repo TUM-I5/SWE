@@ -43,7 +43,7 @@ namespace Scenarios {
   public:
     ~SplashingConeScenario() override = default;
 
-    RealType getWaterHeightAtRest() const;
+    RealType getWaterHeightAtRest() const override;
     RealType getWaterHeight(RealType x, RealType y) const override;
     RealType getBathymetry(RealType x, RealType y) const override;
 
