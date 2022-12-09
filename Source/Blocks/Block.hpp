@@ -173,7 +173,13 @@ namespace Blocks {
      *
      */
     Block(int nx, int ny, RealType dx, RealType dy);
-
+    Block(
+      int nx, int ny, RealType dx, RealType dy,
+      Tools::Float2D<RealType>& h,
+      Tools::Float2D<RealType>& hu,
+      Tools::Float2D<RealType>& hv
+    );
+    
     /**
      * Sets the bathymetry on BoundaryType::Outflow or BoundaryType::Wall.
      * Should be called very time a boundary is changed to a BoundaryType::Outflow or
@@ -224,6 +230,12 @@ namespace Blocks {
     virtual ~Block() = default;
 
     static Block* getBlockInstance(int nx, int ny, RealType dx, RealType dy);
+    static Block* getBlockInstance(
+      int nx, int ny, RealType dx, RealType dy,
+      Tools::Float2D<RealType>& h,
+      Tools::Float2D<RealType>& hu,
+      Tools::Float2D<RealType>& hv
+    );
 
     /// Initialises unknowns to a specific scenario
     /**

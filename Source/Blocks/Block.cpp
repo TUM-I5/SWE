@@ -81,6 +81,27 @@ Blocks::Block* Blocks::Block::getBlockInstance(int nx, int ny, RealType dx, Real
   return block;
 }
 
+Blocks::Block* Blocks::Block::getBlockInstance(
+  int nx, int ny, RealType dx, RealType dy,
+  Tools::Float2D<RealType>& h,
+  Tools::Float2D<RealType>& hu,
+  Tools::Float2D<RealType>& hv) {
+  Block* block = nullptr;
+#if !defined(ENABLE_CUDA)
+#if defined(WITH_SOLVER_FWAVE) || defined(WITH_SOLVER_AUGRIE) || defined(WITH_SOLVER_HLLE)
+  // block = new WaveAccumulationBlock(nx, ny, dx, dy);
+  block = new WavePropagationBlock(nx, ny, dx, dy, h, hu, hv);
+#elif defined(WITH_SOLVER_RUSANOV)
+  block = new Rusanov::RusanovBlock(nx, ny, dx, dy);
+#elif defined(WITH_SOLVER_AUGRIE_SIMD)
+#error "Not implemented yet!"
+#endif
+#else
+  block = getCUDABlockInstance(nx, ny, dx, dy);
+#endif
+  return block;
+}
+
 Blocks::Block::Block(int nx, int ny, RealType dx, RealType dy):
   nx_(nx),
   ny_(ny),
@@ -89,6 +110,29 @@ Blocks::Block::Block(int nx, int ny, RealType dx, RealType dy):
   h_(nx + 2, ny + 2),
   hu_(nx + 2, ny + 2),
   hv_(nx + 2, ny + 2),
+  b_(nx + 2, ny + 2),
+  maxTimeStep_(0),
+  offsetX_(0),
+  offsetY_(0) {
+
+  for (int i = 0; i < 4; i++) {
+    boundary_[i]  = BoundaryType::Passive;
+    neighbour_[i] = nullptr;
+  }
+}
+
+Blocks::Block::Block(
+  int nx, int ny, RealType dx, RealType dy,
+  Tools::Float2D<RealType>& h,
+  Tools::Float2D<RealType>& hu,
+  Tools::Float2D<RealType>& hv):
+  nx_(nx),
+  ny_(ny),
+  dx_(dx),
+  dy_(dy),
+  h_(h, true),
+  hu_(hu, true),
+  hv_(hv, true),
   b_(nx + 2, ny + 2),
   maxTimeStep_(0),
   offsetX_(0),
