@@ -131,6 +131,12 @@ namespace Blocks {
      * </pre>
      */
     WavePropagationBlock(int nx, int ny, RealType dx, RealType dy);
+    WavePropagationBlock(
+      int nx, int ny, RealType dx, RealType dy,
+      Tools::Float2D<RealType>& h,
+      Tools::Float2D<RealType>& hu,
+      Tools::Float2D<RealType>& hv
+    );
     ~WavePropagationBlock() override = default;
 
     /**

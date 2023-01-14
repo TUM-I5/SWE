@@ -43,6 +43,22 @@ Blocks::WavePropagationBlock::WavePropagationBlock(int nx, int ny, RealType dx, 
   hvNetUpdatesBelow_(nx, ny + 1),
   hvNetUpdatesAbove_(nx, ny + 1) {}
 
+Blocks::WavePropagationBlock::WavePropagationBlock(
+  int nx, int ny, RealType dx, RealType dy,
+  Tools::Float2D<RealType>& h,
+  Tools::Float2D<RealType>& hu,
+  Tools::Float2D<RealType>& hv
+):
+  Block(nx, ny, dx, dy, h, hu, hv),
+  hNetUpdatesLeft_(nx + 1, ny),
+  hNetUpdatesRight_(nx + 1, ny),
+  huNetUpdatesLeft_(nx + 1, ny),
+  huNetUpdatesRight_(nx + 1, ny),
+  hNetUpdatesBelow_(nx, ny + 1),
+  hNetUpdatesAbove_(nx, ny + 1),
+  hvNetUpdatesBelow_(nx, ny + 1),
+  hvNetUpdatesAbove_(nx, ny + 1) {}
+
 void Blocks::WavePropagationBlock::computeNumericalFluxes() {
   // Maximum (linearized) wave speed within one iteration
   RealType maxWaveSpeed = RealType(0.0);
