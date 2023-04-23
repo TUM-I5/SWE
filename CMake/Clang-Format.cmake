@@ -14,8 +14,8 @@ if(CLANGFORMAT)
         file(GLOB_RECURSE ALL_CXX_SOURCE_FILES
             ${CMAKE_SOURCE_DIR}/Source/*.[ch]pp
             ${CMAKE_SOURCE_DIR}/Source/*.cpph
-            ${CMAKE_SOURCE_DIR}/Tests/*.[ch]pp
-            ${CMAKE_SOURCE_DIR}/Tests/*.cpph
+            # ${CMAKE_SOURCE_DIR}/Tests/*.[ch]pp
+            # ${CMAKE_SOURCE_DIR}/Tests/*.cpph
         )
 
         if(NOT TARGET clang-format)

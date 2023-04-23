@@ -28,22 +28,22 @@
 #include "Scenario.hpp"
 
 RealType Scenarios::Scenario::getWaterHeight([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
-  return RealType(10.0);
+  return utilities::smart_cast<RealType>(10.0);
 }
 
 RealType Scenarios::Scenario::getVelocityU([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
-  return RealType(0.0);
+  return utilities::smart_cast<RealType>(0.0);
 }
 
 RealType Scenarios::Scenario::getVelocityV([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
-  return RealType(0.0);
+  return utilities::smart_cast<RealType>(0.0);
 }
 
 RealType Scenarios::Scenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
-  return RealType(0.0);
+  return utilities::smart_cast<RealType>(0.0);
 }
 
-RealType Scenarios::Scenario::getWaterHeightAtRest() const { return RealType(10.0); }
+RealType Scenarios::Scenario::getWaterHeightAtRest() const { return utilities::smart_cast<RealType>(10.0); }
 
 double Scenarios::Scenario::getEndSimulationTime() const { return 0.1; }
 
@@ -53,8 +53,8 @@ BoundaryType Scenarios::Scenario::getBoundaryType([[maybe_unused]] BoundaryEdge 
 
 RealType Scenarios::Scenario::getBoundaryPos(BoundaryEdge edge) const {
   if (edge == BoundaryEdge::Left || edge == BoundaryEdge::Bottom) {
-    return RealType(0.0);
+    return utilities::smart_cast<RealType>(0.0);
   } else {
-    return RealType(1.0);
+    return utilities::smart_cast<RealType>(1.0);
   }
 }

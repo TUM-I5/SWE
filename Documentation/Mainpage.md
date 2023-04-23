@@ -156,7 +156,7 @@ We will model three different situations:
 To implement the boundary conditions, the class \texttt{SWE\_Block} contains an 
 array of four enum variables, \texttt{boundary[4]} (for left/right/bottom/top 
 boundary), that can take the values 
-<code>OUTFLOW</code>, <code>WALL</code>, and <code>CONNECT</code>.
+<code>BoundaryType::Outflow</code>, <code>BoundaryType::Wall</code>, and <code>CONNECT</code>.
 
 
 \subsection multblocks Multiple Blocks

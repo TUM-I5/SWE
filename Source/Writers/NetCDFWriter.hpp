@@ -33,7 +33,7 @@
 
 namespace Writers {
 
-#ifdef ENABLE_NETCDF
+#if defined(ENABLE_WRITERS) && defined(ENABLE_NETCDF)
 
   class NetCDFWriter: public Writer {
   private:

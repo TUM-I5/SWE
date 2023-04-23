@@ -32,9 +32,9 @@
 #include <cmath>
 
 RealType Scenarios::SeaAtRestScenario::getWaterHeight(RealType x, RealType y) const {
-  return RealType((sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)) < 0.1) ? 9.9 : 10.0);
+  return utilities::smart_cast<RealType>((sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)) < 0.1) ? 9.9 : 10.0);
 }
 
 RealType Scenarios::SeaAtRestScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
-  return RealType(sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)) < 0.1) ? 0.1 : 0.0;
+  return utilities::smart_cast<RealType>(sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)) < 0.1) ? 0.1 : 0.0;
 }

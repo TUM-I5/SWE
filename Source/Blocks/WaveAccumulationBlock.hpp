@@ -36,11 +36,15 @@
 //  - Approximate Augmented Riemann solver (functional implementation: AugRieFunSolver)
 //  - F-Wave (vectorized implementation: FWaveVecSolver)
 #if defined(WITH_SOLVER_AUGRIE)
-#include "AugRieFunSolver.hpp"
+#include "Solvers/AugRieFunSolver.hpp"
 #elif defined(WITH_SOLVER_HLLE)
-#include "HLLEFunSolver.hpp"
+#include "Solvers/HLLEFunSolver.hpp"
 #elif defined(WITH_SOLVER_FWAVE)
-#include "FWaveVecSolver.hpp"
+  #if defined(ENABLE_VECTORIZATION) && defined(ENABLE_VECTORIZATION_WITH_SIMD)
+    #include "Solvers/FWaveSIMDsolver.hpp"
+  #else
+    #include "Solvers/FWaveSolver.hpp"
+  #endif
 #else
 #error Chosen wave propagation solver not supported by WaveAccumulationBlock
 #endif
@@ -56,7 +60,7 @@ namespace Blocks {
    *  (details can be found in the corresponding source files)
    */
   class WaveAccumulationBlock: public Block {
-#ifdef SOLVER_AUGRIE
+#ifdef WITH_SOLVER_AUGRIE
     //! Approximate Augmented Riemann solver
     Solvers::AugRieFunSolver<RealType> wavePropagationSolver_;
 #elif defined(WITH_SOLVER_HLLE)
@@ -64,7 +68,11 @@ namespace Blocks {
     Solvers::HLLEFunSolver<RealType> wavePropagationSolver_;
 #elif defined(WITH_SOLVER_FWAVE)
     //! Approximate Augmented Riemann solver
-    Solvers::FWaveVecSolver<RealType> wavePropagationSolver_;
+    #if defined(ENABLE_VECTORIZATION) && defined(ENABLE_VECTORIZATION_WITH_SIMD)
+      Solvers::FWaveSIMDsolver<RealType> wavePropagationSolver_;
+    #else
+      Solvers::FWaveSolver<RealType> wavePropagationSolver_;
+    #endif
 #endif
 
     //! net-updates for the heights of the cells (for accumulation)

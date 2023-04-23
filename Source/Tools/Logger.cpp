@@ -23,6 +23,9 @@
 
 #include "Logger.hpp"
 
+#include "Utilities.hpp"
+#include <iomanip>
+
 Tools::Logger Tools::Logger::logger;
 
 std::ostream& Tools::Logger::getTimeStream() const {
@@ -218,7 +221,7 @@ void Tools::Logger::initWallClockTime(const double wallClockTime) { wallClockTim
 void Tools::Logger::printWallClockTime(const double wallClockTime, const std::string wallClockTimeMessage) const {
   getTimeStream(
   ) << indentation_
-    << "Process " << processRank_ << " - " << wallClockTimeMessage << ": " << wallClockTime - wallClockTime
+    << "Process " << processRank_ << " - " << wallClockTimeMessage << ": " << std::fixed << std::setprecision(5) << (wallClockTime - wallClockTime_)
     << " seconds" << std::endl;
 }
 
@@ -242,6 +245,6 @@ void Tools::Logger::printElementUpdatesDone(
   if (processRank_ == 0) {
     getTimeStream(
     ) << indentation_
-      << double(iterations) * nX * nY / timer_.at(name) << ' ' << iterationMessage << std::endl;
+      << utilities::smart_cast<double>(iterations) * nX * nY / timer_.at(name) << ' ' << iterationMessage << std::endl;
   }
 }

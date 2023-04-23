@@ -27,10 +27,9 @@
 
 #pragma once
 
-#include "BoundaryEdge.hpp"
-#include "BoundaryType.hpp"
-
 #include "Tools/RealType.hpp"
+#include "Types/BoundaryEdge.hpp"
+#include "Types/BoundaryType.hpp"
 
 namespace Scenarios {
 

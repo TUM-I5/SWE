@@ -25,10 +25,12 @@
  */
 
 #include "Writer.hpp"
+#if defined(ENABLE_WRITERS)
 #if defined(ENABLE_NETCDF)
 #include "NetCDFWriter.hpp"
 #else
 #include "VTKWriter.hpp"
+#endif
 #endif
 
 #include <sstream>
@@ -44,6 +46,7 @@ int& Writers::BoundarySize::operator[](unsigned int i) { return boundarySize[i];
 
 int Writers::BoundarySize::operator[](unsigned int i) const { return boundarySize[i]; }
 
+#if defined(ENABLE_WRITERS)
 std::shared_ptr<Writers::Writer> Writers::Writer::createWriterInstance(
   [[maybe_unused]] const std::string&              fileName,
   [[maybe_unused]] const Tools::Float2D<RealType>& bathymetry,
@@ -69,6 +72,7 @@ std::shared_ptr<Writers::Writer> Writers::Writer::createWriterInstance(
 
   return writer;
 }
+#endif
 
 Writers::Writer::Writer(
   const std::string&              fileName,

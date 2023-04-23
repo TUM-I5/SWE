@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utilities.hpp"
+
 // Datatype for the type of data stored in the structures
 #ifdef ENABLE_SINGLE_PRECISION
 using RealType = float;

@@ -32,126 +32,122 @@
 
 #include "Block.hpp"
 
+#include "Solvers/WavePropagationSolver.hpp"
+#include "Tools/HelperFunctions.hpp"
+
 #ifdef WITH_SOLVER_HYBRID
-#include "HybridSolver.hpp"
+#include "Solvers/HybridSolver.hpp"
 #elif defined(WITH_SOLVER_FWAVE)
-#include "FWaveSolver.hpp"
+#if defined(ENABLE_VECTORIZATION) && defined(ENABLE_VECTORIZATION_WITH_SIMD)
+#include "Solvers/FWaveSIMDsolver.hpp"
+#else
+#include "Solvers/FWaveSolver.hpp"
+#endif
 #elif defined(WITH_SOLVER_AUGRIE)
-#include "AugRieSolver.hpp"
+#include "Solvers/AugRieSolver.hpp"
 #else
 #warning WavePropagationBlock should only be used with Riemann solvers (FWave, AugRie or Hybrid)
 #endif
 
-namespace Blocks {
-
-  /**
-   * Blocks::WavePropagationBlock is an implementation of the Blocks::Block abstract class.
-   * It uses a wave propagation solver which is defined with the pre-compiler flag WITH_SOLVER_ (see above).
-   *
-   * Possible wave propagation solvers are:
-   *  F-Wave, Approximate Augmented Riemann, Hybrid (f-wave + augmented).
-   *  (details can be found in the corresponding source files)
-   */
-  class WavePropagationBlock: public Block {
-  private:
-#ifdef WITH_SOLVER_HYBRID
-    //! Hybrid solver (f-wave + augmented)
-    Solvers::HybridSolver<RealType> wavePropagationSolver_;
-#elif defined(WITH_SOLVER_FWAVE)
-    //! F-wave Riemann solver
-    Solvers::FWaveSolver<RealType> wavePropagationSolver_;
-#elif defined(WITH_SOLVER_AUGRIE)
-    //! Approximate Augmented Riemann solver
-    Solvers::AugRieSolver<RealType> wavePropagationSolver_;
-#endif
-
-    //! net-updates for the heights of the cells on the left sides of the vertical edges.
-    Tools::Float2D<RealType> hNetUpdatesLeft_;
-    //! net-updates for the heights of the cells on the right sides of the vertical edges.
-    Tools::Float2D<RealType> hNetUpdatesRight_;
-
-    //! net-updates for the x-momentums of the cells on the left sides of the vertical edges.
-    Tools::Float2D<RealType> huNetUpdatesLeft_;
-    //! net-updates for the x-momentums of the cells on the right sides of the vertical edges.
-    Tools::Float2D<RealType> huNetUpdatesRight_;
-
-    //! net-updates for the heights of the cells below the horizontal edges.
-    Tools::Float2D<RealType> hNetUpdatesBelow_;
-    //! net-updates for the heights of the cells above the horizontal edges.
-    Tools::Float2D<RealType> hNetUpdatesAbove_;
-
-    //! net-updates for the y-momentums of the cells below the horizontal edges.
-    Tools::Float2D<RealType> hvNetUpdatesBelow_;
-    //! net-updates for the y-momentums of the cells above the horizontal edges.
-    Tools::Float2D<RealType> hvNetUpdatesAbove_;
-
-  public:
-    /**
-     * Constructor of a Blocks::WavePropagationBlock.
-     *
-     * Allocates the variables for the simulation:
-     *   unknowns h,hu,hv,b are defined on grid indices [0,..,nx+1]*[0,..,ny+1] (-> Abstract class Blocks::Block)
-     *     -> computational domain is [1,..,nx]*[1,..,ny]
-     *     -> plus ghost cell layer
-     *
-     *   net-updates are defined for edges with indices [0,..,nx]*[0,..,ny-1]
-     *   or [0,..,nx-1]*[0,..,ny] (for horizontal/vertical edges)
-     *
-     *   A left/right net update with index (i-1,j-1) is located on the edge between
-     *   cells with index (i-1,j) and (i,j):
-     * <pre>
-     *   *********************
-     *   *         *         *
-     *   * (i-1,j) *  (i,j)  *
-     *   *         *         *
-     *   *********************
-     *
-     *             *
-     *            ***
-     *           *****
-     *             *
-     *             *
-     *   NetUpdatesLeft(i-1,j-1)
-     *             or
-     *   NetUpdatesRight(i-1,j-1)
-     * </pre>
-     *
-     *   A below/above net update with index (i-1, j-1) is located on the edge between
-     *   cells with index (i, j-1) and (i,j):
-     * <pre>
-     *   ***********
-     *   *         *
-     *   * (i, j)  *   *
-     *   *         *  **  NetUpdatesBelow(i-1,j-1)
-     *   *********** *****         or
-     *   *         *  **  NetUpdatesAbove(i-1,j-1)
-     *   * (i,j-1) *   *
-     *   *         *
-     *   ***********
-     * </pre>
-     */
-    WavePropagationBlock(int nx, int ny, RealType dx, RealType dy);
-    WavePropagationBlock(
-      int nx, int ny, RealType dx, RealType dy,
-      Tools::Float2D<RealType>& h,
-      Tools::Float2D<RealType>& hu,
-      Tools::Float2D<RealType>& hv
-    );
-    ~WavePropagationBlock() override = default;
+namespace Blocks
+{
 
     /**
-     * Compute net updates for the block.
-     * The member variable #maxTimestep will be updated with the
-     * maximum allowed time step size
-     */
-    void computeNumericalFluxes() override;
-
-    /**
-     * Updates the unknowns with the already computed net-updates.
+     * Blocks::WavePropagationBlock is an implementation of the Blocks::Block abstract class.
+     * It uses a wave propagation solver which is defined with the pre-compiler flag WITH_SOLVER_ (see above).
      *
-     * @param dt time step width used in the update.
+     * Possible wave propagation solvers are:
+     *  F-Wave, Approximate Augmented Riemann, Hybrid (f-wave + augmented).
+     *  (details can be found in the corresponding source files)
      */
-    void updateUnknowns(RealType dt) override;
-  };
+    class WavePropagationBlock: public Block
+    {
+      private:
+        std::shared_ptr<Solvers::WavePropagationSolver<RealType>> wavePropagationSolver_;
+
+        //! net-updates for the heights of the cells on the left sides of the vertical edges.
+        Tools::Float2D<RealType> hNetUpdatesLeft_;
+        //! net-updates for the heights of the cells on the right sides of the vertical edges.
+        Tools::Float2D<RealType> hNetUpdatesRight_;
+
+        //! net-updates for the x-momentums of the cells on the left sides of the vertical edges.
+        Tools::Float2D<RealType> huNetUpdatesLeft_;
+        //! net-updates for the x-momentums of the cells on the right sides of the vertical edges.
+        Tools::Float2D<RealType> huNetUpdatesRight_;
+
+        //! net-updates for the heights of the cells below the horizontal edges.
+        Tools::Float2D<RealType> hNetUpdatesBelow_;
+        //! net-updates for the heights of the cells above the horizontal edges.
+        Tools::Float2D<RealType> hNetUpdatesAbove_;
+
+        //! net-updates for the y-momentums of the cells below the horizontal edges.
+        Tools::Float2D<RealType> hvNetUpdatesBelow_;
+        //! net-updates for the y-momentums of the cells above the horizontal edges.
+        Tools::Float2D<RealType> hvNetUpdatesAbove_;
+
+      public:
+        /**
+         * Constructor of a Blocks::WavePropagationBlock.
+         *
+         * Allocates the variables for the simulation:
+         *   unknowns h,hu,hv,b are defined on grid indices [0,..,nx+1]*[0,..,ny+1] (-> Abstract class Blocks::Block)
+         *     -> computational domain is [1,..,nx]*[1,..,ny]
+         *     -> plus ghost cell layer
+         *
+         *   net-updates are defined for edges with indices [0,..,nx]*[0,..,ny-1]
+         *   or [0,..,nx-1]*[0,..,ny] (for horizontal/vertical edges)
+         *
+         *   A left/right net update with index (i-1,j-1) is located on the edge between
+         *   cells with index (i-1,j) and (i,j):
+         * <pre>
+         *   *********************
+         *   *         *         *
+         *   * (i-1,j) *  (i,j)  *
+         *   *         *         *
+         *   *********************
+         *
+         *             *
+         *            ***
+         *           *****
+         *             *
+         *             *
+         *   NetUpdatesLeft(i-1,j-1)
+         *             or
+         *   NetUpdatesRight(i-1,j-1)
+         * </pre>
+         *
+         *   A below/above net update with index (i-1, j-1) is located on the edge between
+         *   cells with index (i, j-1) and (i,j):
+         * <pre>
+         *   ***********
+         *   *         *
+         *   * (i, j)  *   *
+         *   *         *  **  NetUpdatesBelow(i-1,j-1)
+         *   *********** *****         or
+         *   *         *  **  NetUpdatesAbove(i-1,j-1)
+         *   * (i,j-1) *   *
+         *   *         *
+         *   ***********
+         * </pre>
+         */
+        WavePropagationBlock(
+            int nx, int ny, RealType dx, RealType dy, std::shared_ptr<Solvers::WavePropagationSolver<RealType>> solver
+        );
+        ~WavePropagationBlock() override = default;
+
+        /**
+         * Compute net updates for the block.
+         * The member variable #maxTimestep will be updated with the
+         * maximum allowed time step size
+         */
+        void computeNumericalFluxes() override;
+
+        /**
+         * Updates the unknowns with the already computed net-updates.
+         *
+         * @param dt time step width used in the update.
+         */
+        void updateUnknowns(RealType dt) override;
+    };
 
 } // namespace Blocks

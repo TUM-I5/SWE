@@ -31,11 +31,11 @@
 
 #include <cmath>
 
-RealType Scenarios::SplashingConeScenario::getWaterHeightAtRest() const { return RealType(4.0); }
+RealType Scenarios::SplashingConeScenario::getWaterHeightAtRest() const { return utilities::smart_cast<RealType>(4.0); }
 
 RealType Scenarios::SplashingConeScenario::getWaterHeight(RealType x, RealType y) const {
-  RealType r = RealType(sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)));
-  RealType h = RealType(4.0 - 4.5 * (r / 0.5));
+  RealType r = utilities::smart_cast<RealType>(sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)));
+  RealType h = utilities::smart_cast<RealType>(4.0 - 4.5 * (r / 0.5));
 
   if (r < 0.1)
     h = h + 1.0;
@@ -45,11 +45,11 @@ RealType Scenarios::SplashingConeScenario::getWaterHeight(RealType x, RealType y
 
 RealType Scenarios::SplashingConeScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y)
   const {
-  RealType r = RealType(sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)));
+  RealType r = utilities::smart_cast<RealType>(sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)));
   return 1.0 + 9.0 * ((r < 0.5) ? r : 0.5);
 }
 
-double Scenarios::SplashingConeScenario::getEndSimulationTime() const { return double(0.5); }
+double Scenarios::SplashingConeScenario::getEndSimulationTime() const { return 0.5; }
 
 BoundaryType Scenarios::SplashingConeScenario::getBoundaryType([[maybe_unused]] BoundaryEdge edge) const {
   return BoundaryType::Outflow;

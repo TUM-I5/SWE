@@ -29,7 +29,7 @@
 
 #include "NetCDFWriter.hpp"
 
-#ifdef ENABLE_NETCDF
+#if defined(ENABLE_WRITERS) && defined(ENABLE_NETCDF)
 
 #include <cassert>
 #include <cstring>

@@ -43,17 +43,17 @@ Blocks::WaveAccumulationBlock::WaveAccumulationBlock(int nx, int ny, RealType dx
   hvNetUpdates_(nx + 2, ny + 2) {}
 
 void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
-  RealType dxInv = RealType(1.0) / dx_;
-  RealType dyInv = RealType(1.0) / dy_;
+  RealType dxInv = utilities::smart_cast<RealType>(1.0) / dx_;
+  RealType dyInv = utilities::smart_cast<RealType>(1.0) / dy_;
 
   // Maximum (linearized) wave speed within one iteration
-  RealType maxWaveSpeed = RealType(0.0);
+  RealType maxWaveSpeed = utilities::smart_cast<RealType>(0.0);
 
 #ifdef ENABLE_OPENMP
 #pragma omp parallel
   {
     // Thread-local maximum wave speed:
-    RealType maxWaveSpeedLocal = RealType(0.0);
+    RealType maxWaveSpeedLocal = utilities::smart_cast<RealType>(0.0);
 
     // Use OpenMP for the outer loop
 #pragma omp for
@@ -68,10 +68,27 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
 #elif defined(ENABLE_VECTORIZATION)
 #pragma omp simd reduction(max : maxWaveSpeed)
 #endif
-      for (int j = 1; j < nyEnd; j++) {
-        RealType maxEdgeSpeed = RealType(0.0);
+      for (int j = 1; j < nyEnd; j=j+4) {
+        RealType maxEdgeSpeed = utilities::smart_cast<RealType>(0.0);
         RealType hNetUpLeft = 0.0, hNetUpRight = 0.0;
         RealType huNetUpLeft = 0.0, huNetUpRight = 0.0;
+       /* RealType *hNetUpLeft_ptr = &hNetUpLeft;
+         RealType *huNetUpLeft_ptr = &huNetUpLeft;
+         RealType *hNetUpRight_ptr = &hNetUpRight;
+         RealType *huNetUpRight_ptr = &huNetUpRight;
+        wavePropagationSolver_.computeNetUpdates(
+          (h_[i - 1] +j),
+          (h_[i]+j),
+          (hu_[i - 1]+j),
+          (hu_[i]+j),
+          (b_[i - 1]+j),
+          (b_[i]+j),
+          hNetUpLeft_ptr,
+          hNetUpRight_ptr,
+          huNetUpLeft_ptr,
+          huNetUpRight_ptr,
+          maxEdgeSpeed
+        );*/
         wavePropagationSolver_.computeNetUpdates(
           h_[i - 1][j],
           h_[i][j],
@@ -87,6 +104,10 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
         );
 
         // Accumulate net updates to cell-wise net updates for h and hu
+        /*hNetUpdates_[i - 1][j] += dxInv * hNetUpLeft;
+        huNetUpdates_[i - 1][j] += dxInv * huNetUpLeft;
+        hNetUpdates_[i][j] += dxInv * hNetUpRight;
+        huNetUpdates_[i][j] += dxInv * huNetUpRight;*/
         hNetUpdates_[i - 1][j] += dxInv * hNetUpLeft;
         huNetUpdates_[i - 1][j] += dxInv * huNetUpLeft;
         hNetUpdates_[i][j] += dxInv * hNetUpRight;
@@ -115,15 +136,32 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
 #elif defined(ENABLE_VECTORIZATION)
 #pragma omp simd reduction(max : maxWaveSpeed)
 #endif
-      for (int j = 1; j < nyEnd; j++) {
+      for (int j = 1; j < nyEnd; j=j+4) {
         RealType maxEdgeSpeed = 0.0;
         RealType hNetUpDow = 0.0, hNetUpUpw = 0.0;
         RealType hvNetUpDow = 0.0, hvNetUpUpw = 0.0;
+        /*RealType *hNetUpDow_ptr = &hNetUpDow;
+        RealType *hNetUpUpw_ptr = &hNetUpUpw;
+         RealType *hvNetUpDow_ptr = &hvNetUpDow;
+         RealType *hvNetUpUpw_ptr = &hvNetUpUpw;
         wavePropagationSolver_.computeNetUpdates(
-          h_[i][j - 1],
-          h_[i][j],
-          hv_[i][j - 1],
-          hv_[i][j],
+         (h_[i]+j - 1),
+         (h_[i]+j),
+         (hv_[i]+j - 1),
+         (hv_[i]+j),
+          (b_[i]+j - 1),
+          (b_[i]+j),
+          hNetUpDow_ptr,
+          hNetUpUpw_ptr,
+          hvNetUpDow_ptr,
+          hvNetUpUpw_ptr,
+          maxEdgeSpeed
+        );*/
+        wavePropagationSolver_.computeNetUpdates(
+         h_[i][j - 1],
+         h_[i][j],
+         hv_[i][j - 1],
+         hv_[i][j],
           b_[i][j - 1],
           b_[i][j],
           hNetUpDow,
@@ -132,7 +170,6 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
           hvNetUpUpw,
           maxEdgeSpeed
         );
-
         // Accumulate net updates to cell-wise net updates for h and hu
         hNetUpdates_[i][j - 1] += dyInv * hNetUpDow;
         hvNetUpdates_[i][j - 1] += dyInv * hvNetUpDow;
@@ -161,7 +198,7 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
     maxTimeStep_ = std::min(dx_ / maxWaveSpeed, dy_ / maxWaveSpeed);
 
     // Reduce maximum time step size by "safety factor"
-    maxTimeStep_ *= RealType(0.4); // CFL-number = 0.5
+    maxTimeStep_ *= utilities::smart_cast<RealType>(0.4); // CFL-number = 0.5
   } else {
     // Might happen in dry cells
     maxTimeStep_ = std::numeric_limits<float>::max();
@@ -185,12 +222,12 @@ void Blocks::WaveAccumulationBlock::updateUnknowns(RealType dt) {
       hu_[i][j] -= dt * huNetUpdates_[i][j];
       hv_[i][j] -= dt * hvNetUpdates_[i][j];
 
-      hNetUpdates_[i][j]  = RealType(0.0);
-      huNetUpdates_[i][j] = RealType(0.0);
-      hvNetUpdates_[i][j] = RealType(0.0);
+      hNetUpdates_[i][j]  = utilities::smart_cast<RealType>(0.0);
+      huNetUpdates_[i][j] = utilities::smart_cast<RealType>(0.0);
+      hvNetUpdates_[i][j] = utilities::smart_cast<RealType>(0.0);
 
       if (h_[i][j] < 0.1) {                    // dryTol
-        hu_[i][j] = hv_[i][j] = RealType(0.0); // No water, no speed!
+        hu_[i][j] = hv_[i][j] = utilities::smart_cast<RealType>(0.0); // No water, no speed!
       }
 
       if (h_[i][j] < 0) {
@@ -204,7 +241,7 @@ void Blocks::WaveAccumulationBlock::updateUnknowns(RealType dt) {
 #endif
 
         // Zero (small) negative depths
-        h_[i][j] = RealType(0.0);
+        h_[i][j] = utilities::smart_cast<RealType>(0.0);
       }
     }
   }

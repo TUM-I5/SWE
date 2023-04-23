@@ -39,6 +39,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_INLINES_HIDDEN YES)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# FIXME intel or gcc
+
+# set(CMAKE_CXX_COMPILER_ID "GNU" CACHE STRING "Choose which compiler to use (Default=GNU, Intel)")
+# set(CMAKE_CXX_COMPILER_ID_OPTIONS GNU Intel)
+# set_property(CACHE CMAKE_CXX_COMPILER_ID PROPERTY STRINGS ${CMAKE_CXX_COMPILER_ID_OPTIONS})
+# if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+# set(CMAKE_CXX_COMPILER "icpx")
+# endif()
+
 set(META_COMPILER_VERSION "${CMAKE_SYSTEM_NAME} ${CMAKE_CXX_COMPILER_ID} (${CMAKE_CXX_COMPILER_VERSION})")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
@@ -85,8 +94,8 @@ ProcessorCount(AVAILABLE_PROCESSOR_COUNT)
 find_package(Threads REQUIRED)
 
 enable_testing()
-add_subdirectory(Source)
 add_subdirectory(Tests)
+add_subdirectory(Source)
 
 display_separator("Project Configuration Summary")
 

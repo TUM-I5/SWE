@@ -29,11 +29,12 @@ RUN apt-get update -y && \
         pkg-config \
         python3 \
         python3-pip \
-        texlive \
-        texlive-full \
+        # texlive \
+        # texlive-full \
         unifdef \
         valgrind \
         vim \
+        libgtest-dev \
         wget && \
     rm -rf /var/lib/apt/lists/*
 

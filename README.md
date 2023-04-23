@@ -1,6 +1,8 @@
 SWE
 ===
 
+[![pipeline status](https://gitlab.lrz.de/ladin/SWE/badges/master/pipeline.svg)](https://gitlab.lrz.de/ladin/SWE/-/commits/master)
+
 [An Education-Oriented Code for Parallel Tsunami Simulation.](Documentation/Mainpage.md)
 
 <div align="center">
@@ -79,3 +81,21 @@ Instead of using `make test`, run `ctest --verbose`.
 ## Course Material on SWE:
 * [SWE - Anatomy of a Parallel Shallow Water Code](http://www5.in.tum.de/SWE/lugano2013/swe_anatomy.pdf) (introduction given at the [CSCS-USI Summer School on Computer Simulations in Science and Engineering](http://icsweb.inf.unisi.ch/cms/index.php/component/content/article/12-news/95-summerschool2013.html)  in Lugano , July 8-19, 2013)
 * [SWE – An Education-Oriented Code to Solve the Shallow Water Equations](http://www.mac.tum.de/g2s3/swe_g2s3_2012.pdf) (presentation given at the [Gene Golub SIAM Summer School 2012](http://www.mac.tum.de/g2s3/) on "Simulation and Supercomputing in the Geosciences", Monterey, July 29 - August 10, 2012)
+
+# How to run on the SCCS GPU cluster for CUDA development
+- Load all dependencies:
+```bash
+module load singularity-3.8.5
+module load cuda-11.4.4
+module load module load openmpi-4.0.2
+module load cmake-3.23.0
+module load googletest-1.11.0
+```
+- run the command `singularity run --nv docker://asam11/swe:latest `
+- run the command `mkdir build && cd build`
+- run the command `cmake .. -DENABLE_MPI=ON -DENABLE_NETCDF=ON -DENABLE_CUDA=ON -DENABLE_DEVELOPER_MODE=ON` or simply `cmake ..` for a default build
+- `ccmake ..` for more options
+- Enable the `ENABLE_CUDA` option
+- Set the appropriate code allocator for the GPU (e.g. `cudaMallocManaged` for UMA or `cudaMalloc` for Normal H2D memory or  `cudaMallocHost`  Pinned memory)
+- `make -j` to compile
+- `./SWE-MPI-Runner` to run the code

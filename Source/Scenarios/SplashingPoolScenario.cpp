@@ -32,24 +32,24 @@
 #include <cmath>
 
 RealType Scenarios::SplashingPoolScenario::getWaterHeight(RealType x, RealType y) const {
-  return RealType(250.0 + (5.0 - (x + y) / 200));
+  return utilities::smart_cast<RealType>(250.0 + (5.0 - (x + y) / 200));
 }
 
 RealType Scenarios::SplashingPoolScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y)
   const {
-  return RealType(-250.0);
+  return utilities::smart_cast<RealType>(-250.0);
 }
 
-double Scenarios::SplashingPoolScenario::getEndSimulationTime() const { return double(15); }
+double Scenarios::SplashingPoolScenario::getEndSimulationTime() const { return 15; }
 
 RealType Scenarios::SplashingPoolScenario::getBoundaryPos(BoundaryEdge edge) const {
   if (edge == BoundaryEdge::Left) {
-    return RealType(0.0);
+    return utilities::smart_cast<RealType>(0.0);
   } else if (edge == BoundaryEdge::Right) {
-    return RealType(1000.0);
+    return utilities::smart_cast<RealType>(1000.0);
   } else if (edge == BoundaryEdge::Bottom) {
-    return RealType(0.0);
+    return utilities::smart_cast<RealType>(0.0);
   } else {
-    return RealType(1000.0);
+    return utilities::smart_cast<RealType>(1000.0);
   }
 }

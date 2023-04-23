@@ -32,15 +32,17 @@
 #include <cmath>
 
 RealType Scenarios::RadialDamBreakScenario::getWaterHeight(RealType x, RealType y) const {
-  return RealType((sqrt((x - 500.0) * (x - 500.0) + (y - 500.0) * (y - 500.0)) < 100.0) ? 15.0 : 10.0);
+  return utilities::smart_cast<RealType>(
+    (sqrt((x - 500.0) * (x - 500.0) + (y - 500.0) * (y - 500.0)) < 100.0) ? 15.0 : 10.0
+  );
 }
 
 RealType Scenarios::RadialDamBreakScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y)
   const {
-  return RealType(0.0);
+  return utilities::smart_cast<RealType>(0.0);
 }
 
-double Scenarios::RadialDamBreakScenario::getEndSimulationTime() const { return double(15); }
+double Scenarios::RadialDamBreakScenario::getEndSimulationTime() const { return 15; }
 
 BoundaryType Scenarios::RadialDamBreakScenario::getBoundaryType([[maybe_unused]] BoundaryEdge edge) const {
   return BoundaryType::Outflow;
@@ -48,12 +50,12 @@ BoundaryType Scenarios::RadialDamBreakScenario::getBoundaryType([[maybe_unused]]
 
 RealType Scenarios::RadialDamBreakScenario::getBoundaryPos(BoundaryEdge edge) const {
   if (edge == BoundaryEdge::Left) {
-    return RealType(0.0);
+    return utilities::smart_cast<RealType>(0.0);
   } else if (edge == BoundaryEdge::Right) {
-    return RealType(1000.0);
+    return utilities::smart_cast<RealType>(1000.0);
   } else if (edge == BoundaryEdge::Bottom) {
-    return RealType(0.0);
+    return utilities::smart_cast<RealType>(0.0);
   } else {
-    return RealType(1000.0);
+    return utilities::smart_cast<RealType>(1000.0);
   }
 }
