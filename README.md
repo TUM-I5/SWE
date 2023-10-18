@@ -11,12 +11,10 @@ SWE
 This code has been tested under Ubuntu 20.04 or higher. Other Linux distributions will probably work. However, we do not recommend using Windows or MacOS. If you do not have Linux installed on your computer, please use WSL, Virtual Machine, or similar.
 Since SWE uses CMake, it should work under Windows with MSVC or MacOS.
 
-## Dockerfile
+## Docker
 You can use the Dockerfile included in the repository. This will create an image where everything is set up and you can just begin with compiling the code.
-
 Of course, you can also just look at the Dockerfile as a recipe on how to set up your environment.
-
-For a short introduction on how to generate, build and run a Docker container, refer to [Dockerfile](/Tools/README.md).
+For a short introduction on how to build and run a Docker container, refer to [Docker](/Docker/README.md).
 
 ## Tutorial
 ### Compilation
