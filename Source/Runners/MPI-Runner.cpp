@@ -171,33 +171,21 @@ int main(int argc, char** argv) {
 
   Tools::Logger::logger.printNumberOfCellsPerProcess(nXLocal, nYLocal);
 
-  // Create a simple artificial scenario
-  // Scenarios::RadialDamBreakScenario scenario;
-
   // Create a scenario, default: RadialDamBreakScenario
   Scenarios::Scenario* scenarioptr;
 
-  Tools::Logger::logger.printString("Name:" + scenarioName);
-
   if(scenarioName == "BathymetryDamBreakScenario") {
-    Tools::Logger::logger.printString("first");
     scenarioptr = new Scenarios::BathymetryDamBreakScenario;
   } else if(scenarioName == "RadialDamBreakScenario") {
-    Tools::Logger::logger.printString("second");
     scenarioptr = new Scenarios::BathymetryDamBreakScenario;
   } else if(scenarioName == "SeaAtRestScenario") {
-    Tools::Logger::logger.printString("third");
     scenarioptr = new Scenarios::SeaAtRestScenario;
   } else if(scenarioName == "SplashingConeScenario") {
     scenarioptr = new Scenarios::SplashingConeScenario;
-    Tools::Logger::logger.printString("fourth");
   } else if(scenarioName == "SplashingPoolScenario") {
-    Tools::Logger::logger.printString("fifth");
     scenarioptr = new Scenarios::SplashingPoolScenario;
   }
   //Add your own scenarios here 
-
-  Tools::Logger::logger.printString("end time:" + std::to_string(scenarioptr->getEndSimulationTime()));
 
   Scenarios::Scenario scenario = *scenarioptr;
 
