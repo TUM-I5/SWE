@@ -177,18 +177,27 @@ int main(int argc, char** argv) {
   // Create a scenario, default: RadialDamBreakScenario
   Scenarios::Scenario* scenarioptr;
 
+  Tools::Logger::printString("Name:" + scenarioName);
+
   if(scenarioName == "BathymetryDamBreakScenario") {
+    Tools::Logger::printString("first");
     scenarioptr = new Scenarios::BathymetryDamBreakScenario;
   } else if(scenarioName == "RadialDamBreakScenario") {
+    Tools::Logger::printString("second");
     scenarioptr = new Scenarios::BathymetryDamBreakScenario;
   } else if(scenarioName == "SeaAtRestScenario") {
+    Tools::Logger::printString("third");
     scenarioptr = new Scenarios::SeaAtRestScenario;
   } else if(scenarioName == "SplashingConeScenario") {
     scenarioptr = new Scenarios::SplashingConeScenario;
+    Tools::Logger::printString("fourth");
   } else if(scenarioName == "SplashingPoolScenario") {
+    Tools::Logger::printString("fifth");
     scenarioptr = new Scenarios::SplashingPoolScenario;
   }
   //Add your own scenarios here 
+
+  Tools::Logger::printString("end time:" + std::to_string(scenarioptr->getEndSimulationTime));
 
   Scenarios::Scenario scenario = *scenarioptr;
 
