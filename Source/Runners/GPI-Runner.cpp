@@ -157,6 +157,7 @@ int main(int argc, char** argv) {
   args.addOption("output-basepath", 'o', "Output base file name");
   args.addOption("number-of-checkpoints", 'n', "Number of checkpoints to write output files");
   args.addOption("scenario", 's', "Name of scenario");
+  args.addOption("time", 't', "Multiplier for end simulation time");
 
   Tools::Args::Result ret = args.parse(argc, argv, gpiRank == 0);
 
@@ -177,6 +178,8 @@ int main(int argc, char** argv) {
     "number-of-checkpoints", 20
   ); //! Number of checkpoints for visualization (at each checkpoint in time, an output file is written).
   std::string scenarioName        = args.getArgument<std::string>("scenario", "RadialDamBreakScenario");
+  float multiplier        = args.getArgument<float>("time", 1.0);
+
 
   // Print information about the grid
   Tools::Logger::logger.printNumberOfCells(numberOfGridCellsX, numberOfGridCellsY);
@@ -259,7 +262,7 @@ int main(int argc, char** argv) {
   waveBlock->initialiseScenario(originX, originY, scenario, true);
 
   // Get the final simulation time from the scenario
-  double endSimulationTime = scenario.getEndSimulationTime();
+  double endSimulationTime = scenario.getEndSimulationTime() * multiplier;
 
   // Checkpoints when output files are written
   double* checkPoints = new double[numberOfCheckPoints + 1];
