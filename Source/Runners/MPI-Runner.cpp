@@ -177,19 +177,23 @@ int main(int argc, char** argv) {
   Scenarios::Scenario* scenarioptr;
 
   if(scenarioName == "BathymetryDamBreakScenario") {
-    scenarioptr = new Scenarios::BathymetryDamBreakScenario;
+    scenarioptr = new Scenarios::BathymetryDamBreakScenario();
   } else if(scenarioName == "RadialDamBreakScenario") {
-    scenarioptr = new Scenarios::BathymetryDamBreakScenario;
+    scenarioptr = new Scenarios::RadialDamBreakScenario();
   } else if(scenarioName == "SeaAtRestScenario") {
-    scenarioptr = new Scenarios::SeaAtRestScenario;
+    scenarioptr = new Scenarios::SeaAtRestScenario();
   } else if(scenarioName == "SplashingConeScenario") {
-    scenarioptr = new Scenarios::SplashingConeScenario;
+    scenarioptr = new Scenarios::SplashingConeScenario();
   } else if(scenarioName == "SplashingPoolScenario") {
-    scenarioptr = new Scenarios::SplashingPoolScenario;
+    scenarioptr = new Scenarios::SplashingPoolScenario();
   }
   //Add your own scenarios here 
 
+
   Scenarios::Scenario scenario = *scenarioptr;
+
+  std::cout << "scen: " << scenarioName << "\n";
+
 
   // Compute the size of a single cell
   RealType cellSizeX = (scenario.getBoundaryPos(BoundaryEdge::Right) - scenario.getBoundaryPos(BoundaryEdge::Left))
