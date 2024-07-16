@@ -177,6 +177,7 @@ int main(int argc, char** argv) {
   Scenarios::Scenario* scenarioptr;
 
   if(scenarioName == "BathymetryDamBreakScenario") {
+    std::cout << "entered" << "\n";
     scenarioptr = new Scenarios::BathymetryDamBreakScenario();
   } else if(scenarioName == "RadialDamBreakScenario") {
     scenarioptr = new Scenarios::RadialDamBreakScenario();
