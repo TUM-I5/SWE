@@ -193,7 +193,7 @@ int main(int argc, char** argv) {
   Scenarios::Scenario scenario = *scenarioptr;
 
   std::cout << "scen: " << scenarioName << "\n";
-  std::cout << "scen2: " << scenario.getWaterHeight(0.0,0.0) << "\n";
+  std::cout << "scen2: " << scenario.getWaterHeight(500.0,500.0) << "\n";
 
 
   // Compute the size of a single cell
