@@ -29,6 +29,7 @@ endif()
 
 option(ENABLE_CUDA "Enable CUDA-accelerated SWE Blocks." OFF)
 if(ENABLE_CUDA)
+    message(FATAL_ERROR "CUDA Version not implemented")
     target_compile_definitions(${META_PROJECT_NAME} PUBLIC ENABLE_CUDA)
 endif()
 
