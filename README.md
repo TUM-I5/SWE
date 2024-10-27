@@ -18,7 +18,7 @@ If you do not have Linux installed on your computer, please use WSL, Virtual Mac
 A prebuilt Docker image is available in [Dockerhub](https://hub.docker.com/r/tumi5/swe).
 
 To use the prebuilt image, we do recommended that you first clone SWE, then navigate into the SWE checkout
-and run the Docker container interactively by mapping the SWE1D directory into the container (here, we use `work` as our mapping point):
+and run the Docker container interactively by mapping the SWE directory into the container (here, we use `work` as our mapping point):
 
 ```shell
 docker run -it -v ${PWD}:/work --rm --privileged tumi5/swe /bin/bash
@@ -61,7 +61,7 @@ You can add new source files by just creating them somewhere within the `Source`
 
 ## Creating Doxygen Documentation
 
-* Navigate into the SWE1D directory
+* Navigate into the SWE directory
 * Run the following Doxygen command: `doxygen Documentation/Doxyfile`
 * You should now see a directory called `html`
 * Open `index.html` to see the generated documentation.
