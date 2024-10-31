@@ -24,13 +24,16 @@ and run the Docker container interactively by mapping the SWE directory into the
 docker run -it -v ${PWD}:/work --rm --privileged tumi5/swe /bin/bash
 ```
 
+Navigate into the `work` directory and continue with the steps below.
+
 ## Build and Test
 
 As build system configurator we use CMake. To compile the code execute the following commands in this directory:
 
 * Create a build directory: `mkdir build`. You can also choose any other name for your build directory.
 * Switch to this directory: `cd build`
-* Run CMake: `cmake ..` (For an overview of all available options, use `ccmake ..`)
+* Run CMake: `cmake ..` (for an overview of all available options, use `ccmake ..`)
+* For a `Debug` build, run `cmake .. -DCMAKE_BUILD_TYPE=Debug`
 * Run Make: `make` (or `make -j` to compile with multiple cores).
 * Run Tests: Some example unit tests have been implemented (`make test`). Feel free to add your own test cases inside the `Tests` folder.
 
