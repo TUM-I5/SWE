@@ -121,7 +121,7 @@ endif()
 
 option(ENABLE_NETCDF "Enable output writing with NetCDF." ON)
 if(ENABLE_NETCDF)
-  set(NETCDF_CXX "YES")
+  #set(NETCDF_CXX "YES")
   find_package(NetCDF REQUIRED)
   target_link_libraries(SWE-Interface INTERFACE ${NETCDF_LIBRARIES} ${NETCDF_LIBRARIES_CXX})
   target_include_directories(SWE-Interface INTERFACE ${NETCDF_INCLUDES})

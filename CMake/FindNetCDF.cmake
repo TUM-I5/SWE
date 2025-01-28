@@ -36,7 +36,6 @@ find_path (NETCDF_INCLUDES netcdf.h
 find_library (NETCDF_LIBRARIES_C       NAMES netcdf)
 mark_as_advanced(NETCDF_LIBRARIES_C)
 
-
 set (NetCDF_libs "${NETCDF_LIBRARIES_C}")
 
 get_filename_component (NetCDF_lib_dirs "${NETCDF_LIBRARIES_C}" PATH)
