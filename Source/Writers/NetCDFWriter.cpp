@@ -66,6 +66,7 @@ Writers::NetCDFWriter::NetCDFWriter(
   unsigned int                    flush
 ):
   Writer(baseName + ".nc", bathymetry, boundarySize, nX, nY),
+  temp(nX * nY), 
   flush_(flush) {
   int status = -1;
 
@@ -148,39 +149,27 @@ Writers::NetCDFWriter::NetCDFWriter(
 Writers::NetCDFWriter::~NetCDFWriter() { nc_close(dataFile_); }
 
 void Writers::NetCDFWriter::writeVarTimeDependent(const Tools::Float2D<RealType>& matrix, int ncVariable) {
-  // Write column wise, necessary to get rid of the boundary
-  // Storage in Float2D is column wise
-  // Read carefully, the dimensions are confusing
-  std::size_t start[] = {static_cast<std::size_t>(timeStep_), 0, 0};
-  std::size_t count[] = {1, static_cast<std::size_t>(nY_), 1};
-  for (unsigned int col = 0; col < nX_; col++) {
-    start[2] = col; // Select column (dim "x")
-    nc_put_vara_double(
-      dataFile_,
-      ncVariable,
-      start,
-      count,
-      &matrix[col + boundarySize_[0]][boundarySize_[2]]
-    ); // Write column
+  #pragma omp parallel for
+  for (size_t x = 0; x < nX_; ++x) {
+    for (size_t y = 0; y < nY_; ++y) {
+      temp[nX_ * y + x] = matrix[x + boundarySize_[0]][y + boundarySize_[2]];
+    }
   }
+  std::size_t start[] = {static_cast<std::size_t>(timeStep_), 0, 0};
+  std::size_t count[] = {1, static_cast<std::size_t>(nY_), static_cast<std::size_t>(nX_)};
+  nc_put_vara_double(dataFile_, ncVariable, start, count, temp.data());
 }
 
 void Writers::NetCDFWriter::writeVarTimeIndependent(const Tools::Float2D<RealType>& matrix, int ncVariable) {
-  // Write column wise, necessary to get rid of the boundary
-  // Storage in Float2D is column wise
-  // Read carefully, the dimensions are confusing
-  std::size_t start[] = {0, 0};
-  std::size_t count[] = {static_cast<std::size_t>(nY_), 1};
-  for (unsigned int col = 0; col < nX_; col++) {
-    start[1] = col; // Select column (dim "x")
-    nc_put_vara_double(
-      dataFile_,
-      ncVariable,
-      start,
-      count,
-      &matrix[col + boundarySize_[0]][boundarySize_[2]]
-    ); // Write column
+  #pragma omp parallel for
+  for (size_t x = 0; x < nX_; ++x) {
+    for (size_t y = 0; y < nY_; ++y) {
+      temp[nX_ * y + x] = matrix[x + boundarySize_[0]][y + boundarySize_[2]];
+    }
   }
+  std::size_t start[] = {0, 0};
+  std::size_t count[] = {static_cast<std::size_t>(nY_), static_cast<std::size_t>(nX_)};
+  nc_put_vara_double(dataFile_, ncVariable, start, count, temp.data());
 }
 
 void Writers::NetCDFWriter::writeTimeStep(

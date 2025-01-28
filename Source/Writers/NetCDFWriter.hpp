@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <vector>
+#include "Tools/RealType.hpp"
 #include "Writer.hpp"
 
 namespace Writers {
@@ -40,6 +42,8 @@ namespace Writers {
     int dataFile_;
 
     int timeVar_, hVar_, huVar_, hvVar_, bVar_;
+
+    std::vector<RealType> temp;
 
     /** Flush after every x write operation? */
     unsigned int flush_;
