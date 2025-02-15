@@ -156,6 +156,7 @@ int main(int argc, char** argv) {
   args.addOption("grid-size-y", 'y', "Number of cells in y direction");
   args.addOption("output-basepath", 'o', "Output base file name");
   args.addOption("number-of-checkpoints", 'n', "Number of checkpoints to write output files");
+  args.addOption("time", 't', "Multiplier for end simulation time");
 
   Tools::Args::Result ret = args.parse(argc, argv, gpiRank == 0);
 
@@ -175,6 +176,8 @@ int main(int argc, char** argv) {
   int         numberOfCheckPoints = args.getArgument<int>(
     "number-of-checkpoints", 20
   ); //! Number of checkpoints for visualization (at each checkpoint in time, an output file is written).
+  float simulationTimeMultiplier        = args.getArgument<float>("time", 1.0);
+
 
   // Print information about the grid
   Tools::Logger::logger.printNumberOfCells(numberOfGridCellsX, numberOfGridCellsY);
@@ -239,7 +242,7 @@ int main(int argc, char** argv) {
   waveBlock->initialiseScenario(originX, originY, scenario, true);
 
   // Get the final simulation time from the scenario
-  double endSimulationTime = scenario.getEndSimulationTime();
+  double endSimulationTime = scenario.getEndSimulationTime() * simulationTimeMultiplier;
 
   // Checkpoints when output files are written
   double* checkPoints = new double[numberOfCheckPoints + 1];
