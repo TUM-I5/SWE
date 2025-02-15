@@ -123,7 +123,6 @@ int main(int argc, char** argv) {
   args.addOption("grid-size-y", 'y', "Number of cells in y direction");
   args.addOption("output-basepath", 'o', "Output base file name");
   args.addOption("number-of-checkpoints", 'n', "Number of checkpoints to write output files");
-  args.addOption("scenario", 's', "Name of scenario");
   args.addOption("time", 't', "Multiplier for end simulation time");
 
   Tools::Args::Result ret = args.parse(argc, argv, mpiRank == 0);
@@ -145,8 +144,7 @@ int main(int argc, char** argv) {
   int         numberOfCheckPoints = args.getArgument<int>(
     "number-of-checkpoints", 20
   ); //! Number of checkpoints for visualization (at each checkpoint in time, an output file is written).
-  std::string scenarioName        = args.getArgument<std::string>("scenario", "RadialDamBreakScenario");
-  float multiplier        = args.getArgument<float>("time", 1.0);
+  float simulationTimeMultiplier  = args.getArgument<float>("time", 1.0);
 
   // Print information about the grid
   Tools::Logger::logger.printNumberOfCells(numberOfGridCellsX, numberOfGridCellsY);
@@ -173,29 +171,8 @@ int main(int argc, char** argv) {
 
   Tools::Logger::logger.printNumberOfCellsPerProcess(nXLocal, nYLocal);
 
-  // Create a scenario, default: RadialDamBreakScenario
-  Scenarios::Scenario* scenarioptr;
-
-  if(scenarioName == "BathymetryDamBreakScenario") {
-    std::cout << "entered" << "\n";
-    scenarioptr = new Scenarios::BathymetryDamBreakScenario();
-  } else if(scenarioName == "RadialDamBreakScenario") {
-    scenarioptr = new Scenarios::RadialDamBreakScenario();
-  } else if(scenarioName == "SeaAtRestScenario") {
-    scenarioptr = new Scenarios::SeaAtRestScenario();
-  } else if(scenarioName == "SplashingConeScenario") {
-    scenarioptr = new Scenarios::SplashingConeScenario();
-  } else if(scenarioName == "SplashingPoolScenario") {
-    scenarioptr = new Scenarios::SplashingPoolScenario();
-  }
-  //Add your own scenarios here 
-
-
-  Scenarios::Scenario scenario = *scenarioptr;
-
-  std::cout << "scen: " << scenarioName << "\n";
-  std::cout << "scen2: " << scenario.getWaterHeight(500.0,500.0) << "\n";
-
+  // Create a simple artificial scenario
+  Scenarios::RadialDamBreakScenario scenario;
 
   // Compute the size of a single cell
   RealType cellSizeX = (scenario.getBoundaryPos(BoundaryEdge::Right) - scenario.getBoundaryPos(BoundaryEdge::Left))
@@ -214,7 +191,7 @@ int main(int argc, char** argv) {
   waveBlock->initialiseScenario(originX, originY, scenario, true);
 
   // Get the final simulation time from the scenario
-  double endSimulationTime = scenario.getEndSimulationTime() * multiplier;
+  double endSimulationTime = scenario.getEndSimulationTime() * simulationTimeMultiplier;
 
   // Checkpoints when output files are written
   double* checkPoints = new double[numberOfCheckPoints + 1];
