@@ -56,9 +56,9 @@ namespace Blocks {
    *  (details can be found in the corresponding source files)
    */
   class WaveAccumulationBlock: public Block {
-#ifdef SOLVER_AUGRIE
+#ifdef WITH_SOLVER_AUGRIE
     //! Approximate Augmented Riemann solver
-    Solvers::AugRieFunSolver<RealType> wavePropagationSolver_;
+    solver::AugRieFun<RealType> wavePropagationSolver_;
 #elif defined(WITH_SOLVER_HLLE)
     //! Vectorized FWave solver
     Solvers::HLLEFunSolver<RealType> wavePropagationSolver_;
