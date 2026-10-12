@@ -64,7 +64,6 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
 #if defined(ENABLE_VECTORIZATION) && defined(ENABLE_OPENMP) // Vectorize the inner loop
 #pragma omp simd reduction(max : maxWaveSpeedLocal)
 #elif defined(ENABLE_OPENMP)
-#pragma omp reduction(max : maxWaveSpeedLocal)
 #elif defined(ENABLE_VECTORIZATION)
 #pragma omp simd reduction(max : maxWaveSpeed)
 #endif
@@ -94,7 +93,7 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
 
 #ifdef ENABLE_OPENMP
         // Update the thread-local maximum wave speed
-        maxWaveSpeedLocal = std::max(maxWaveSpeed, maxEdgeSpeed);
+        maxWaveSpeedLocal = std::max(maxWaveSpeedLocal, maxEdgeSpeed);
 #else
       // Update the maximum wave speed
       maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
@@ -111,7 +110,6 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
 #if defined(ENABLE_VECTORIZATION) && defined(ENABLE_OPENMP)
 #pragma omp simd reduction(max : maxWaveSpeedLocal)
 #elif defined(ENABLE_OPENMP)
-#pragma omp reduction(max : maxWaveSpeedLocal)
 #elif defined(ENABLE_VECTORIZATION)
 #pragma omp simd reduction(max : maxWaveSpeed)
 #endif
@@ -141,7 +139,7 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
 
 #ifdef ENABLE_OPENMP
         // Update the thread-local maximum wave speed
-        maxWaveSpeedLocal = std::max(maxWaveSpeed, maxEdgeSpeed);
+        maxWaveSpeedLocal = std::max(maxWaveSpeedLocal, maxEdgeSpeed);
 #else
       // Update the maximum wave speed
       maxWaveSpeed = std::max(maxWaveSpeed, maxEdgeSpeed);
@@ -171,7 +169,7 @@ void Blocks::WaveAccumulationBlock::computeNumericalFluxes() {
 void Blocks::WaveAccumulationBlock::updateUnknowns(RealType dt) {
   // Update cell averages with the net-updates
 
-#ifdef SWE_USE_OPENMP
+#ifdef ENABLE_OPENMP
 #pragma omp parallel for
 #endif
   for (int i = 1; i < nx_ + 1; i++) {
